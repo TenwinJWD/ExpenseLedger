@@ -1,0 +1,1120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>LactaFlow - Dairy Production & Operations Management</title>
+  <meta name="description" content="Enterprise dairy production management platform featuring multi-tab intake logging, quality assurance testing, cold-chain logistics, dynamic forms, and comprehensive filtered data tables.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    body {
+      font-family: 'Plus Jakarta Sans', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    }
+    code, kbd, samp, pre, .font-mono {
+      font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    }
+    .dairy-milk-bg {
+      background-color: #f6faff;
+      background-image: 
+        radial-gradient(at 10% 12%, rgba(224, 242, 254, 0.75) 0px, transparent 50%),
+        radial-gradient(at 90% 10%, rgba(254, 249, 215, 0.55) 0px, transparent 45%),
+        radial-gradient(at 50% 45%, rgba(255, 255, 255, 0.95) 0px, transparent 65%),
+        radial-gradient(at 85% 85%, rgba(219, 234, 254, 0.65) 0px, transparent 50%),
+        radial-gradient(at 15% 85%, rgba(254, 243, 199, 0.45) 0px, transparent 50%);
+      background-attachment: fixed;
+    }
+    .frosted-glass-card {
+      background: rgba(255, 255, 255, 0.84);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid rgba(255, 255, 255, 0.9);
+      box-shadow: 0 10px 30px -5px rgba(2, 132, 199, 0.06), 0 4px 12px -2px rgba(15, 23, 42, 0.03);
+    }
+    .frosted-glass-header {
+      background: rgba(255, 255, 255, 0.88);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border-bottom: 1px solid rgba(224, 242, 254, 0.85);
+      box-shadow: 0 4px 20px -2px rgba(2, 132, 199, 0.05);
+    }
+    .frosted-glass-tab {
+      background: rgba(255, 255, 255, 0.78);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border-bottom: 1px solid rgba(224, 242, 254, 0.85);
+    }
+    @keyframes milkFlow {
+      0% { transform: translateY(0px) scale(1); }
+      50% { transform: translateY(-8px) scale(1.02); }
+      100% { transform: translateY(0px) scale(1); }
+    }
+    .animate-milk-flow {
+      animation: milkFlow 18s ease-in-out infinite;
+    }
+    .badge-emerald {
+      background-color: #ecfdf5;
+      color: #065f46;
+      border: 1px solid #a7f3d0;
+    }
+    .badge-amber {
+      background-color: #fffbeb;
+      color: #92400e;
+      border: 1px solid #fde68a;
+    }
+    .badge-rose {
+      background-color: #fff1f2;
+      color: #9f1239;
+      border: 1px solid #fecdd3;
+    }
+    .badge-sky {
+      background-color: #f0f9ff;
+      color: #0369a1;
+      border: 1px solid #bae6fd;
+    }
+  </style>
+</head>
+<body class="dairy-milk-bg min-h-screen flex flex-col font-sans selection:bg-sky-100 selection:text-sky-900 relative overflow-x-hidden text-slate-800">
+
+  <!-- Ambient Milky Background Waves -->
+  <div class="fixed inset-0 pointer-events-none z-0 overflow-hidden">
+    <div class="absolute -top-32 -left-32 w-96 h-96 rounded-full bg-sky-200/40 blur-3xl animate-milk-flow"></div>
+    <div class="absolute top-1/3 -right-32 w-[30rem] h-[30rem] rounded-full bg-amber-100/40 blur-3xl animate-milk-flow" style="animation-delay: -6s;"></div>
+    <div class="absolute -bottom-32 left-1/4 w-[36rem] h-[36rem] rounded-full bg-cyan-100/40 blur-3xl animate-milk-flow" style="animation-delay: -12s;"></div>
+    <svg class="absolute top-24 left-0 w-full h-48 opacity-30 text-sky-100" preserveAspectRatio="none" viewBox="0 0 1440 120" fill="none">
+      <path d="M0 30C240 70 480 0 720 40C960 80 1200 10 1440 50V0H0V30Z" fill="currentColor"></path>
+    </svg>
+    <svg class="absolute bottom-0 left-0 w-full h-40 opacity-40 text-blue-50" preserveAspectRatio="none" viewBox="0 0 1440 100" fill="none">
+      <path d="M0 60C360 10 720 90 1080 30C1260 0 1380 40 1440 50V100H0V60Z" fill="currentColor"></path>
+    </svg>
+  </div>
+
+  <!-- Header -->
+  <header class="frosted-glass-header sticky top-0 z-40 transition-all">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-2 flex flex-wrap items-center justify-between gap-3 text-xs border-b border-sky-100/70 text-slate-600">
+      <nav class="flex items-center gap-1.5 font-medium">
+        <span class="text-slate-400">Dairy Operations</span>
+        <span class="text-slate-300">/</span>
+        <span class="text-slate-500">Intake & Logistics Portal</span>
+        <span class="text-slate-300">/</span>
+        <span class="text-sky-700 font-bold flex items-center gap-1 bg-sky-50 px-2 py-0.5 rounded-md border border-sky-200/60">
+          📍 Silo Plant Delta-01 (Wisconsin Central)
+        </span>
+      </nav>
+      <div class="flex items-center gap-3.5">
+        <span class="text-[11px] font-semibold text-sky-800 bg-sky-50 px-2.5 py-0.5 rounded-full border border-sky-200/70">
+          ❄️ Silo Chilling: <strong>3.2°C</strong>
+        </span>
+        <span class="text-[11px] font-semibold text-emerald-800 bg-emerald-50 px-2.5 py-0.5 rounded-full border border-emerald-200/70 flex items-center gap-1">
+          <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+          HACCP Quality: Certified
+        </span>
+        <span class="text-[11px] font-semibold text-amber-800 bg-amber-50 px-2.5 py-0.5 rounded-full border border-amber-200/70 hidden sm:inline-block">
+          💧 Avg Fat: <strong>4.1%</strong>
+        </span>
+      </div>
+    </div>
+
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3.5 flex flex-wrap items-center justify-between gap-4">
+      <div class="flex items-center gap-3.5">
+        <div class="w-11 h-11 rounded-2xl bg-gradient-to-tr from-sky-600 via-sky-500 to-cyan-400 flex items-center justify-center text-white shadow-md shadow-sky-600/25 border-2 border-white text-xl font-bold">
+          🥛
+        </div>
+        <div>
+          <div class="flex items-center gap-2">
+            <h1 class="text-lg sm:text-xl font-extrabold tracking-tight text-slate-900">
+              LactaFlow Enterprise Dairy OS
+            </h1>
+            <span class="px-2 py-0.5 text-[10px] font-extrabold tracking-wider uppercase bg-gradient-to-r from-sky-100 to-blue-50 text-sky-800 border border-sky-200/80 rounded-md">
+              Standalone Edition
+            </span>
+          </div>
+          <p class="text-xs text-slate-500 mt-0.5 font-medium">Multi-Tab Milk Intake Reception, Laboratory QA Analysis & Cold-Chain Logistics Hub</p>
+        </div>
+      </div>
+
+      <div class="flex items-center gap-3">
+        <div class="hidden md:flex items-center gap-3 px-3 py-1.5 rounded-xl bg-white/70 border border-sky-100/90 shadow-2xs">
+          <div class="text-left">
+            <span class="text-[10px] uppercase font-bold text-slate-400 block tracking-wider">Logged Batches</span>
+            <span id="stat-batch-count" class="text-sm font-extrabold text-sky-950 font-mono">18 Batches</span>
+          </div>
+          <div class="w-px h-6 bg-slate-200"></div>
+          <div class="text-left">
+            <span class="text-[10px] uppercase font-bold text-slate-400 block tracking-wider">Intake Volume</span>
+            <span id="stat-intake-liters" class="text-sm font-extrabold text-emerald-700 font-mono">91,400 L</span>
+          </div>
+        </div>
+
+        <button id="btn-export-csv" class="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-bold text-sky-900 bg-white/80 hover:bg-white border border-sky-200 rounded-xl transition shadow-xs cursor-pointer">
+          📥 Export CSV
+        </button>
+        <button id="btn-reset-data" class="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-bold text-slate-700 bg-white/60 hover:bg-white border border-slate-200 rounded-xl transition shadow-xs cursor-pointer">
+          🔄 Reset Demo
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Sticky Primary Navigation Tabs -->
+  <nav class="frosted-glass-tab sticky top-[97px] z-30 transition-all">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="flex space-x-2 sm:space-x-4 overflow-x-auto pt-2" role="tablist">
+        <button id="tab-btn-intake" onclick="switchPrimaryTab('intake')" class="relative flex items-center gap-2.5 py-3.5 px-4 text-xs sm:text-sm font-bold border-b-2 border-sky-600 text-sky-950 bg-white/90 shadow-2xs rounded-t-xl transition-all cursor-pointer">
+          <span class="p-1.5 rounded-lg bg-gradient-to-tr from-sky-600 to-cyan-500 text-white shadow-xs">🥛</span>
+          <div class="text-left">
+            <div class="flex items-center gap-1.5">
+              <span class="text-[10px] tracking-wider uppercase font-extrabold px-1.5 py-0.2 rounded border text-sky-800 bg-sky-100 border-sky-200">PRIMARY TAB 1</span>
+              <span>Raw Milk Intake & Reception</span>
+            </div>
+            <span class="text-[11px] font-normal text-slate-500 block hidden sm:inline">Farm Procurement & Silo Storage Intake</span>
+          </div>
+          <span id="badge-intake-count" class="ml-1.5 px-2 py-0.5 text-xs font-semibold rounded-full font-mono bg-sky-100 text-sky-950 font-bold border border-sky-300">8</span>
+        </button>
+
+        <button id="tab-btn-operations" onclick="switchPrimaryTab('operations')" class="relative flex items-center gap-2.5 py-3.5 px-4 text-xs sm:text-sm font-bold border-b-2 border-transparent text-slate-600 hover:text-slate-900 hover:bg-white/50 rounded-t-xl transition-all cursor-pointer">
+          <span class="p-1.5 rounded-lg text-slate-400 bg-slate-100/70">🏭</span>
+          <div class="text-left">
+            <div class="flex items-center gap-1.5">
+              <span class="text-[10px] tracking-wider uppercase font-extrabold px-1.5 py-0.2 rounded border text-slate-500 bg-slate-100 border-slate-200">PRIMARY TAB 2</span>
+              <span>Processing & Cold-Chain Operations</span>
+            </div>
+            <span class="text-[11px] font-normal text-slate-500 block hidden sm:inline">Pasteurization, Lab QA & Distribution Logistics</span>
+          </div>
+          <span id="badge-operations-count" class="ml-1.5 px-2 py-0.5 text-xs font-semibold rounded-full font-mono bg-slate-100 text-slate-600 border border-slate-200">10</span>
+        </button>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Main View Container -->
+  <main class="relative z-10 flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
+
+    <!-- PRIMARY TAB 1 PANEL -->
+    <div id="panel-intake" class="space-y-6">
+      <!-- Intake Form Card -->
+      <div class="frosted-glass-card rounded-2xl overflow-hidden transition-all">
+        <!-- Edit Mode Banner -->
+        <div id="edit-banner-intake" class="hidden bg-sky-50 border-b border-sky-100 px-5 py-3 flex flex-wrap items-center justify-between gap-3">
+          <div class="flex items-center gap-2.5">
+            <span class="p-1.5 bg-sky-100 text-sky-700 rounded-md">✏️</span>
+            <div>
+              <p class="text-sm font-semibold text-sky-950">Editing Record: <span id="edit-record-id-intake" class="font-mono text-sky-700 font-bold"></span></p>
+              <p class="text-xs text-sky-700">Modify any fields below and click "Update Record" to save changes.</p>
+            </div>
+          </div>
+          <button type="button" onclick="cancelEditMode()" class="px-3 py-1.5 text-xs font-semibold text-slate-600 bg-white border border-slate-300 rounded-md hover:bg-slate-50 transition">
+            ✕ Cancel Edit Mode
+          </button>
+        </div>
+
+        <div class="px-5 sm:px-6 py-4 border-b border-slate-100 flex flex-wrap items-center justify-between gap-3 bg-gradient-to-r from-slate-50/70 to-white">
+          <div>
+            <h3 class="text-base font-bold text-slate-900 flex items-center gap-2">
+              <span>Raw Milk Reception & Supplier Entry</span>
+              <span id="status-badge-intake" class="text-[11px] font-semibold tracking-wide uppercase px-2 py-0.5 bg-emerald-100 text-emerald-800 border border-emerald-200 rounded">New Entry</span>
+            </h3>
+            <p class="text-xs text-slate-500 mt-0.5">Enter incoming tanker arrival details, supplier contact credentials, temperature compliance, and silo allocation.</p>
+          </div>
+          <span class="text-[11px] text-slate-400 font-medium hidden sm:inline-block">Fields marked with <span class="text-rose-500 font-bold">*</span> are required</span>
+        </div>
+
+        <form id="form-intake" onsubmit="handleIntakeSubmit(event)" class="p-5 sm:p-6 space-y-6" novalidate>
+          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5">
+            <div>
+              <label class="block text-xs font-semibold text-slate-700 tracking-wide uppercase mb-1.5">Intake Record ID</label>
+              <input id="in-id" type="text" readonly placeholder="Auto-generated on submit" class="w-full px-3.5 py-2.5 text-sm bg-slate-100 text-slate-500 border border-slate-200 rounded-lg cursor-not-allowed">
+              <p class="text-xs text-slate-500 mt-1">System-generated unique batch identifier</p>
+            </div>
+
+            <div>
+              <label class="block text-xs font-semibold text-slate-700 tracking-wide uppercase mb-1.5">Supplier / Dairy Farm Name <span class="text-rose-500 font-bold">*</span></label>
+              <input id="in-name" type="text" required placeholder="e.g. Highland Valley Dairy Co-op" class="w-full px-3.5 py-2.5 text-sm bg-white border border-slate-300 rounded-lg focus:border-sky-500 focus:ring-2 focus:ring-sky-100 outline-none">
+              <p id="err-in-name" class="hidden text-xs text-rose-600 mt-1">Supplier name is required</p>
+            </div>
+
+            <div>
+              <label class="block text-xs font-semibold text-slate-700 tracking-wide uppercase mb-1.5">Contact Phone Number <span class="text-rose-500 font-bold">*</span></label>
+              <input id="in-phone" type="tel" required placeholder="e.g. (555) 382-9102" class="w-full px-3.5 py-2.5 text-sm bg-white border border-slate-300 rounded-lg focus:border-sky-500 focus:ring-2 focus:ring-sky-100 outline-none">
+              <p id="err-in-phone" class="hidden text-xs text-rose-600 mt-1">Valid phone number required (min 7 digits)</p>
+            </div>
+
+            <div>
+              <label class="block text-xs font-semibold text-slate-700 tracking-wide uppercase mb-1.5">Contact Email ID <span class="text-rose-500 font-bold">*</span></label>
+              <input id="in-email" type="email" required placeholder="e.g. dispatch@highlanddairy.com" class="w-full px-3.5 py-2.5 text-sm bg-white border border-slate-300 rounded-lg focus:border-sky-500 focus:ring-2 focus:ring-sky-100 outline-none">
+              <p id="err-in-email" class="hidden text-xs text-rose-600 mt-1">Valid email address required</p>
+            </div>
+
+            <div class="col-span-1 md:col-span-2">
+              <label class="block text-xs font-semibold text-slate-700 tracking-wide uppercase mb-1.5">Farm Origin / Facility Location <span class="text-rose-500 font-bold">*</span></label>
+              <input id="in-location" type="text" required placeholder="e.g. Green Pastures - Shed B, Wisconsin" class="w-full px-3.5 py-2.5 text-sm bg-white border border-slate-300 rounded-lg focus:border-sky-500 focus:ring-2 focus:ring-sky-100 outline-none">
+              <p id="err-in-location" class="hidden text-xs text-rose-600 mt-1">Farm location is required</p>
+            </div>
+
+            <div>
+              <label class="block text-xs font-semibold text-slate-700 tracking-wide uppercase mb-1.5">Milk Category / Breed Type <span class="text-rose-500 font-bold">*</span></label>
+              <select id="in-category" required class="w-full px-3.5 py-2.5 text-sm bg-white border border-slate-300 rounded-lg focus:border-sky-500 focus:ring-2 focus:ring-sky-100 outline-none cursor-pointer">
+                <option value="">-- Select Milk Category --</option>
+                <option value="Grade A Whole Cow Milk">Grade A Whole Cow Milk (Raw)</option>
+                <option value="Organic Pasture-Fed Cow Milk">Organic Pasture-Fed Cow Milk</option>
+                <option value="A2 Jersey High-Fat Cream Milk">A2 Jersey High-Fat Cream Milk</option>
+                <option value="Buffalo Whole Milk">Buffalo Whole Milk (High SNF)</option>
+                <option value="Chilled Skimmed Milk">Chilled Skimmed Milk Batch</option>
+              </select>
+              <p id="err-in-category" class="hidden text-xs text-rose-600 mt-1">Please select milk category</p>
+            </div>
+
+            <div>
+              <label class="block text-xs font-semibold text-slate-700 tracking-wide uppercase mb-1.5">Reception Status <span class="text-rose-500 font-bold">*</span></label>
+              <select id="in-status" required class="w-full px-3.5 py-2.5 text-sm bg-white border border-slate-300 rounded-lg focus:border-sky-500 focus:ring-2 focus:ring-sky-100 outline-none cursor-pointer">
+                <option value="">-- Select Reception Status --</option>
+                <option value="Accepted">Accepted - Chilled in Silo</option>
+                <option value="Testing">Under Lab Quality Testing</option>
+                <option value="Quarantined">Quarantined - High Temp Warning</option>
+                <option value="Approved">Approved for Pasteurization</option>
+                <option value="Rejected">Rejected - Acidic / Souring</option>
+              </select>
+              <p id="err-in-status" class="hidden text-xs text-rose-600 mt-1">Please select reception status</p>
+            </div>
+
+            <div>
+              <label class="block text-xs font-semibold text-slate-700 tracking-wide uppercase mb-1.5">Reception Date & Time <span class="text-rose-500 font-bold">*</span></label>
+              <input id="in-date" type="datetime-local" required class="w-full px-3.5 py-2.5 text-sm bg-white border border-slate-300 rounded-lg focus:border-sky-500 focus:ring-2 focus:ring-sky-100 outline-none">
+              <p id="err-in-date" class="hidden text-xs text-rose-600 mt-1">Reception date is required</p>
+            </div>
+
+            <div>
+              <label class="block text-xs font-semibold text-slate-700 tracking-wide uppercase mb-1.5">Received Volume <span class="text-rose-500 font-bold">*</span></label>
+              <div class="relative flex items-center">
+                <input id="in-liters" type="number" min="100" max="100000" required placeholder="e.g. 12500" class="w-full px-3.5 py-2.5 text-sm bg-white border border-slate-300 rounded-lg pr-14 focus:border-sky-500 focus:ring-2 focus:ring-sky-100 outline-none">
+                <span class="absolute right-3 text-xs font-semibold text-slate-500 bg-slate-100 px-2 py-0.5 rounded border border-slate-200">Liters</span>
+              </div>
+              <p id="err-in-liters" class="hidden text-xs text-rose-600 mt-1">Volume between 100 - 100,000 L required</p>
+            </div>
+
+            <div>
+              <label class="block text-xs font-semibold text-slate-700 tracking-wide uppercase mb-1.5">Fat Content <span class="text-rose-500 font-bold">*</span></label>
+              <div class="relative flex items-center">
+                <input id="in-fat" type="number" step="0.01" min="2" max="12" required placeholder="e.g. 3.85" class="w-full px-3.5 py-2.5 text-sm bg-white border border-slate-300 rounded-lg pr-12 focus:border-sky-500 focus:ring-2 focus:ring-sky-100 outline-none">
+                <span class="absolute right-3 text-xs font-semibold text-slate-500 bg-slate-100 px-2 py-0.5 rounded border border-slate-200">%</span>
+              </div>
+              <p id="err-in-fat" class="hidden text-xs text-rose-600 mt-1">Fat % between 2.0 - 12.0 required</p>
+            </div>
+
+            <div>
+              <label class="block text-xs font-semibold text-slate-700 tracking-wide uppercase mb-1.5">SNF (Solids-Not-Fat) <span class="text-rose-500 font-bold">*</span></label>
+              <div class="relative flex items-center">
+                <input id="in-snf" type="number" step="0.01" min="6" max="14" required placeholder="e.g. 8.75" class="w-full px-3.5 py-2.5 text-sm bg-white border border-slate-300 rounded-lg pr-12 focus:border-sky-500 focus:ring-2 focus:ring-sky-100 outline-none">
+                <span class="absolute right-3 text-xs font-semibold text-slate-500 bg-slate-100 px-2 py-0.5 rounded border border-slate-200">%</span>
+              </div>
+              <p id="err-in-snf" class="hidden text-xs text-rose-600 mt-1">SNF % between 6.0 - 14.0 required</p>
+            </div>
+
+            <div>
+              <label class="block text-xs font-semibold text-slate-700 tracking-wide uppercase mb-1.5">Milk Chilling Temp <span class="text-rose-500 font-bold">*</span></label>
+              <div class="relative flex items-center">
+                <input id="in-temp" type="number" step="0.1" min="-2" max="20" required placeholder="e.g. 3.4" class="w-full px-3.5 py-2.5 text-sm bg-white border border-slate-300 rounded-lg pr-12 focus:border-sky-500 focus:ring-2 focus:ring-sky-100 outline-none">
+                <span class="absolute right-3 text-xs font-semibold text-slate-500 bg-slate-100 px-2 py-0.5 rounded border border-slate-200">°C</span>
+              </div>
+              <p id="err-in-temp" class="hidden text-xs text-rose-600 mt-1">Valid temp (-2°C to 20°C) required</p>
+              <p class="text-xs text-slate-500 mt-1">Acceptable range: 2.0°C to 4.5°C</p>
+            </div>
+
+            <div>
+              <label class="block text-xs font-semibold text-slate-700 tracking-wide uppercase mb-1.5">Target Storage Silo <span class="text-rose-500 font-bold">*</span></label>
+              <select id="in-silo" required class="w-full px-3.5 py-2.5 text-sm bg-white border border-slate-300 rounded-lg focus:border-sky-500 focus:ring-2 focus:ring-sky-100 outline-none cursor-pointer">
+                <option value="">-- Select Target Storage Silo --</option>
+                <option value="Silo Alpha">Silo Alpha (Cold Chilled 3.2°C)</option>
+                <option value="Silo Bravo">Silo Bravo (Dedicated Organic)</option>
+                <option value="Silo Charlie">Silo Charlie (Buffer Tank)</option>
+                <option value="Silo Delta">Silo Delta (Premium A2 Tank)</option>
+              </select>
+              <p id="err-in-silo" class="hidden text-xs text-rose-600 mt-1">Target silo is required</p>
+            </div>
+
+            <div class="col-span-1 md:col-span-2 lg:col-span-4">
+              <label class="block text-xs font-semibold text-slate-700 tracking-wide uppercase mb-1.5">Quality Notes & Sensor Observations</label>
+              <textarea id="in-notes" rows="3" placeholder="Record driver remarks, odor check, sample tube IDs, or chilling anomalies..." class="w-full px-3.5 py-2.5 text-sm bg-white border border-slate-300 rounded-lg focus:border-sky-500 focus:ring-2 focus:ring-sky-100 outline-none resize-y"></textarea>
+            </div>
+          </div>
+
+          <div class="pt-4 border-t border-slate-100 flex flex-wrap items-center justify-between gap-3">
+            <button type="button" onclick="resetIntakeForm()" class="px-3.5 py-2 text-xs font-semibold text-slate-700 bg-slate-100 hover:bg-slate-200 border border-slate-300 rounded-lg transition cursor-pointer">
+              🔄 Reset Form
+            </button>
+            <button type="submit" id="btn-submit-intake" class="px-5 py-2.5 text-xs font-bold tracking-wide uppercase text-white bg-sky-600 hover:bg-sky-700 rounded-lg transition shadow-xs cursor-pointer">
+              ✨ Record Milk Intake Batch
+            </button>
+          </div>
+        </form>
+      </div>
+
+      <!-- Filter Toolbar for Tab 1 -->
+      <div class="frosted-glass-card rounded-2xl overflow-hidden transition-all">
+        <div class="p-4 flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 bg-gradient-to-r from-slate-50/50 to-white">
+          <div class="flex items-center gap-3 flex-1 min-w-[280px]">
+            <input id="search-intake" type="text" oninput="applyFiltersIntake()" placeholder="Search by ID, name, email, phone, location..." class="w-full max-w-md px-3.5 py-2 text-xs sm:text-sm bg-white border border-slate-300 rounded-lg focus:outline-none focus:border-sky-500 focus:ring-2 focus:ring-sky-100">
+          </div>
+          <div class="flex items-center gap-3 text-xs text-slate-500">
+            <span>Matching Records: <strong id="filter-count-intake" class="text-slate-800 font-mono">8</strong></span>
+            <button onclick="clearFiltersIntake()" class="text-rose-600 hover:underline cursor-pointer font-medium">Clear Filters</button>
+          </div>
+        </div>
+
+        <div class="p-4 bg-slate-50/60 border-t border-slate-100 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+          <div>
+            <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-600 mb-1">Category / Product Line</label>
+            <select id="filter-cat-intake" onchange="applyFiltersIntake()" class="w-full px-3 py-2 text-xs bg-white border border-slate-300 rounded-lg cursor-pointer">
+              <option value="ALL">All Categories</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-600 mb-1">Operating Status</label>
+            <select id="filter-stat-intake" onchange="applyFiltersIntake()" class="w-full px-3 py-2 text-xs bg-white border border-slate-300 rounded-lg cursor-pointer">
+              <option value="ALL">All Statuses</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-600 mb-1">Date From</label>
+            <input id="filter-date-from-intake" type="date" onchange="applyFiltersIntake()" class="w-full px-3 py-2 text-xs bg-white border border-slate-300 rounded-lg">
+          </div>
+          <div>
+            <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-600 mb-1">Date To</label>
+            <input id="filter-date-to-intake" type="date" onchange="applyFiltersIntake()" class="w-full px-3 py-2 text-xs bg-white border border-slate-300 rounded-lg">
+          </div>
+        </div>
+      </div>
+
+      <!-- Data Table for Tab 1 -->
+      <div class="frosted-glass-card rounded-2xl overflow-hidden transition-all">
+        <div class="px-5 py-3.5 border-b border-slate-100 flex items-center justify-between gap-3 bg-gradient-to-r from-slate-50/70 to-white">
+          <div class="flex items-center gap-2">
+            <span class="text-sky-600 font-bold">📋</span>
+            <h3 class="text-sm font-bold text-slate-800">Registered Intake Records</h3>
+          </div>
+          <span class="text-xs text-slate-400">Click column headers to sort</span>
+        </div>
+
+        <div class="overflow-x-auto min-h-[250px]">
+          <table class="w-full text-left border-collapse text-xs sm:text-sm">
+            <thead>
+              <tr class="bg-slate-50/90 border-b border-slate-200 text-slate-700 text-xs font-bold uppercase tracking-wider">
+                <th onclick="sortTableIntake('id')" class="px-4 py-3 cursor-pointer hover:bg-slate-100">Record ID ⇕</th>
+                <th onclick="sortTableIntake('name')" class="px-4 py-3 cursor-pointer hover:bg-slate-100">Supplier Name ⇕</th>
+                <th class="px-4 py-3">Phone</th>
+                <th onclick="sortTableIntake('location')" class="px-4 py-3 cursor-pointer hover:bg-slate-100">Farm Location ⇕</th>
+                <th onclick="sortTableIntake('category')" class="px-4 py-3 cursor-pointer hover:bg-slate-100">Category ⇕</th>
+                <th onclick="sortTableIntake('liters')" class="px-4 py-3 text-right cursor-pointer hover:bg-slate-100">Volume (L) ⇕</th>
+                <th onclick="sortTableIntake('fatPercentage')" class="px-4 py-3 text-right cursor-pointer hover:bg-slate-100">Fat % ⇕</th>
+                <th onclick="sortTableIntake('temperature')" class="px-4 py-3 text-right cursor-pointer hover:bg-slate-100">Temp ⇕</th>
+                <th onclick="sortTableIntake('siloId')" class="px-4 py-3 cursor-pointer hover:bg-slate-100">Silo Tank ⇕</th>
+                <th onclick="sortTableIntake('status')" class="px-4 py-3 cursor-pointer hover:bg-slate-100">Status ⇕</th>
+                <th onclick="sortTableIntake('date')" class="px-4 py-3 cursor-pointer hover:bg-slate-100">Date ⇕</th>
+                <th class="px-4 py-3 text-right">Actions</th>
+              </tr>
+            </thead>
+            <tbody id="tbody-intake" class="divide-y divide-slate-100">
+              <!-- Dynamically populated -->
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Pagination Bar -->
+        <div class="bg-white border-t border-slate-200/80 px-4 py-3 flex flex-wrap items-center justify-between gap-4 text-xs text-slate-600">
+          <div>
+            Showing <span id="pag-start-intake" class="font-bold text-slate-900 font-mono">1</span> to <span id="pag-end-intake" class="font-bold text-slate-900 font-mono">5</span> of <span id="pag-total-intake" class="font-bold text-slate-900 font-mono">8</span> records
+          </div>
+          <div class="flex items-center gap-1" id="pag-controls-intake">
+            <!-- Pag buttons -->
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PRIMARY TAB 2 PANEL -->
+    <div id="panel-operations" class="space-y-6 hidden">
+      <!-- Sub-Tabs Bar -->
+      <div class="bg-white/60 backdrop-blur-md border border-sky-100/90 p-1.5 rounded-2xl flex flex-wrap gap-2 shadow-xs">
+        <button id="subtab-btn-quality" onclick="switchSubTab('quality')" class="flex-1 min-w-[220px] flex items-center justify-between px-4 py-3 rounded-xl text-xs font-bold transition-all cursor-pointer bg-white text-slate-900 shadow-sm border border-sky-200/80">
+          <div class="flex items-center gap-2.5">
+            <span class="p-1.5 rounded-lg bg-gradient-to-tr from-sky-600 to-cyan-500 text-white shadow-xs">🧪</span>
+            <div class="text-left">
+              <div class="flex items-center gap-1.5">
+                <span class="text-[10px] font-extrabold uppercase px-1.5 py-0.2 rounded border bg-sky-50 text-sky-800 border-sky-200">SUB-TAB 1</span>
+                <span>Pasteurization & Quality Testing</span>
+              </div>
+              <span class="text-[10px] font-normal text-slate-500 block truncate max-w-[220px]">Chemical assays, pH & somatic cell counts</span>
+            </div>
+          </div>
+          <span id="badge-sub-quality" class="ml-2 px-2.5 py-0.5 text-[11px] rounded-full font-mono font-bold border bg-sky-100 text-sky-900 border-sky-300">5</span>
+        </button>
+
+        <button id="subtab-btn-logistics" onclick="switchSubTab('logistics')" class="flex-1 min-w-[220px] flex items-center justify-between px-4 py-3 rounded-xl text-xs font-bold transition-all cursor-pointer text-slate-600 hover:text-slate-900 hover:bg-white/50 border border-transparent">
+          <div class="flex items-center gap-2.5">
+            <span class="p-1.5 rounded-lg bg-slate-100/80 text-slate-500">🚚</span>
+            <div class="text-left">
+              <div class="flex items-center gap-1.5">
+                <span class="text-[10px] font-extrabold uppercase px-1.5 py-0.2 rounded border bg-slate-100 text-slate-500 border-slate-200">SUB-TAB 2</span>
+                <span>Cold-Chain Logistics & Dispatch</span>
+              </div>
+              <span class="text-[10px] font-normal text-slate-500 block truncate max-w-[220px]">Outbound refrigerated fleet & temperature tracking</span>
+            </div>
+          </div>
+          <span id="badge-sub-logistics" class="ml-2 px-2.5 py-0.5 text-[11px] rounded-full font-mono font-bold border bg-slate-100 text-slate-600 border-slate-200">5</span>
+        </button>
+      </div>
+
+      <!-- Filter Toolbar for Tab 2 -->
+      <div class="frosted-glass-card rounded-2xl overflow-hidden transition-all">
+        <div class="p-4 flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 bg-gradient-to-r from-slate-50/50 to-white">
+          <div class="flex items-center gap-3 flex-1 min-w-[280px]">
+            <input id="search-sub" type="text" oninput="applyFiltersSub()" placeholder="Search sub-tab records..." class="w-full max-w-md px-3.5 py-2 text-xs sm:text-sm bg-white border border-slate-300 rounded-lg focus:outline-none focus:border-sky-500 focus:ring-2 focus:ring-sky-100">
+          </div>
+          <div class="flex items-center gap-3 text-xs text-slate-500">
+            <span>Matching Records: <strong id="filter-count-sub" class="text-slate-800 font-mono">5</strong></span>
+            <button onclick="clearFiltersSub()" class="text-rose-600 hover:underline cursor-pointer font-medium">Clear Filters</button>
+          </div>
+        </div>
+        <div class="p-4 bg-slate-50/60 border-t border-slate-100 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+          <div>
+            <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-600 mb-1">Category</label>
+            <select id="filter-cat-sub" onchange="applyFiltersSub()" class="w-full px-3 py-2 text-xs bg-white border border-slate-300 rounded-lg cursor-pointer">
+              <option value="ALL">All Categories</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-600 mb-1">Status</label>
+            <select id="filter-stat-sub" onchange="applyFiltersSub()" class="w-full px-3 py-2 text-xs bg-white border border-slate-300 rounded-lg cursor-pointer">
+              <option value="ALL">All Statuses</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-600 mb-1">Date From</label>
+            <input id="filter-date-from-sub" type="date" onchange="applyFiltersSub()" class="w-full px-3 py-2 text-xs bg-white border border-slate-300 rounded-lg">
+          </div>
+          <div>
+            <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-600 mb-1">Date To</label>
+            <input id="filter-date-to-sub" type="date" onchange="applyFiltersSub()" class="w-full px-3 py-2 text-xs bg-white border border-slate-300 rounded-lg">
+          </div>
+        </div>
+      </div>
+
+      <!-- Data Table for Tab 2 -->
+      <div class="frosted-glass-card rounded-2xl overflow-hidden transition-all">
+        <div class="px-5 py-3.5 border-b border-slate-100 flex items-center justify-between gap-3 bg-gradient-to-r from-slate-50/70 to-white">
+          <div class="flex items-center gap-2">
+            <span class="text-sky-600 font-bold">📋</span>
+            <h3 id="table-title-sub" class="text-sm font-bold text-slate-800">Quality Testing Records</h3>
+          </div>
+          <span class="text-xs text-slate-400">Click column headers to sort</span>
+        </div>
+
+        <div class="overflow-x-auto min-h-[250px]">
+          <table class="w-full text-left border-collapse text-xs sm:text-sm">
+            <thead id="thead-sub">
+              <!-- Rendered per sub-tab -->
+            </thead>
+            <tbody id="tbody-sub" class="divide-y divide-slate-100">
+              <!-- Dynamically populated -->
+            </tbody>
+          </table>
+        </div>
+
+        <div class="bg-white border-t border-slate-200/80 px-4 py-3 flex flex-wrap items-center justify-between gap-4 text-xs text-slate-600">
+          <div>
+            Showing <span id="pag-start-sub" class="font-bold text-slate-900 font-mono">1</span> to <span id="pag-end-sub" class="font-bold text-slate-900 font-mono">5</span> of <span id="pag-total-sub" class="font-bold text-slate-900 font-mono">5</span> records
+          </div>
+          <div class="flex items-center gap-1" id="pag-controls-sub">
+            <!-- Pag buttons -->
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- Delete Modal Dialog -->
+  <div id="modal-delete" class="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-xs flex items-center justify-center p-4 hidden">
+    <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6 border border-slate-200">
+      <div class="flex items-start gap-3.5">
+        <div class="p-2.5 rounded-full bg-rose-100 text-rose-600 shrink-0">🗑️</div>
+        <div>
+          <h3 class="text-base font-bold text-slate-900">Confirm Record Deletion</h3>
+          <p id="delete-modal-msg" class="text-xs sm:text-sm text-slate-600 mt-1.5 leading-relaxed">Are you sure you want to permanently delete this record? This action cannot be undone.</p>
+        </div>
+      </div>
+      <div class="mt-6 flex items-center justify-end gap-2.5">
+        <button onclick="closeDeleteModal()" class="px-4 py-2 text-xs font-semibold text-slate-700 bg-white border border-slate-300 rounded-lg hover:bg-slate-50">Cancel</button>
+        <button onclick="confirmDelete()" class="px-4 py-2 text-xs font-bold text-white bg-rose-600 hover:bg-rose-700 rounded-lg">Yes, Delete Record</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Container -->
+  <div id="toast-container" class="fixed bottom-4 right-4 z-50 flex flex-col gap-2 max-w-sm w-full pointer-events-none"></div>
+
+  <script>
+    // --- Seed Data & State Initialization ---
+    const INITIAL_RECORDS = [
+      { id: 'RMI-2026-1001', primaryTabId: 'intake', name: 'Green Pastures Dairy Co-op', phone: '(555) 234-8901', email: 'intake@greenpastures.com', location: 'Sunrise Valley - Barn 4, WI', category: 'Grade A Whole Cow Milk', status: 'Accepted', date: '2026-10-19T06:30', liters: 14500, fatPercentage: 3.92, snfPercentage: 8.85, temperature: 3.2, siloId: 'Silo Alpha', notes: 'Morning milking batch. Fresh odor.' },
+      { id: 'RMI-2026-1002', primaryTabId: 'intake', name: 'Highland Organic Valley Farms', phone: '(555) 412-7789', email: 'shipments@highlandorganic.org', location: 'Rolling Hills Organic Sector, MN', category: 'Organic Pasture-Fed Cow Milk', status: 'Approved', date: '2026-10-19T07:15', liters: 9800, fatPercentage: 4.15, snfPercentage: 9.05, temperature: 3.6, siloId: 'Silo Bravo', notes: 'USDA Organic verified.' },
+      { id: 'RMI-2026-1003', primaryTabId: 'intake', name: 'Apex Jersey Heritage Dairy', phone: '(555) 609-3281', email: 'supply@apexjersey.net', location: 'Meadowbrook Estate - Unit 1, OH', category: 'A2 Jersey High-Fat Cream Milk', status: 'Accepted', date: '2026-10-19T08:00', liters: 6200, fatPercentage: 5.25, snfPercentage: 9.40, temperature: 3.1, siloId: 'Silo Delta', notes: 'Premium butterfat batch.' },
+      { id: 'RMI-2026-1004', primaryTabId: 'intake', name: 'Prairie Gold Farmers Collective', phone: '(555) 773-1940', email: 'logistics@prairiegolddairy.com', location: 'Central Plains Hub - Silo Bay 2, IA', category: 'Grade A Whole Cow Milk', status: 'Testing', date: '2026-10-19T09:45', liters: 22000, fatPercentage: 3.75, snfPercentage: 8.65, temperature: 4.2, siloId: 'Silo Charlie', notes: 'Rapid sample drawn.' },
+      { id: 'RMI-2026-1005', primaryTabId: 'intake', name: 'Cascade Mountain Agro-Union', phone: '(555) 902-3341', email: 'intake-team@cascademtn.com', location: 'Northwest Timberline Sector, WA', category: 'Buffalo Whole Milk', status: 'Accepted', date: '2026-10-18T14:20', liters: 7500, fatPercentage: 7.20, snfPercentage: 10.10, temperature: 3.4, siloId: 'Silo Delta', notes: 'Premium buffalo milk.' },
+      { id: 'RMI-2026-1006', primaryTabId: 'intake', name: 'Silver Lake Family Farmstead', phone: '(555) 314-5590', email: 'silverlake.dairy@gmail.com', location: 'Lakeside Pastures - Lot 7, MI', category: 'Grade A Whole Cow Milk', status: 'Quarantined', date: '2026-10-18T16:10', liters: 8400, fatPercentage: 3.60, snfPercentage: 8.40, temperature: 6.8, siloId: 'Silo Charlie', notes: 'Temp alert at arrival.' },
+      { id: 'RMI-2026-1007', primaryTabId: 'intake', name: 'Clearwater Creek Dairy Ranch', phone: '(555) 829-4112', email: 'dispatch@clearwaterdairy.com', location: 'Clearwater Valley - Sector 12, ID', category: 'Chilled Skimmed Milk', status: 'Approved', date: '2026-10-17T11:00', liters: 18000, fatPercentage: 2.10, snfPercentage: 8.90, temperature: 2.9, siloId: 'Silo Alpha', notes: 'Standardized skim ready.' },
+      { id: 'RMI-2026-1008', primaryTabId: 'intake', name: 'Sunny Ridge Dairies LLC', phone: '(555) 543-9988', email: 'operations@sunnyridgedairy.com', location: 'Sunny Ridge Road - Station 3, PA', category: 'Grade A Whole Cow Milk', status: 'Rejected', date: '2026-10-17T13:30', liters: 5000, fatPercentage: 3.40, snfPercentage: 8.20, temperature: 8.2, siloId: 'Silo Charlie', notes: 'Sour odor, pH 6.1.' },
+
+      // Sub-tab 1: Quality
+      { id: 'QLT-2026-2001', primaryTabId: 'operations', subTabId: 'quality', name: 'Dr. Emily Chen, QC Lead', phone: '(555) 789-1029', email: 'emily.chen@lactaflow.com', location: 'Central Plant 1 - Cleanroom Lab 2B', category: 'Pasteurized Whole Milk', status: 'Passed', date: '2026-10-19T08:30', phLevel: 6.68, somaticCount: 95000, antibioticResidue: 'Negative', pasteurTemp: 72.8, notes: 'HTST continuous validated.' },
+      { id: 'QLT-2026-2002', primaryTabId: 'operations', subTabId: 'quality', name: 'Liam Gallagher (Microbiology)', phone: '(555) 621-4820', email: 'liam.g@lactaflow.com', location: 'Bio-Assay Suite - Station 4', category: 'Heavy Cream 40%', status: 'Passed', date: '2026-10-19T09:15', phLevel: 6.64, somaticCount: 82000, antibioticResidue: 'Negative', pasteurTemp: 78.5, notes: 'Rich aromatic profile.' },
+      { id: 'QLT-2026-2003', primaryTabId: 'operations', subTabId: 'quality', name: 'Sofia Martinez, Food Safety', phone: '(555) 309-8472', email: 'sofia.m@lactaflow.com', location: 'Regional Testing Bay - North Wing', category: 'Homogenized A2 Whole Milk', status: 'Passed', date: '2026-10-18T15:00', phLevel: 6.72, somaticCount: 65000, antibioticResidue: 'Negative', pasteurTemp: 73.0, notes: 'Pure Beta-Casein A2 variant.' },
+      { id: 'QLT-2026-2004', primaryTabId: 'operations', subTabId: 'quality', name: 'David K. O’Connor', phone: '(555) 883-2941', email: 'david.o@lactaflow.com', location: 'Central Plant 1 - Cleanroom Lab 2B', category: 'Cultured Buttermilk', status: 'Conditional', date: '2026-10-18T17:30', phLevel: 6.42, somaticCount: 185000, antibioticResidue: 'Negative', pasteurTemp: 71.5, notes: 'Secondary check pending.' },
+      { id: 'QLT-2026-2005', primaryTabId: 'operations', subTabId: 'quality', name: 'Priya Patel, QA Chemist', phone: '(555) 472-9183', email: 'priya.patel@lactaflow.com', location: 'Bio-Assay Suite - Station 4', category: 'Standardized Skimmed Milk', status: 'Retest', date: '2026-10-17T14:10', phLevel: 6.55, somaticCount: 220000, antibioticResidue: 'Trace', pasteurTemp: 72.0, notes: 'Re-incubating duplicate sample.' },
+
+      // Sub-tab 2: Logistics
+      { id: 'LOG-2026-3001', primaryTabId: 'operations', subTabId: 'logistics', name: 'Marcus Vance (Fleet Master)', phone: '(555) 441-2093', email: 'logistics.ops@lactaflow.com', location: 'Midwest Cold Hub - Bay 14, Chicago IL', category: 'Whole Milk 1L Bottles', status: 'In Transit', date: '2026-10-19T05:00', tankerId: 'TK-CHILL-904', cargoTemp: 2.8, quantity: 12500, sealNumber: 'SEAL-LF-884920' },
+      { id: 'LOG-2026-3002', primaryTabId: 'operations', subTabId: 'logistics', name: 'Elena Rostova (Lead Driver)', phone: '(555) 831-9023', email: 'elena.rostova@lactaflow.com', location: 'Great Lakes Metro Logistics, Detroit MI', category: 'Organic Milk Cartons', status: 'Delivered', date: '2026-10-19T04:15', tankerId: 'REEFER-OR-210', cargoTemp: 3.1, quantity: 8400, sealNumber: 'SEAL-LF-772194' },
+      { id: 'LOG-2026-3003', primaryTabId: 'operations', subTabId: 'logistics', name: 'Jamal Washington (Dispatch)', phone: '(555) 298-6710', email: 'j.washington@lactaflow.com', location: 'St. Louis Refrigerated Distribution Depot, MO', category: 'Bulk Insulated Cream Tanker', status: 'In Transit', date: '2026-10-19T07:45', tankerId: 'TK-CREAM-550', cargoTemp: 3.4, quantity: 16000, sealNumber: 'SEAL-LF-902411' },
+      { id: 'LOG-2026-3004', primaryTabId: 'operations', subTabId: 'logistics', name: 'Carla Mendoza (Fleet Ops)', phone: '(555) 914-7265', email: 'carla.mendoza@lactaflow.com', location: 'Twin Cities Food Terminal, Minneapolis MN', category: 'Artisan Salted Butter', status: 'Scheduled', date: '2026-10-19T11:00', tankerId: 'VAN-COLD-102', cargoTemp: 1.5, quantity: 3200, sealNumber: 'SEAL-LF-441098' },
+      { id: 'LOG-2026-3005', primaryTabId: 'operations', subTabId: 'logistics', name: 'Brian Thorne (Highway)', phone: '(555) 601-3829', email: 'b.thorne@lactaflow.com', location: 'Ohio Valley Regional Depot, Columbus OH', category: 'Skimmed Milk Pails', status: 'Arrived', date: '2026-10-18T18:00', tankerId: 'TK-SKIM-801', cargoTemp: 3.8, quantity: 9500, sealNumber: 'SEAL-LF-663012' }
+    ];
+
+    let records = [];
+    const STORAGE_KEY = 'lactaflow_standalone_v1';
+    try {
+      const stored = localStorage.getItem(STORAGE_KEY);
+      records = stored ? JSON.parse(stored) : [...INITIAL_RECORDS];
+    } catch (e) {
+      records = [...INITIAL_RECORDS];
+    }
+
+    function save() {
+      try { localStorage.setItem(STORAGE_KEY, JSON.stringify(records)); } catch(e){}
+      updateBadgesAndStats();
+    }
+
+    let activePrimaryTab = 'intake';
+    let activeSubTab = 'quality';
+    let editingRecordId = null;
+    let pendingDeleteId = null;
+
+    let pageIntake = 1;
+    const pageSizeIntake = 5;
+    let sortIntakeField = 'date';
+    let sortIntakeDir = 'desc';
+
+    let pageSub = 1;
+    const pageSizeSub = 5;
+    let sortSubField = 'date';
+    let sortSubDir = 'desc';
+
+    // Update Header Badges & Metrics
+    function updateBadgesAndStats() {
+      const intakeList = records.filter(r => r.primaryTabId === 'intake');
+      const qualityList = records.filter(r => r.primaryTabId === 'operations' && r.subTabId === 'quality');
+      const logisticsList = records.filter(r => r.primaryTabId === 'operations' && r.subTabId === 'logistics');
+
+      document.getElementById('badge-intake-count').textContent = intakeList.length;
+      document.getElementById('badge-operations-count').textContent = qualityList.length + logisticsList.length;
+      document.getElementById('badge-sub-quality').textContent = qualityList.length;
+      document.getElementById('badge-sub-logistics').textContent = logisticsList.length;
+
+      document.getElementById('stat-batch-count').textContent = records.length + ' Batches';
+      const totalLiters = intakeList.reduce((sum, r) => sum + (Number(r.liters) || 0), 0);
+      document.getElementById('stat-intake-liters').textContent = totalLiters.toLocaleString() + ' L';
+    }
+
+    function switchPrimaryTab(tabId) {
+      activePrimaryTab = tabId;
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+
+      const btnIn = document.getElementById('tab-btn-intake');
+      const btnOp = document.getElementById('tab-btn-operations');
+      const panIn = document.getElementById('panel-intake');
+      const panOp = document.getElementById('panel-operations');
+
+      if (tabId === 'intake') {
+        btnIn.className = "relative flex items-center gap-2.5 py-3.5 px-4 text-xs sm:text-sm font-bold border-b-2 border-sky-600 text-sky-950 bg-white/90 shadow-2xs rounded-t-xl transition-all cursor-pointer";
+        btnOp.className = "relative flex items-center gap-2.5 py-3.5 px-4 text-xs sm:text-sm font-bold border-b-2 border-transparent text-slate-600 hover:text-slate-900 hover:bg-white/50 rounded-t-xl transition-all cursor-pointer";
+        panIn.classList.remove('hidden');
+        panOp.classList.add('hidden');
+        renderIntakeTable();
+      } else {
+        btnOp.className = "relative flex items-center gap-2.5 py-3.5 px-4 text-xs sm:text-sm font-bold border-b-2 border-sky-600 text-sky-950 bg-white/90 shadow-2xs rounded-t-xl transition-all cursor-pointer";
+        btnIn.className = "relative flex items-center gap-2.5 py-3.5 px-4 text-xs sm:text-sm font-bold border-b-2 border-transparent text-slate-600 hover:text-slate-900 hover:bg-white/50 rounded-t-xl transition-all cursor-pointer";
+        panOp.classList.remove('hidden');
+        panIn.classList.add('hidden');
+        renderSubTable();
+      }
+    }
+
+    function switchSubTab(subId) {
+      activeSubTab = subId;
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+
+      const btnQ = document.getElementById('subtab-btn-quality');
+      const btnL = document.getElementById('subtab-btn-logistics');
+
+      if (subId === 'quality') {
+        btnQ.className = "flex-1 min-w-[220px] flex items-center justify-between px-4 py-3 rounded-xl text-xs font-bold transition-all cursor-pointer bg-white text-slate-900 shadow-sm border border-sky-200/80";
+        btnL.className = "flex-1 min-w-[220px] flex items-center justify-between px-4 py-3 rounded-xl text-xs font-bold transition-all cursor-pointer text-slate-600 hover:text-slate-900 hover:bg-white/50 border border-transparent";
+        document.getElementById('table-title-sub').textContent = "Quality Testing Records";
+      } else {
+        btnL.className = "flex-1 min-w-[220px] flex items-center justify-between px-4 py-3 rounded-xl text-xs font-bold transition-all cursor-pointer bg-white text-slate-900 shadow-sm border border-sky-200/80";
+        btnQ.className = "flex-1 min-w-[220px] flex items-center justify-between px-4 py-3 rounded-xl text-xs font-bold transition-all cursor-pointer text-slate-600 hover:text-slate-900 hover:bg-white/50 border border-transparent";
+        document.getElementById('table-title-sub').textContent = "Cold-Chain Logistics Dispatches";
+      }
+      populateSubFilterDropdowns();
+      pageSub = 1;
+      renderSubTable();
+    }
+
+    // Status Badge Helper
+    function getStatusBadge(status) {
+      const s = (status || '').toLowerCase();
+      let badgeClass = 'badge-sky';
+      if (s.includes('accept') || s.includes('pass') || s.includes('approved') || s.includes('deliver')) badgeClass = 'badge-emerald';
+      else if (s.includes('quarantin') || s.includes('transit') || s.includes('test') || s.includes('sched')) badgeClass = 'badge-amber';
+      else if (s.includes('reject') || s.includes('alert') || s.includes('fail')) badgeClass = 'badge-rose';
+
+      return `<span class="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-semibold ${badgeClass}">● ${status}</span>`;
+    }
+
+    // --- Tab 1 Intake Table Rendering & Filtering ---
+    function populateIntakeFilterDropdowns() {
+      const intakeList = records.filter(r => r.primaryTabId === 'intake');
+      const cats = Array.from(new Set(intakeList.map(r => r.category))).filter(Boolean);
+      const stats = Array.from(new Set(intakeList.map(r => r.status))).filter(Boolean);
+
+      const catSelect = document.getElementById('filter-cat-intake');
+      catSelect.innerHTML = '<option value="ALL">All Categories</option>' + cats.map(c => `<option value="${c}">${c}</option>`).join('');
+
+      const statSelect = document.getElementById('filter-stat-intake');
+      statSelect.innerHTML = '<option value="ALL">All Statuses</option>' + stats.map(s => `<option value="${s}">${s}</option>`).join('');
+    }
+
+    function getFilteredIntakeRecords() {
+      const q = document.getElementById('search-intake').value.toLowerCase().trim();
+      const cat = document.getElementById('filter-cat-intake').value;
+      const stat = document.getElementById('filter-stat-intake').value;
+      const from = document.getElementById('filter-date-from-intake').value;
+      const to = document.getElementById('filter-date-to-intake').value;
+
+      return records.filter(r => {
+        if (r.primaryTabId !== 'intake') return false;
+        if (q) {
+          const match = [r.id, r.name, r.email, r.phone, r.location, r.category, r.status, r.notes].join(' ').toLowerCase();
+          if (!match.includes(q)) return false;
+        }
+        if (cat !== 'ALL' && r.category !== cat) return false;
+        if (stat !== 'ALL' && r.status !== stat) return false;
+        if (from && r.date.slice(0, 10) < from) return false;
+        if (to && r.date.slice(0, 10) > to) return false;
+        return true;
+      });
+    }
+
+    function renderIntakeTable() {
+      let filtered = getFilteredIntakeRecords();
+      document.getElementById('filter-count-intake').textContent = filtered.length;
+
+      // Sort
+      filtered.sort((a, b) => {
+        const valA = a[sortIntakeField];
+        const valB = b[sortIntakeField];
+        const mod = sortIntakeDir === 'asc' ? 1 : -1;
+        if (typeof valA === 'number' && typeof valB === 'number') return (valA - valB) * mod;
+        return String(valA || '').localeCompare(String(valB || '')) * mod;
+      });
+
+      // Pagination
+      const total = filtered.length;
+      const totalPages = Math.max(1, Math.ceil(total / pageSizeIntake));
+      if (pageIntake > totalPages) pageIntake = totalPages;
+      const start = total === 0 ? 0 : (pageIntake - 1) * pageSizeIntake + 1;
+      const end = Math.min(pageIntake * pageSizeIntake, total);
+      const pageItems = filtered.slice((pageIntake - 1) * pageSizeIntake, end);
+
+      document.getElementById('pag-start-intake').textContent = start;
+      document.getElementById('pag-end-intake').textContent = end;
+      document.getElementById('pag-total-intake').textContent = total;
+
+      const tbody = document.getElementById('tbody-intake');
+      if (pageItems.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="12" class="py-12 text-center text-slate-500">No matching intake records found.</td></tr>`;
+      } else {
+        tbody.innerHTML = pageItems.map(r => `
+          <tr class="hover:bg-sky-50/40 transition">
+            <td class="px-4 py-3 font-mono font-bold text-sky-900">${r.id}</td>
+            <td class="px-4 py-3 font-semibold text-slate-900">${r.name}</td>
+            <td class="px-4 py-3 text-slate-600">${r.phone}</td>
+            <td class="px-4 py-3 text-slate-600">${r.location}</td>
+            <td class="px-4 py-3 text-slate-700">${r.category}</td>
+            <td class="px-4 py-3 text-right font-mono font-bold">${Number(r.liters).toLocaleString()} L</td>
+            <td class="px-4 py-3 text-right font-mono text-amber-800">${r.fatPercentage}%</td>
+            <td class="px-4 py-3 text-right font-mono ${r.temperature > 4.5 ? 'text-rose-600 font-bold' : 'text-cyan-700'}">${r.temperature}°C</td>
+            <td class="px-4 py-3 text-slate-700">${r.siloId}</td>
+            <td class="px-4 py-3">${getStatusBadge(r.status)}</td>
+            <td class="px-4 py-3 font-mono text-slate-500">${r.date ? r.date.replace('T', ' ') : ''}</td>
+            <td class="px-4 py-3 text-right whitespace-nowrap">
+              <button onclick="editRecord('${r.id}')" title="Edit" class="p-1.5 text-slate-500 hover:text-sky-700 rounded transition cursor-pointer">✏️</button>
+              <button onclick="openDeleteModal('${r.id}')" title="Delete" class="p-1.5 text-slate-400 hover:text-rose-600 rounded transition cursor-pointer">🗑️</button>
+            </td>
+          </tr>
+        `).join('');
+      }
+
+      // Render pagination controls
+      const pagCtrl = document.getElementById('pag-controls-intake');
+      let html = `<button onclick="setPageIntake(${pageIntake - 1})" ${pageIntake <= 1 ? 'disabled class="opacity-30 p-1.5"' : 'class="p-1.5 hover:bg-slate-100 rounded"'}>◀</button>`;
+      for (let i = 1; i <= totalPages; i++) {
+        html += `<button onclick="setPageIntake(${i})" class="px-2.5 py-1 rounded text-xs font-semibold ${pageIntake === i ? 'bg-sky-600 text-white font-bold' : 'hover:bg-slate-100'}">${i}</button>`;
+      }
+      html += `<button onclick="setPageIntake(${pageIntake + 1})" ${pageIntake >= totalPages ? 'disabled class="opacity-30 p-1.5"' : 'class="p-1.5 hover:bg-slate-100 rounded"'}>▶</button>`;
+      pagCtrl.innerHTML = html;
+    }
+
+    function sortTableIntake(field) {
+      if (sortIntakeField === field) sortIntakeDir = sortIntakeDir === 'asc' ? 'desc' : 'asc';
+      else { sortIntakeField = field; sortIntakeDir = 'asc'; }
+      renderIntakeTable();
+    }
+
+    function setPageIntake(p) {
+      pageIntake = p;
+      renderIntakeTable();
+    }
+
+    function applyFiltersIntake() {
+      pageIntake = 1;
+      renderIntakeTable();
+    }
+
+    function clearFiltersIntake() {
+      document.getElementById('search-intake').value = '';
+      document.getElementById('filter-cat-intake').value = 'ALL';
+      document.getElementById('filter-stat-intake').value = 'ALL';
+      document.getElementById('filter-date-from-intake').value = '';
+      document.getElementById('filter-date-to-intake').value = '';
+      applyFiltersIntake();
+    }
+
+    // --- Tab 2 Sub-Tabs Table Rendering ---
+    function populateSubFilterDropdowns() {
+      const subList = records.filter(r => r.primaryTabId === 'operations' && r.subTabId === activeSubTab);
+      const cats = Array.from(new Set(subList.map(r => r.category))).filter(Boolean);
+      const stats = Array.from(new Set(subList.map(r => r.status))).filter(Boolean);
+
+      document.getElementById('filter-cat-sub').innerHTML = '<option value="ALL">All Categories</option>' + cats.map(c => `<option value="${c}">${c}</option>`).join('');
+      document.getElementById('filter-stat-sub').innerHTML = '<option value="ALL">All Statuses</option>' + stats.map(s => `<option value="${s}">${s}</option>`).join('');
+    }
+
+    function renderSubTable() {
+      const q = document.getElementById('search-sub').value.toLowerCase().trim();
+      const cat = document.getElementById('filter-cat-sub').value;
+      const stat = document.getElementById('filter-stat-sub').value;
+      const from = document.getElementById('filter-date-from-sub').value;
+      const to = document.getElementById('filter-date-to-sub').value;
+
+      let filtered = records.filter(r => {
+        if (r.primaryTabId !== 'operations' || r.subTabId !== activeSubTab) return false;
+        if (q) {
+          const match = Object.values(r).join(' ').toLowerCase();
+          if (!match.includes(q)) return false;
+        }
+        if (cat !== 'ALL' && r.category !== cat) return false;
+        if (stat !== 'ALL' && r.status !== stat) return false;
+        if (from && r.date.slice(0, 10) < from) return false;
+        if (to && r.date.slice(0, 10) > to) return false;
+        return true;
+      });
+
+      document.getElementById('filter-count-sub').textContent = filtered.length;
+
+      const thead = document.getElementById('thead-sub');
+      const tbody = document.getElementById('tbody-sub');
+
+      if (activeSubTab === 'quality') {
+        thead.innerHTML = `
+          <tr class="bg-slate-50/90 border-b border-slate-200 text-slate-700 text-xs font-bold uppercase">
+            <th class="px-4 py-3">QA ID</th>
+            <th class="px-4 py-3">Lead Chemist</th>
+            <th class="px-4 py-3">Lab Station</th>
+            <th class="px-4 py-3">Tested Product</th>
+            <th class="px-4 py-3 text-right">pH Level</th>
+            <th class="px-4 py-3 text-right">Somatic Count</th>
+            <th class="px-4 py-3">Antibiotic Assay</th>
+            <th class="px-4 py-3 text-right">HTST Temp</th>
+            <th class="px-4 py-3">Status</th>
+            <th class="px-4 py-3">Date</th>
+            <th class="px-4 py-3 text-right">Actions</th>
+          </tr>
+        `;
+        tbody.innerHTML = filtered.map(r => `
+          <tr class="hover:bg-sky-50/40 transition">
+            <td class="px-4 py-3 font-mono font-bold text-sky-900">${r.id}</td>
+            <td class="px-4 py-3 font-semibold text-slate-900">${r.name}</td>
+            <td class="px-4 py-3 text-slate-600">${r.location}</td>
+            <td class="px-4 py-3 text-slate-700">${r.category}</td>
+            <td class="px-4 py-3 text-right font-mono font-bold">${r.phLevel} pH</td>
+            <td class="px-4 py-3 text-right font-mono">${Number(r.somaticCount).toLocaleString()} CFU/ml</td>
+            <td class="px-4 py-3">${getStatusBadge(r.antibioticResidue)}</td>
+            <td class="px-4 py-3 text-right font-mono">${r.pasteurTemp}°C</td>
+            <td class="px-4 py-3">${getStatusBadge(r.status)}</td>
+            <td class="px-4 py-3 font-mono text-slate-500">${r.date ? r.date.replace('T', ' ') : ''}</td>
+            <td class="px-4 py-3 text-right">
+              <button onclick="openDeleteModal('${r.id}')" title="Delete" class="p-1.5 text-slate-400 hover:text-rose-600 rounded cursor-pointer">🗑️</button>
+            </td>
+          </tr>
+        `).join('');
+      } else {
+        thead.innerHTML = `
+          <tr class="bg-slate-50/90 border-b border-slate-200 text-slate-700 text-xs font-bold uppercase">
+            <th class="px-4 py-3">Dispatch ID</th>
+            <th class="px-4 py-3">Driver Lead</th>
+            <th class="px-4 py-3">Fleet Unit</th>
+            <th class="px-4 py-3">Destination Hub</th>
+            <th class="px-4 py-3">Product Line</th>
+            <th class="px-4 py-3 text-right">Quantity</th>
+            <th class="px-4 py-3 text-right">Cargo Temp</th>
+            <th class="px-4 py-3">Seal Barcode</th>
+            <th class="px-4 py-3">Status</th>
+            <th class="px-4 py-3">Date</th>
+            <th class="px-4 py-3 text-right">Actions</th>
+          </tr>
+        `;
+        tbody.innerHTML = filtered.map(r => `
+          <tr class="hover:bg-sky-50/40 transition">
+            <td class="px-4 py-3 font-mono font-bold text-sky-900">${r.id}</td>
+            <td class="px-4 py-3 font-semibold text-slate-900">${r.name}</td>
+            <td class="px-4 py-3 font-mono text-slate-700">${r.tankerId}</td>
+            <td class="px-4 py-3 text-slate-600">${r.location}</td>
+            <td class="px-4 py-3 text-slate-700">${r.category}</td>
+            <td class="px-4 py-3 text-right font-mono font-bold">${Number(r.quantity).toLocaleString()}</td>
+            <td class="px-4 py-3 text-right font-mono ${r.cargoTemp > 4.5 ? 'text-rose-600' : 'text-sky-700'}">${r.cargoTemp}°C</td>
+            <td class="px-4 py-3 font-mono text-xs text-slate-500">${r.sealNumber}</td>
+            <td class="px-4 py-3">${getStatusBadge(r.status)}</td>
+            <td class="px-4 py-3 font-mono text-slate-500">${r.date ? r.date.replace('T', ' ') : ''}</td>
+            <td class="px-4 py-3 text-right">
+              <button onclick="openDeleteModal('${r.id}')" title="Delete" class="p-1.5 text-slate-400 hover:text-rose-600 rounded cursor-pointer">🗑️</button>
+            </td>
+          </tr>
+        `).join('');
+      }
+
+      document.getElementById('pag-start-sub').textContent = filtered.length === 0 ? 0 : 1;
+      document.getElementById('pag-end-sub').textContent = filtered.length;
+      document.getElementById('pag-total-sub').textContent = filtered.length;
+    }
+
+    function applyFiltersSub() { renderSubTable(); }
+    function clearFiltersSub() {
+      document.getElementById('search-sub').value = '';
+      document.getElementById('filter-cat-sub').value = 'ALL';
+      document.getElementById('filter-stat-sub').value = 'ALL';
+      document.getElementById('filter-date-from-sub').value = '';
+      document.getElementById('filter-date-to-sub').value = '';
+      renderSubTable();
+    }
+
+    // --- Intake Form Submission & Edit Handling ---
+    function handleIntakeSubmit(e) {
+      e.preventDefault();
+
+      let hasError = false;
+      const getVal = id => document.getElementById(id).value.trim();
+      const showErr = (id, cond) => {
+        const el = document.getElementById(id);
+        if (cond) { el.classList.remove('hidden'); hasError = true; }
+        else { el.classList.add('hidden'); }
+      };
+
+      const name = getVal('in-name');
+      const phone = getVal('in-phone');
+      const email = getVal('in-email');
+      const location = getVal('in-location');
+      const category = getVal('in-category');
+      const status = getVal('in-status');
+      const date = getVal('in-date');
+      const liters = Number(getVal('in-liters'));
+      const fat = Number(getVal('in-fat'));
+      const snf = Number(getVal('in-snf'));
+      const temp = Number(getVal('in-temp'));
+      const silo = getVal('in-silo');
+      const notes = getVal('in-notes');
+
+      showErr('err-in-name', !name);
+      showErr('err-in-phone', phone.replace(/\D/g, '').length < 7);
+      showErr('err-in-email', !email || !email.includes('@'));
+      showErr('err-in-location', !location);
+      showErr('err-in-category', !category);
+      showErr('err-in-status', !status);
+      showErr('err-in-date', !date);
+      showErr('err-in-liters', isNaN(liters) || liters < 100 || liters > 100000);
+      showErr('err-in-fat', isNaN(fat) || fat < 2 || fat > 12);
+      showErr('err-in-snf', isNaN(snf) || snf < 6 || snf > 14);
+      showErr('err-in-temp', isNaN(temp) || temp < -2 || temp > 20);
+      showErr('err-in-silo', !silo);
+
+      if (hasError) return;
+
+      if (editingRecordId) {
+        // Update
+        const idx = records.findIndex(r => r.id === editingRecordId);
+        if (idx !== -1) {
+          records[idx] = {
+            ...records[idx],
+            name, phone, email, location, category, status, date,
+            liters, fatPercentage: fat, snfPercentage: snf, temperature: temp,
+            siloId: silo, notes
+          };
+          showToast(`Record ${editingRecordId} updated successfully.`);
+        }
+        cancelEditMode();
+      } else {
+        // Create
+        const newId = 'RMI-2026-' + Math.floor(1000 + Math.random() * 9000);
+        const newRec = {
+          id: newId, primaryTabId: 'intake', name, phone, email, location,
+          category, status, date, liters, fatPercentage: fat, snfPercentage: snf,
+          temperature: temp, siloId: silo, notes
+        };
+        records.unshift(newRec);
+        showToast(`New intake batch ${newId} recorded.`);
+        resetIntakeForm();
+      }
+
+      save();
+      populateIntakeFilterDropdowns();
+      renderIntakeTable();
+    }
+
+    function editRecord(id) {
+      const rec = records.find(r => r.id === id);
+      if (!rec) return;
+
+      editingRecordId = id;
+      document.getElementById('edit-banner-intake').classList.remove('hidden');
+      document.getElementById('edit-record-id-intake').textContent = id;
+      document.getElementById('status-badge-intake').textContent = 'EDIT MODE';
+      document.getElementById('status-badge-intake').className = 'text-[11px] font-semibold tracking-wide uppercase px-2 py-0.5 bg-amber-100 text-amber-800 border border-amber-200 rounded';
+      document.getElementById('btn-submit-intake').textContent = '✓ Update Record';
+
+      document.getElementById('in-id').value = rec.id;
+      document.getElementById('in-name').value = rec.name || '';
+      document.getElementById('in-phone').value = rec.phone || '';
+      document.getElementById('in-email').value = rec.email || '';
+      document.getElementById('in-location').value = rec.location || '';
+      document.getElementById('in-category').value = rec.category || '';
+      document.getElementById('in-status').value = rec.status || '';
+      document.getElementById('in-date').value = rec.date || '';
+      document.getElementById('in-liters').value = rec.liters || '';
+      document.getElementById('in-fat').value = rec.fatPercentage || '';
+      document.getElementById('in-snf').value = rec.snfPercentage || '';
+      document.getElementById('in-temp').value = rec.temperature || '';
+      document.getElementById('in-silo').value = rec.siloId || '';
+      document.getElementById('in-notes').value = rec.notes || '';
+
+      window.scrollTo({ top: 120, behavior: 'smooth' });
+    }
+
+    function cancelEditMode() {
+      editingRecordId = null;
+      document.getElementById('edit-banner-intake').classList.add('hidden');
+      document.getElementById('status-badge-intake').textContent = 'NEW ENTRY';
+      document.getElementById('status-badge-intake').className = 'text-[11px] font-semibold tracking-wide uppercase px-2 py-0.5 bg-emerald-100 text-emerald-800 border border-emerald-200 rounded';
+      document.getElementById('btn-submit-intake').textContent = '✨ Record Milk Intake Batch';
+      resetIntakeForm();
+    }
+
+    function resetIntakeForm() {
+      document.getElementById('form-intake').reset();
+      document.getElementById('in-id').value = '';
+      const now = new Date();
+      now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+      document.getElementById('in-date').value = now.toISOString().slice(0, 16);
+      ['name','phone','email','location','category','status','date','liters','fat','snf','temp','silo'].forEach(f => {
+        const el = document.getElementById('err-in-' + f);
+        if (el) el.classList.add('hidden');
+      });
+    }
+
+    // --- Delete Modal ---
+    function openDeleteModal(id) {
+      pendingDeleteId = id;
+      const rec = records.find(r => r.id === id);
+      document.getElementById('delete-modal-msg').textContent = `Are you sure you want to permanently delete record ${id} (${rec ? rec.name : ''})? This action cannot be undone.`;
+      document.getElementById('modal-delete').classList.remove('hidden');
+    }
+
+    function closeDeleteModal() {
+      pendingDeleteId = null;
+      document.getElementById('modal-delete').classList.add('hidden');
+    }
+
+    function confirmDelete() {
+      if (!pendingDeleteId) return;
+      records = records.filter(r => r.id !== pendingDeleteId);
+      showToast(`Record ${pendingDeleteId} removed.`);
+      closeDeleteModal();
+      save();
+      renderIntakeTable();
+      renderSubTable();
+    }
+
+    // --- Toast Alerts ---
+    function showToast(msg) {
+      const container = document.getElementById('toast-container');
+      const div = document.createElement('div');
+      div.className = "p-3.5 rounded-xl border border-emerald-200 bg-emerald-50 text-emerald-950 shadow-lg flex items-center justify-between gap-3 text-xs font-semibold animate-slideIn";
+      div.innerHTML = `<span>✓ ${msg}</span><button onclick="this.parentElement.remove()" class="text-emerald-700 hover:text-emerald-900 cursor-pointer">✕</button>`;
+      container.appendChild(div);
+      setTimeout(() => div.remove(), 4000);
+    }
+
+    // --- CSV Export ---
+    document.getElementById('btn-export-csv').addEventListener('click', () => {
+      const activeList = activePrimaryTab === 'intake'
+        ? records.filter(r => r.primaryTabId === 'intake')
+        : records.filter(r => r.primaryTabId === 'operations' && r.subTabId === activeSubTab);
+
+      if (activeList.length === 0) return alert('No records to export');
+      const keys = Object.keys(activeList[0]);
+      let csv = keys.join(',') + '\n';
+      activeList.forEach(r => {
+        csv += keys.map(k => `"${(r[k] ?? '').toString().replace(/"/g, '""')}"`).join(',') + '\n';
+      });
+      const blob = new Blob([csv], { type: 'text/csv' });
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = `LactaFlow_${activePrimaryTab}_export.csv`;
+      a.click();
+      showToast('Exported CSV file.');
+    });
+
+    // --- Reset Demo Data ---
+    document.getElementById('btn-reset-data').addEventListener('click', () => {
+      if (confirm('Restore factory demo seed records? Any custom additions will be reset.')) {
+        records = [...INITIAL_RECORDS];
+        save();
+        renderIntakeTable();
+        renderSubTable();
+        showToast('Restored factory demo dataset.');
+      }
+    });
+
+    // Initialize on load
+    window.addEventListener('DOMContentLoaded', () => {
+      const now = new Date();
+      now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+      document.getElementById('in-date').value = now.toISOString().slice(0, 16);
+      populateIntakeFilterDropdowns();
+      populateSubFilterDropdowns();
+      updateBadgesAndStats();
+      renderIntakeTable();
+    });
+  </script>
+</body>
+</html>

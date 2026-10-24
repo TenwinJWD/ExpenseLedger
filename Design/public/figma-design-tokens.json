@@ -1,0 +1,70 @@
+{
+  "name": "LactaFlow Enterprise Dairy OS Design System",
+  "version": "2.4.0",
+  "tokens": {
+    "color": {
+      "brand": {
+        "primary": { "value": "#0284c7", "type": "color", "description": "LactaFlow Sky Blue" },
+        "primaryLight": { "value": "#e0f2fe", "type": "color" },
+        "primaryDark": { "value": "#0369a1", "type": "color" },
+        "creamAccent": { "value": "#fef3c7", "type": "color", "description": "Dairy Rich Butter/Cream" },
+        "milkWhite": { "value": "#ffffff", "type": "color" },
+        "milkBackground": { "value": "#f6faff", "type": "color" }
+      },
+      "status": {
+        "successBg": { "value": "#ecfdf5", "type": "color" },
+        "successText": { "value": "#065f46", "type": "color" },
+        "successBorder": { "value": "#a7f3d0", "type": "color" },
+        "warningBg": { "value": "#fffbeb", "type": "color" },
+        "warningText": { "value": "#92400e", "type": "color" },
+        "warningBorder": { "value": "#fde68a", "type": "color" },
+        "dangerBg": { "value": "#fff1f2", "type": "color" },
+        "dangerText": { "value": "#9f1239", "type": "color" },
+        "dangerBorder": { "value": "#fecdd3", "type": "color" }
+      },
+      "neutral": {
+        "slate900": { "value": "#0f172a", "type": "color" },
+        "slate800": { "value": "#1e293b", "type": "color" },
+        "slate600": { "value": "#475569", "type": "color" },
+        "slate400": { "value": "#94a3b8", "type": "color" },
+        "slate200": { "value": "#e2e8f0", "type": "color" },
+        "slate100": { "value": "#f1f5f9", "type": "color" }
+      }
+    },
+    "typography": {
+      "fontFamily": {
+        "sans": { "value": "Plus Jakarta Sans, system-ui, sans-serif", "type": "fontFamilies" },
+        "mono": { "value": "JetBrains Mono, ui-monospace, monospace", "type": "fontFamilies" }
+      },
+      "fontSize": {
+        "xs": { "value": "12px", "type": "fontSizes" },
+        "sm": { "value": "14px", "type": "fontSizes" },
+        "base": { "value": "16px", "type": "fontSizes" },
+        "lg": { "value": "18px", "type": "fontSizes" },
+        "xl": { "value": "20px", "type": "fontSizes" }
+      }
+    },
+    "spacing": {
+      "gutter": { "value": "16px", "type": "spacing" },
+      "cardPadding": { "value": "24px", "type": "spacing" },
+      "containerMax": { "value": "1280px", "type": "dimension" }
+    },
+    "borderRadius": {
+      "input": { "value": "8px", "type": "borderRadius" },
+      "tab": { "value": "12px", "type": "borderRadius" },
+      "card": { "value": "16px", "type": "borderRadius" },
+      "pill": { "value": "9999px", "type": "borderRadius" }
+    },
+    "elevation": {
+      "frostedGlass": {
+        "value": {
+          "blur": "16px",
+          "background": "rgba(255, 255, 255, 0.84)",
+          "border": "1px solid rgba(255, 255, 255, 0.9)",
+          "boxShadow": "0 10px 30px -5px rgba(2, 132, 199, 0.06)"
+        },
+        "type": "boxShadow"
+      }
+    }
+  }
+}

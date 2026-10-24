@@ -1,0 +1,6 @@
+{
+  "name": "LactaFlow - Dairy Production & Operations Management",
+  "description": "Enterprise dairy production management platform featuring multi-tab intake logging, quality assurance testing, cold-chain logistics, dynamic forms, and comprehensive filtered data tables.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
