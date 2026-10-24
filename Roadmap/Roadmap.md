@@ -193,5 +193,4 @@ A task or phase is done only when:
 The design is approved, so the build can start. Start Phase 0, task T0.1 in Tasks.md.
 
 Open items that do not block Phases 0 to 3:
-- Choose the bundled font family (task T1.4a). The mockup currently uses Segoe UI.
 - Get the customer's answers to PRD.md Section 10 before Phase 10.

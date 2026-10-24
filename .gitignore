@@ -1,0 +1,21 @@
+# Virtual environments
+.venv/
+Build/*/.venv/
+
+# Build outputs
+build/
+dist/
+installer/output/
+Build/*/build/
+Build/*/dist/
+
+# Python cache
+__pycache__/
+*.pyc
+.pytest_cache/
+
+# User data (never commit login, sub-heads, or ledger files)
+account.json
+subheads.json
+app.log
+*.xlsx

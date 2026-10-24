@@ -35,7 +35,7 @@ Developed by **Tenwin James**.
 | Added sub-heads (list copy) | `%APPDATA%\ExpenseLedger\Defaults\default.js` |
 | Log | `%APPDATA%\ExpenseLedger\app.log` |
 
-Uninstalling removes the program only. Your entries, login, and sub-heads are kept.
+Uninstalling removes the program and your login. Your entries and sub-heads are kept. After a reinstall, the app asks you to create a new user and password.
 
 ---
 
@@ -66,8 +66,10 @@ The packaged program is built from this environment, so the build includes the l
 ## Packaging and uninstall
 
 - `ExpenseLedger.exe` is built with PyInstaller.
-- `ExpenseLedger-1.0.0.msi` is the installer, built with WiX Toolset v4 (to be confirmed in task T9.3).
+- `ExpenseLedger-Setup-1.0.0.exe` is a single setup program. It shows the license, then installs for the current user (no administrator rights) with a desktop shortcut and a Start Menu entry. It installs the `ExpenseLedger-1.0.0-CurrentUser.msi` inside it.
+- `ExpenseLedger-1.0.0.msi` is the installer, built with WiX Toolset v4. The install dialog asks **Just me** (the default: installs for the current user, no administrator rights) or **Anyone who uses this computer** (installs for all users, needs administrator rights). A desktop shortcut and a Start Menu entry are added for the chosen user.
 - To uninstall, use **Settings > Apps > Installed apps > Expense Ledger**, or run `installer\uninstall.bat`. Both keep your data.
+- **Windows SmartScreen warning:** the program is not digitally signed, so Windows may show "Windows protected your PC" the first time you run the installer or the program. To continue, click **More info**, then **Run anyway**. Only do this for the installer you received from the developer.
 
 ---
 

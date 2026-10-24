@@ -53,7 +53,7 @@ The app uses a dark theme only in v1. The palette has layered blacks, soft white
 
 ### 1.2 Typography
 
-- Font: a font bundled with the app (family to be chosen; proposed Inter, SIL Open Font License). The font files ship in the program folder and are loaded only for this program (PRD NFR-8). The mockup uses Segoe UI until the font is chosen. Segoe UI is also the fallback if a bundled file is missing.
+- Font: Segoe UI, the Windows system font (PRD NFR-8). Nothing is bundled or installed. The mockup uses the same font.
 - Weights (the mockup's levels, shown in the font's heaviest available weight):
   - Page titles, popup titles, the sidebar app name, card titles: Black (900).
   - Field labels, table headers, card labels, summary card values, totals: Black (900).
@@ -78,6 +78,19 @@ The app uses a dark theme only in v1. The palette has layered blacks, soft white
 ### 1.4 Disabled State
 
 A disabled field or button uses `DISABLED_BG` with `DISABLED_TEXT` and ignores clicks (Rule 24). The label "Select a Sub-Head to enable entry." under the Sub-Head dropdown explains why the fields are disabled.
+
+---
+
+### 1.5 Windows Build Notes (how the screens are built)
+
+These rules keep the Windows app close to the mockup. They were set after the first build was compared with the mockup on 25-Oct-2026.
+
+- **Cards:** login, create-account, and popup cards keep their size (420 px wide). Layout containers use plain frames (no default height), so content does not stretch.
+- **Dropdowns:** every dropdown is the styled dropdown box (`SelectBox`). It opens a list with hover highlights and a selected row in `PRIMARY_LIGHT`. Lists with more than 8 items show a search box at the top. The system menu is not used.
+- **Icons:** pencil, delete, tick, and calendar use the Windows icon font (Segoe MDL2 Assets). Emoji are not used, because they show as empty boxes in Segoe UI. The Change Password key is drawn as a white line icon.
+- **Sidebar:** the app name and version, then Main Entry and Expense Report together, directly under the header. Change Password, Logout, and the developer footer sit at the bottom.
+- **Font weights:** Tkinter has only normal and bold. The mockup's Black and ExtraBold weights therefore show as bold in the app.
+- **Gradients:** Tkinter cannot draw CSS gradients. The app uses solid colours from `theme.py`, with the nearest mid-tone for each gradient.
 
 ---
 
@@ -106,7 +119,7 @@ After login, every page uses the same frame.
 - **Sidebar**: width 220 px, full window height, fixed while the content scrolls. It never scrolls itself; its contents fit the window height.
   - Background: a vertical gradient from `SIDE_TOP` to `SIDE_BOTTOM`, with a 1 px `BORDER_SOFT` right edge, an inner highlight, and a soft shadow on the right side so the sidebar looks raised above the content.
   - App name at the top: "Expense Ledger" in Black weight, with "Version 1.0.0" below in muted text. A `BORDER_SOFT` line separates the header from the menu.
-  - Menu items, in this order: Main Entry (✎), Expense Report (▤), then **Change Password** (a white line-drawn key icon, see Section 2.1), then Logout (⏻). The icons for Main Entry, Expense Report, and Logout are text symbols, and the key icon is an SVG so it can take the sidebar text colour (PRD FR-6, FR-37, FR-5).
+  - Menu items, in this order: Main Entry (✎), Expense Report (▤), then **Change Password** (text only, see Section 2.1), then Logout (⏻). The icons for Main Entry, Expense Report, and Logout are text symbols, and the key icon is an SVG so it can take the sidebar text colour (PRD FR-6, FR-37, FR-5).
   - Hover: a light tint (white at 14%). Active item: a stronger tint (white at 22%) and a 4 px `BTN_TOP` bar on its left edge.
   - Footer at the bottom of the sidebar: "Developed by Tenwin James" in small type (PRD FR-34).
 - **Content area**: background is the page gradient, padding 24 px.
@@ -264,7 +277,7 @@ The default page (PRD FR-7). Layout follows the specification's "Main Entry Form
   - The field is empty until a date is entered; it is not filled with today's date.
 - **Name**: up to 100 characters.
 - **Particulars**: up to 200 characters.
-- **Debit** and **Credit**: default 0.00. Accept digits and one decimal point, two decimals at most, 0.00 or more. Errors show under the field (Rule 25).
+- **Debit** and **Credit**: start empty and show a grey 0.00 placeholder. A blank amount counts as 0.00. Accept digits and one decimal point, two decimals at most, 0.00 or more. Errors show under the field (Rule 25).
 - If both Debit and Credit are 0.00, Submit stays disabled and the hint "Enter a Debit or Credit amount greater than 0.00." shows under the two amount fields.
 - Labels with `*` are mandatory.
 
@@ -457,7 +470,7 @@ Layout follows the specification's "Expense Report Table & Filter Bar" (Section 
 ## 8. Screen Checklist (used in Phase 8)
 
 - [ ] Theme matches Section 1: dark layered blacks, soft white text, blue primary buttons, red debit, green credit.
-- [ ] Sidebar: fixed height, no scrolling, items in order Main Entry, Expense Report, Change Password (with the white key icon), Logout, and the developer footer.
+- [ ] Sidebar: fixed height, no scrolling, items in order Main Entry, Expense Report, Change Password (text only), Logout, and the developer footer.
 - [ ] Change Password popup matches Section 2.1; the success toast appears after saving.
 - [ ] Login and create account match sections 3 and 4.
 - [ ] Main Entry opens with Daily Collection selected and Sub-Head at "-Select-".
@@ -473,3 +486,8 @@ Layout follows the specification's "Expense Report Table & Filter Bar" (Section 
 - [ ] No screen shows a folder, AppData path, or file name (other than the date-based Excel name shown in the warning, which is shown as a date only).
 - [ ] All dates are DD-Mon-YYYY.
 - [ ] All screens work with keyboard only.
+
+### 1.6 App Icon
+
+- The app icon is the file `Design/IconKitchen-Output/web/icon-512.png` (a blue rounded square with a white box). It is the program's icon in the title bar and taskbar, on the EXE file, and on the installed program's Start Menu shortcut and Add/Remove Programs entry.
+- The Change Password button has no icon; it is text only.
