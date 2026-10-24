@@ -3,1118 +3,1456 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>LactaFlow - Dairy Production & Operations Management</title>
-  <meta name="description" content="Enterprise dairy production management platform featuring multi-tab intake logging, quality assurance testing, cold-chain logistics, dynamic forms, and comprehensive filtered data tables.">
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
-  <script src="https://cdn.tailwindcss.com"></script>
+  <title>Expense Ledger - Design Mockup (v1.1)</title>
+  <meta name="description" content="Clickable design mockup for the Expense Ledger Windows app: login, Main Entry, sub-head popups, and Expense Report with filters and summary cards. Matches Roadmap/Design.md and Defaults/default.js.">
   <style>
+    /* Palette v1.7 (mockup only): modern dark mode, layered blacks, soft white text, blue accents */
+    :root {
+      color-scheme: dark;
+      --page-top: #141419;        /* lifted top of page, for depth */
+      --page-bottom: #0B0B0E;     /* deeper bottom of page */
+      --bg-page: #0C0C0F;
+      --bg-card: #151519;         /* card: one layer above the page */
+      --bg-input: #1C1C22;
+      --border-soft: #26262E;
+      --input-border: #34343E;
+      --side-top: #1A1A21;        /* sidebar, lighter top for depth */
+      --side-bottom: #0A0A0D;     /* sidebar, darker bottom */
+      --sidebar-text: #E4E4E7;    /* soft white text on the sidebar */
+      --btn-top: #4F8CFF;         /* blue, top of primary button gradient */
+      --btn-bottom: #2563EB;      /* blue, bottom of primary button gradient */
+      --primary: #2563EB;
+      --primary-hover: #1D4ED8;
+      --primary-light: #18203A;   /* blue-tinted dark for hover and highlights */
+      --text: #F4F4F5;            /* soft white text */
+      --muted: #8B8B98;           /* grey for hints */
+      --surface-tint: #1C1C22;
+      --row-border: #22222A;
+      --disabled-bg: #17171B;
+      --disabled-text: #4A4A55;
+      --debit: #FB7185;           /* soft red: debit amounts */
+      --credit: #34D399;          /* soft green: credit amounts */
+      --error-bg: #2A1218;
+      --error: #FB7185;
+      --success-bg: #0E2620;
+      --warning-bg: #2A2310;
+      --warning: #FBBF24;
+    }
+    * { box-sizing: border-box; }
+    [hidden] { display: none !important; }
     body {
-      font-family: 'Plus Jakarta Sans', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      margin: 0;
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      font-size: 13px;
+      font-weight: 600;
+      min-height: 100vh;
+      background:
+        radial-gradient(900px 500px at 85% -10%, rgba(79, 140, 255, 0.10), transparent 60%),
+        radial-gradient(700px 420px at -10% 110%, rgba(79, 140, 255, 0.06), transparent 60%),
+        linear-gradient(180deg, var(--page-top) 0%, var(--page-bottom) 100%) fixed;
+      color: var(--text);
     }
-    code, kbd, samp, pre, .font-mono {
-      font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    button, input, select { font: inherit; }
+    .sr-only { position: absolute; width: 1px; height: 1px; opacity: 0; pointer-events: none; }
+
+    /* ---------- Login and create account ---------- */
+    .auth { min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 16px; }
+    .auth-card { width: 420px; max-width: 100%; }
+    .auth-card h1 { font-size: 22px; font-weight: 900; margin: 0 0 4px; text-align: center; }
+    .auth-card .sub { text-align: center; color: var(--muted); margin: 0 0 20px; }
+    .auth-note { color: var(--muted); font-size: 11px; margin-top: 16px; text-align: center; }
+
+    /* ---------- Layout ---------- */
+    .app { display: grid; grid-template-columns: 220px 1fr; min-height: 100vh; }
+    .sidebar {
+      position: sticky;
+      top: 0;
+      height: 100vh;
+      overflow: hidden;           /* no scrolling in the sidebar */
+      z-index: 2;
+      background: linear-gradient(180deg, var(--side-top) 0%, var(--side-bottom) 100%);
+      color: var(--sidebar-text);
+      border-right: 1px solid var(--border-soft);
+      box-shadow: inset -1px 0 0 rgba(255, 255, 255, 0.04), 12px 0 32px -12px rgba(0, 0, 0, 0.85);
+      padding: 20px 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
     }
-    .dairy-milk-bg {
-      background-color: #f6faff;
-      background-image: 
-        radial-gradient(at 10% 12%, rgba(224, 242, 254, 0.75) 0px, transparent 50%),
-        radial-gradient(at 90% 10%, rgba(254, 249, 215, 0.55) 0px, transparent 45%),
-        radial-gradient(at 50% 45%, rgba(255, 255, 255, 0.95) 0px, transparent 65%),
-        radial-gradient(at 85% 85%, rgba(219, 234, 254, 0.65) 0px, transparent 50%),
-        radial-gradient(at 15% 85%, rgba(254, 243, 199, 0.45) 0px, transparent 50%);
-      background-attachment: fixed;
+    .brand { padding: 0 8px 14px; border-bottom: 1px solid var(--border-soft); margin-bottom: 8px; }
+    .brand strong { font-size: 16px; font-weight: 900; display: block; }
+    .brand span { color: var(--muted); font-size: 11px; }
+    .nav-item {
+      display: flex; align-items: center; gap: 10px;
+      padding: 10px 12px; border: 0; background: none; border-radius: 10px;
+      text-align: left; cursor: pointer; color: var(--text); position: relative; font-weight: 800;
     }
-    .frosted-glass-card {
-      background: rgba(255, 255, 255, 0.84);
-      backdrop-filter: blur(16px);
-      -webkit-backdrop-filter: blur(16px);
-      border: 1px solid rgba(255, 255, 255, 0.9);
-      box-shadow: 0 10px 30px -5px rgba(2, 132, 199, 0.06), 0 4px 12px -2px rgba(15, 23, 42, 0.03);
+    .nav-item:hover { background: var(--primary-light); }
+    .nav-item.active { background: var(--primary-light); color: var(--primary-hover); font-weight: 900; }
+    .nav-item.active::before {
+      content: ""; position: absolute; left: 0; top: 8px; bottom: 8px; width: 4px;
+      background: var(--primary); border-radius: 0 4px 4px 0;
     }
-    .frosted-glass-header {
-      background: rgba(255, 255, 255, 0.88);
-      backdrop-filter: blur(20px);
-      -webkit-backdrop-filter: blur(20px);
-      border-bottom: 1px solid rgba(224, 242, 254, 0.85);
-      box-shadow: 0 4px 20px -2px rgba(2, 132, 199, 0.05);
+    .sidebar .change-pw { margin-top: auto; }
+    .nav-icon { flex: none; color: inherit; }
+    .sidebar .logout { margin-top: 0; }
+    .sidebar .author { margin: 8px 0 0 12px; font-size: 11px; color: var(--sidebar-text); opacity: 0.85; }
+    .sidebar .brand { border-bottom-color: rgba(255, 255, 255, 0.25); }
+    .sidebar .brand span { color: var(--sidebar-text); opacity: 0.85; }
+    .sidebar .nav-item { color: var(--sidebar-text); }
+    .sidebar .nav-item:hover { background: rgba(255, 255, 255, 0.14); }
+    .sidebar .nav-item.active { background: rgba(255, 255, 255, 0.22); color: var(--sidebar-text); }
+    .sidebar .nav-item.active::before { background: var(--btn-top); }
+    .content { padding: 24px; min-width: 0; }
+    .page-title { font-size: 22px; font-weight: 900; letter-spacing: -0.02em; margin: 0; }
+    .page-desc { color: var(--muted); margin: 2px 0 18px; }
+
+    /* ---------- Cards, labels, inputs ---------- */
+    .card {
+      background: linear-gradient(180deg, #1B1B22 0%, #131317 100%);
+      border: 1px solid var(--border-soft);
+      border-radius: 16px;
+      padding: 20px;
+      margin-bottom: 16px;
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06), 0 18px 40px -16px rgba(0, 0, 0, 0.9);
     }
-    .frosted-glass-tab {
-      background: rgba(255, 255, 255, 0.78);
-      backdrop-filter: blur(16px);
-      -webkit-backdrop-filter: blur(16px);
-      border-bottom: 1px solid rgba(224, 242, 254, 0.85);
+    .label {
+      font-size: 11px; font-weight: 900; letter-spacing: 0.04em;
+      text-transform: uppercase; color: var(--text); margin: 0 0 6px;
     }
-    @keyframes milkFlow {
-      0% { transform: translateY(0px) scale(1); }
-      50% { transform: translateY(-8px) scale(1.02); }
-      100% { transform: translateY(0px) scale(1); }
+    .label .req { color: var(--error); }
+    .field { margin-bottom: 14px; min-width: 0; }
+    .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px 18px; }
+    .span-2 { grid-column: span 2; }
+    .row { display: flex; gap: 8px; align-items: center; }
+    .grow { flex: 1; min-width: 0; }
+    input[type="text"], input[type="password"], select {
+      width: 100%;
+      height: 36px;
+      padding: 0 10px;
+      border: 1px solid var(--input-border);
+      border-radius: 8px;
+      background: var(--bg-input);
+      color: var(--text);
     }
-    .animate-milk-flow {
-      animation: milkFlow 18s ease-in-out infinite;
+    input:focus, select:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px rgba(79, 140, 255, 0.25); }
+    input:disabled, select:disabled {
+      background: var(--disabled-bg); color: var(--disabled-text); cursor: not-allowed; border-color: var(--border-soft);
     }
-    .badge-emerald {
-      background-color: #ecfdf5;
-      color: #065f46;
-      border: 1px solid #a7f3d0;
+    .amount { text-align: right; font-family: Consolas, 'Courier New', monospace; }
+    .hint { color: var(--muted); font-size: 11px; margin: 6px 0 0; }
+    .err { color: var(--error); font-size: 11px; margin: 4px 0 0; }
+    .err:empty { display: none; }
+    .muted { color: var(--muted); }
+
+    /* ---------- Buttons ---------- */
+    .btn {
+      height: 36px; padding: 0 16px; border-radius: 10px;
+      border: 1px solid var(--input-border); background: var(--bg-card); color: var(--text);
+      cursor: pointer; font-weight: 900;
     }
-    .badge-amber {
-      background-color: #fffbeb;
-      color: #92400e;
-      border: 1px solid #fde68a;
+    .btn:hover { background: var(--surface-tint); }
+    .btn.primary { background: linear-gradient(180deg, var(--btn-top) 0%, var(--btn-bottom) 100%); border-color: var(--btn-bottom); color: #fff; text-transform: uppercase; letter-spacing: 0.03em; box-shadow: 0 8px 20px -8px rgba(37, 99, 235, 0.7); }
+    .btn.primary:hover { background: var(--primary-hover); border-color: var(--primary-hover); }
+    .btn.icon { width: 36px; padding: 0; font-size: 16px; }
+    .btn.wide { width: 100%; }
+    .btn.danger { background: var(--primary); border-color: var(--primary); color: #fff; }
+    .btn.danger:hover { background: var(--primary-hover); }
+    .btn:disabled { background: var(--disabled-bg); color: var(--disabled-text); border-color: var(--border-soft); cursor: not-allowed; }
+    .actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 8px; }
+    .radio-row { display: flex; gap: 22px; margin-bottom: 14px; }
+    .radio-row label { display: flex; align-items: center; gap: 6px; cursor: pointer; }
+
+    /* ---------- Message bar ---------- */
+    .msg { border-radius: 10px; padding: 10px 14px; margin-top: 14px; font-weight: 800; }
+    .msg.success { background: var(--success-bg); color: var(--credit); }
+    .msg.warning { background: var(--warning-bg); color: var(--warning); }
+    .msg.error { background: var(--error-bg); color: var(--debit); }
+    .msg.info { background: var(--primary-light); color: var(--primary-hover); }
+
+    /* ---------- Report filters and summary ---------- */
+    .filter-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 12px 14px; margin-top: 14px; }
+    .filter-grid > div { min-width: 0; }
+    .summary-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; margin-bottom: 14px; flex-wrap: wrap; }
+    .summary-head h3 { font-size: 15px; font-weight: 900; margin: 0 0 2px; }
+    .summary-head select { width: 180px; }
+    .stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+    .stat {
+      border: 1px solid var(--border-soft); border-radius: 12px; padding: 14px 16px;
+      background: var(--primary-light); min-width: 0;
     }
-    .badge-rose {
-      background-color: #fff1f2;
-      color: #9f1239;
-      border: 1px solid #fecdd3;
+    .stat-label { font-size: 11px; font-weight: 900; letter-spacing: 0.04em; text-transform: uppercase; color: var(--muted); }
+    .stat-value { font-size: 18px; font-weight: 900; margin-top: 6px; overflow-wrap: anywhere; }
+    .stat-value.amount-value { font-family: Consolas, 'Courier New', monospace; font-size: 20px; }
+    .stat-sub { font-family: Consolas, 'Courier New', monospace; font-weight: 800; color: var(--muted); margin-top: 4px; }
+    .stat-value.debit, .stat-sub.debit { color: var(--debit); }
+    .stat-value.credit, .stat-sub.credit { color: var(--credit); }
+
+    /* ---------- Table ---------- */
+    .table-wrap { overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; }
+    th, td { padding: 10px 12px; text-align: left; border-bottom: 1px solid var(--row-border); vertical-align: top; }
+    th { font-size: 11px; font-weight: 900; text-transform: uppercase; letter-spacing: 0.04em; color: var(--muted); background: var(--surface-tint); white-space: nowrap; }
+    td.num, th.num { text-align: right; white-space: nowrap; }
+    .debit { color: var(--debit); font-family: Consolas, 'Courier New', monospace; font-weight: 800; }
+    .credit { color: var(--credit); font-family: Consolas, 'Courier New', monospace; font-weight: 800; }
+    .totals td { font-weight: 900; background: var(--surface-tint); }
+    .icon-btn { border: 0; background: none; cursor: pointer; font-size: 15px; padding: 4px 6px; border-radius: 6px; }
+    .icon-btn:hover { background: var(--primary-light); }
+    .empty { text-align: center; color: var(--muted); padding: 28px; }
+    .cell-input { width: 100%; min-width: 90px; height: 32px; padding: 0 8px; border: 1px solid var(--input-border); border-radius: 6px; background: var(--bg-input); color: var(--text); }
+    .cell-input.amount { text-align: right; font-family: Consolas, 'Courier New', monospace; }
+
+    /* ---------- Pagination ---------- */
+    .pager { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; padding: 12px 16px; border-top: 1px solid var(--row-border); background: var(--surface-tint); font-weight: 600; }
+    .pager-controls { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+    .pager-size { display: flex; align-items: center; gap: 6px; }
+    .pager-size select { width: auto; height: 32px; padding: 0 8px; }
+    .pg-btn { height: 32px; min-width: 32px; padding: 0 10px; border: 1px solid var(--input-border); background: var(--bg-input); color: var(--text); border-radius: 8px; cursor: pointer; font-weight: 800; }
+    .pg-btn:hover { background: var(--surface-tint); }
+    .pg-btn.active { background: var(--primary); border-color: var(--primary); color: #fff; }
+    .pg-btn:disabled { opacity: 0.45; cursor: not-allowed; }
+    .pg-gap { padding: 0 4px; color: var(--muted); }
+    td select.cell-input { min-width: 150px; }
+
+    /* ---------- Toast (success message) ---------- */
+    .toast {
+      position: fixed; right: 20px; bottom: 20px; z-index: 60;
+      background: var(--success-bg); color: var(--credit);
+      border: 1px solid var(--border-soft); border-radius: 12px;
+      padding: 12px 16px; font-weight: 800;
+      box-shadow: 0 16px 36px -12px rgba(0, 0, 0, 0.8);
     }
-    .badge-sky {
-      background-color: #f0f9ff;
-      color: #0369a1;
-      border: 1px solid #bae6fd;
+
+    /* ---------- Popups ---------- */
+    .backdrop {
+      position: fixed; inset: 0; background: rgba(0, 0, 0, 0.6); backdrop-filter: blur(4px);
+      display: flex; align-items: center; justify-content: center; padding: 16px; z-index: 50;
+    }
+    .modal {
+      background: var(--bg-card); border-radius: 16px; width: 420px; max-width: 100%;
+      padding: 22px; box-shadow: 0 20px 50px rgba(15, 23, 42, 0.25);
+    }
+    .modal h3 { margin: 0 0 12px; font-size: 16px; font-weight: 900; display: flex; justify-content: space-between; align-items: center; }
+    .modal .actions { justify-content: center; }
+
+    /* ---------- Narrow screens ---------- */
+    @media (max-width: 760px) {
+      .app { grid-template-columns: 1fr; }
+      .sidebar { position: static; height: auto; overflow: visible; flex-direction: row; flex-wrap: wrap; align-items: center; border-right: 0; border-bottom: 1px solid var(--border-soft); }
+      .brand { border: 0; margin: 0; padding: 0 8px 0 0; }
+      .sidebar .change-pw { margin-top: 0; }
+      .sidebar .logout { margin-top: 0; margin-left: auto; }
+      .grid2 { grid-template-columns: 1fr; }
+      .span-2 { grid-column: span 1; }
+      .stats { grid-template-columns: 1fr; }
+      .summary-head select { width: 100%; }
     }
   </style>
 </head>
-<body class="dairy-milk-bg min-h-screen flex flex-col font-sans selection:bg-sky-100 selection:text-sky-900 relative overflow-x-hidden text-slate-800">
+<body>
 
-  <!-- Ambient Milky Background Waves -->
-  <div class="fixed inset-0 pointer-events-none z-0 overflow-hidden">
-    <div class="absolute -top-32 -left-32 w-96 h-96 rounded-full bg-sky-200/40 blur-3xl animate-milk-flow"></div>
-    <div class="absolute top-1/3 -right-32 w-[30rem] h-[30rem] rounded-full bg-amber-100/40 blur-3xl animate-milk-flow" style="animation-delay: -6s;"></div>
-    <div class="absolute -bottom-32 left-1/4 w-[36rem] h-[36rem] rounded-full bg-cyan-100/40 blur-3xl animate-milk-flow" style="animation-delay: -12s;"></div>
-    <svg class="absolute top-24 left-0 w-full h-48 opacity-30 text-sky-100" preserveAspectRatio="none" viewBox="0 0 1440 120" fill="none">
-      <path d="M0 30C240 70 480 0 720 40C960 80 1200 10 1440 50V0H0V30Z" fill="currentColor"></path>
-    </svg>
-    <svg class="absolute bottom-0 left-0 w-full h-40 opacity-40 text-blue-50" preserveAspectRatio="none" viewBox="0 0 1440 100" fill="none">
-      <path d="M0 60C360 10 720 90 1080 30C1260 0 1380 40 1440 50V100H0V60Z" fill="currentColor"></path>
-    </svg>
-  </div>
-
-  <!-- Header -->
-  <header class="frosted-glass-header sticky top-0 z-40 transition-all">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-2 flex flex-wrap items-center justify-between gap-3 text-xs border-b border-sky-100/70 text-slate-600">
-      <nav class="flex items-center gap-1.5 font-medium">
-        <span class="text-slate-400">Dairy Operations</span>
-        <span class="text-slate-300">/</span>
-        <span class="text-slate-500">Intake & Logistics Portal</span>
-        <span class="text-slate-300">/</span>
-        <span class="text-sky-700 font-bold flex items-center gap-1 bg-sky-50 px-2 py-0.5 rounded-md border border-sky-200/60">
-          📍 Silo Plant Delta-01 (Wisconsin Central)
-        </span>
-      </nav>
-      <div class="flex items-center gap-3.5">
-        <span class="text-[11px] font-semibold text-sky-800 bg-sky-50 px-2.5 py-0.5 rounded-full border border-sky-200/70">
-          ❄️ Silo Chilling: <strong>3.2°C</strong>
-        </span>
-        <span class="text-[11px] font-semibold text-emerald-800 bg-emerald-50 px-2.5 py-0.5 rounded-full border border-emerald-200/70 flex items-center gap-1">
-          <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
-          HACCP Quality: Certified
-        </span>
-        <span class="text-[11px] font-semibold text-amber-800 bg-amber-50 px-2.5 py-0.5 rounded-full border border-amber-200/70 hidden sm:inline-block">
-          💧 Avg Fat: <strong>4.1%</strong>
-        </span>
-      </div>
+  <!-- ============ LOGIN / CREATE ACCOUNT (Design.md 3 and 4) ============ -->
+  <section id="auth" class="auth" hidden>
+    <div class="card auth-card">
+      <h1>Expense Ledger</h1>
+      <p class="sub" id="auth-sub"></p>
+      <form id="auth-form" novalidate>
+        <div class="field">
+          <div class="label">Username <span class="req">*</span></div>
+          <input type="text" id="auth-user" autocomplete="username">
+          <p class="err" id="auth-user-err"></p>
+        </div>
+        <div class="field">
+          <div class="label">Password <span class="req">*</span></div>
+          <input type="password" id="auth-pass" autocomplete="current-password">
+          <p class="err" id="auth-pass-err"></p>
+          <p class="hint" id="auth-pass-hint"></p>
+        </div>
+        <div class="field" id="auth-confirm-wrap">
+          <div class="label">Confirm password <span class="req">*</span></div>
+          <input type="password" id="auth-pass2" autocomplete="new-password">
+          <p class="err" id="auth-pass2-err"></p>
+        </div>
+        <p class="err" id="auth-form-err"></p>
+        <p class="hint" id="auth-status"></p>
+        <button type="submit" class="btn primary wide" id="auth-btn" style="margin-top:10px">Login</button>
+      </form>
+      <p class="auth-note">Mockup only. Passwords are not protected in this preview.</p>
     </div>
+  </section>
 
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3.5 flex flex-wrap items-center justify-between gap-4">
-      <div class="flex items-center gap-3.5">
-        <div class="w-11 h-11 rounded-2xl bg-gradient-to-tr from-sky-600 via-sky-500 to-cyan-400 flex items-center justify-center text-white shadow-md shadow-sky-600/25 border-2 border-white text-xl font-bold">
-          🥛
-        </div>
-        <div>
-          <div class="flex items-center gap-2">
-            <h1 class="text-lg sm:text-xl font-extrabold tracking-tight text-slate-900">
-              LactaFlow Enterprise Dairy OS
-            </h1>
-            <span class="px-2 py-0.5 text-[10px] font-extrabold tracking-wider uppercase bg-gradient-to-r from-sky-100 to-blue-50 text-sky-800 border border-sky-200/80 rounded-md">
-              Standalone Edition
-            </span>
-          </div>
-          <p class="text-xs text-slate-500 mt-0.5 font-medium">Multi-Tab Milk Intake Reception, Laboratory QA Analysis & Cold-Chain Logistics Hub</p>
-        </div>
+  <!-- ============ MAIN APP SHELL (Design.md 2) ============ -->
+  <div class="app" id="app" hidden>
+    <aside class="sidebar">
+      <div class="brand">
+        <strong>Expense Ledger</strong>
+        <span>Version 1.0.0</span>
       </div>
+      <button class="nav-item active" data-page="entry">✎ Main Entry</button>
+      <button class="nav-item" data-page="report">▤ Expense Report</button>
+      <button class="nav-item change-pw" id="change-pw"><svg class="nav-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"/></svg>Change Password</button>
+      <button class="nav-item logout" id="logout">⏻ Logout</button>
+      <p class="author">Developed by Tenwin James</p>
+    </aside>
 
-      <div class="flex items-center gap-3">
-        <div class="hidden md:flex items-center gap-3 px-3 py-1.5 rounded-xl bg-white/70 border border-sky-100/90 shadow-2xs">
-          <div class="text-left">
-            <span class="text-[10px] uppercase font-bold text-slate-400 block tracking-wider">Logged Batches</span>
-            <span id="stat-batch-count" class="text-sm font-extrabold text-sky-950 font-mono">18 Batches</span>
+    <main class="content">
+
+      <!-- ===== MAIN ENTRY (Design.md 5) ===== -->
+      <section id="page-entry">
+        <h2 class="page-title">Main Entry</h2>
+        <p class="page-desc">Record a daily collection or a Treesa Agencies entry</p>
+
+        <form class="card" id="entry-form" novalidate>
+          <div class="label">Main Head</div>
+          <div class="radio-row">
+            <label><input type="radio" name="mh" value="MH 1"> Treesa Agencies</label>
+            <label><input type="radio" name="mh" value="MH 2" checked> Daily Collection</label>
           </div>
-          <div class="w-px h-6 bg-slate-200"></div>
-          <div class="text-left">
-            <span class="text-[10px] uppercase font-bold text-slate-400 block tracking-wider">Intake Volume</span>
-            <span id="stat-intake-liters" class="text-sm font-extrabold text-emerald-700 font-mono">91,400 L</span>
+
+          <div class="label">Sub-Head</div>
+          <div class="row">
+            <select id="sh-select" class="grow"></select>
+            <button type="button" class="btn icon" id="sh-add" title="Add sub-head">+</button>
+            <button type="button" class="btn icon" id="sh-remove" title="Remove sub-head">−</button>
           </div>
-        </div>
+          <p class="hint" id="sh-hint">Select a Sub-Head to enable entry.</p>
 
-        <button id="btn-export-csv" class="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-bold text-sky-900 bg-white/80 hover:bg-white border border-sky-200 rounded-xl transition shadow-xs cursor-pointer">
-          📥 Export CSV
-        </button>
-        <button id="btn-reset-data" class="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-bold text-slate-700 bg-white/60 hover:bg-white border border-slate-200 rounded-xl transition shadow-xs cursor-pointer">
-          🔄 Reset Demo
-        </button>
-      </div>
-    </div>
-  </header>
-
-  <!-- Sticky Primary Navigation Tabs -->
-  <nav class="frosted-glass-tab sticky top-[97px] z-30 transition-all">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-      <div class="flex space-x-2 sm:space-x-4 overflow-x-auto pt-2" role="tablist">
-        <button id="tab-btn-intake" onclick="switchPrimaryTab('intake')" class="relative flex items-center gap-2.5 py-3.5 px-4 text-xs sm:text-sm font-bold border-b-2 border-sky-600 text-sky-950 bg-white/90 shadow-2xs rounded-t-xl transition-all cursor-pointer">
-          <span class="p-1.5 rounded-lg bg-gradient-to-tr from-sky-600 to-cyan-500 text-white shadow-xs">🥛</span>
-          <div class="text-left">
-            <div class="flex items-center gap-1.5">
-              <span class="text-[10px] tracking-wider uppercase font-extrabold px-1.5 py-0.2 rounded border text-sky-800 bg-sky-100 border-sky-200">PRIMARY TAB 1</span>
-              <span>Raw Milk Intake & Reception</span>
-            </div>
-            <span class="text-[11px] font-normal text-slate-500 block hidden sm:inline">Farm Procurement & Silo Storage Intake</span>
-          </div>
-          <span id="badge-intake-count" class="ml-1.5 px-2 py-0.5 text-xs font-semibold rounded-full font-mono bg-sky-100 text-sky-950 font-bold border border-sky-300">8</span>
-        </button>
-
-        <button id="tab-btn-operations" onclick="switchPrimaryTab('operations')" class="relative flex items-center gap-2.5 py-3.5 px-4 text-xs sm:text-sm font-bold border-b-2 border-transparent text-slate-600 hover:text-slate-900 hover:bg-white/50 rounded-t-xl transition-all cursor-pointer">
-          <span class="p-1.5 rounded-lg text-slate-400 bg-slate-100/70">🏭</span>
-          <div class="text-left">
-            <div class="flex items-center gap-1.5">
-              <span class="text-[10px] tracking-wider uppercase font-extrabold px-1.5 py-0.2 rounded border text-slate-500 bg-slate-100 border-slate-200">PRIMARY TAB 2</span>
-              <span>Processing & Cold-Chain Operations</span>
-            </div>
-            <span class="text-[11px] font-normal text-slate-500 block hidden sm:inline">Pasteurization, Lab QA & Distribution Logistics</span>
-          </div>
-          <span id="badge-operations-count" class="ml-1.5 px-2 py-0.5 text-xs font-semibold rounded-full font-mono bg-slate-100 text-slate-600 border border-slate-200">10</span>
-        </button>
-      </div>
-    </div>
-  </nav>
-
-  <!-- Main View Container -->
-  <main class="relative z-10 flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
-
-    <!-- PRIMARY TAB 1 PANEL -->
-    <div id="panel-intake" class="space-y-6">
-      <!-- Intake Form Card -->
-      <div class="frosted-glass-card rounded-2xl overflow-hidden transition-all">
-        <!-- Edit Mode Banner -->
-        <div id="edit-banner-intake" class="hidden bg-sky-50 border-b border-sky-100 px-5 py-3 flex flex-wrap items-center justify-between gap-3">
-          <div class="flex items-center gap-2.5">
-            <span class="p-1.5 bg-sky-100 text-sky-700 rounded-md">✏️</span>
-            <div>
-              <p class="text-sm font-semibold text-sky-950">Editing Record: <span id="edit-record-id-intake" class="font-mono text-sky-700 font-bold"></span></p>
-              <p class="text-xs text-sky-700">Modify any fields below and click "Update Record" to save changes.</p>
-            </div>
-          </div>
-          <button type="button" onclick="cancelEditMode()" class="px-3 py-1.5 text-xs font-semibold text-slate-600 bg-white border border-slate-300 rounded-md hover:bg-slate-50 transition">
-            ✕ Cancel Edit Mode
-          </button>
-        </div>
-
-        <div class="px-5 sm:px-6 py-4 border-b border-slate-100 flex flex-wrap items-center justify-between gap-3 bg-gradient-to-r from-slate-50/70 to-white">
-          <div>
-            <h3 class="text-base font-bold text-slate-900 flex items-center gap-2">
-              <span>Raw Milk Reception & Supplier Entry</span>
-              <span id="status-badge-intake" class="text-[11px] font-semibold tracking-wide uppercase px-2 py-0.5 bg-emerald-100 text-emerald-800 border border-emerald-200 rounded">New Entry</span>
-            </h3>
-            <p class="text-xs text-slate-500 mt-0.5">Enter incoming tanker arrival details, supplier contact credentials, temperature compliance, and silo allocation.</p>
-          </div>
-          <span class="text-[11px] text-slate-400 font-medium hidden sm:inline-block">Fields marked with <span class="text-rose-500 font-bold">*</span> are required</span>
-        </div>
-
-        <form id="form-intake" onsubmit="handleIntakeSubmit(event)" class="p-5 sm:p-6 space-y-6" novalidate>
-          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5">
-            <div>
-              <label class="block text-xs font-semibold text-slate-700 tracking-wide uppercase mb-1.5">Intake Record ID</label>
-              <input id="in-id" type="text" readonly placeholder="Auto-generated on submit" class="w-full px-3.5 py-2.5 text-sm bg-slate-100 text-slate-500 border border-slate-200 rounded-lg cursor-not-allowed">
-              <p class="text-xs text-slate-500 mt-1">System-generated unique batch identifier</p>
-            </div>
-
-            <div>
-              <label class="block text-xs font-semibold text-slate-700 tracking-wide uppercase mb-1.5">Supplier / Dairy Farm Name <span class="text-rose-500 font-bold">*</span></label>
-              <input id="in-name" type="text" required placeholder="e.g. Highland Valley Dairy Co-op" class="w-full px-3.5 py-2.5 text-sm bg-white border border-slate-300 rounded-lg focus:border-sky-500 focus:ring-2 focus:ring-sky-100 outline-none">
-              <p id="err-in-name" class="hidden text-xs text-rose-600 mt-1">Supplier name is required</p>
-            </div>
-
-            <div>
-              <label class="block text-xs font-semibold text-slate-700 tracking-wide uppercase mb-1.5">Contact Phone Number <span class="text-rose-500 font-bold">*</span></label>
-              <input id="in-phone" type="tel" required placeholder="e.g. (555) 382-9102" class="w-full px-3.5 py-2.5 text-sm bg-white border border-slate-300 rounded-lg focus:border-sky-500 focus:ring-2 focus:ring-sky-100 outline-none">
-              <p id="err-in-phone" class="hidden text-xs text-rose-600 mt-1">Valid phone number required (min 7 digits)</p>
-            </div>
-
-            <div>
-              <label class="block text-xs font-semibold text-slate-700 tracking-wide uppercase mb-1.5">Contact Email ID <span class="text-rose-500 font-bold">*</span></label>
-              <input id="in-email" type="email" required placeholder="e.g. dispatch@highlanddairy.com" class="w-full px-3.5 py-2.5 text-sm bg-white border border-slate-300 rounded-lg focus:border-sky-500 focus:ring-2 focus:ring-sky-100 outline-none">
-              <p id="err-in-email" class="hidden text-xs text-rose-600 mt-1">Valid email address required</p>
-            </div>
-
-            <div class="col-span-1 md:col-span-2">
-              <label class="block text-xs font-semibold text-slate-700 tracking-wide uppercase mb-1.5">Farm Origin / Facility Location <span class="text-rose-500 font-bold">*</span></label>
-              <input id="in-location" type="text" required placeholder="e.g. Green Pastures - Shed B, Wisconsin" class="w-full px-3.5 py-2.5 text-sm bg-white border border-slate-300 rounded-lg focus:border-sky-500 focus:ring-2 focus:ring-sky-100 outline-none">
-              <p id="err-in-location" class="hidden text-xs text-rose-600 mt-1">Farm location is required</p>
-            </div>
-
-            <div>
-              <label class="block text-xs font-semibold text-slate-700 tracking-wide uppercase mb-1.5">Milk Category / Breed Type <span class="text-rose-500 font-bold">*</span></label>
-              <select id="in-category" required class="w-full px-3.5 py-2.5 text-sm bg-white border border-slate-300 rounded-lg focus:border-sky-500 focus:ring-2 focus:ring-sky-100 outline-none cursor-pointer">
-                <option value="">-- Select Milk Category --</option>
-                <option value="Grade A Whole Cow Milk">Grade A Whole Cow Milk (Raw)</option>
-                <option value="Organic Pasture-Fed Cow Milk">Organic Pasture-Fed Cow Milk</option>
-                <option value="A2 Jersey High-Fat Cream Milk">A2 Jersey High-Fat Cream Milk</option>
-                <option value="Buffalo Whole Milk">Buffalo Whole Milk (High SNF)</option>
-                <option value="Chilled Skimmed Milk">Chilled Skimmed Milk Batch</option>
-              </select>
-              <p id="err-in-category" class="hidden text-xs text-rose-600 mt-1">Please select milk category</p>
-            </div>
-
-            <div>
-              <label class="block text-xs font-semibold text-slate-700 tracking-wide uppercase mb-1.5">Reception Status <span class="text-rose-500 font-bold">*</span></label>
-              <select id="in-status" required class="w-full px-3.5 py-2.5 text-sm bg-white border border-slate-300 rounded-lg focus:border-sky-500 focus:ring-2 focus:ring-sky-100 outline-none cursor-pointer">
-                <option value="">-- Select Reception Status --</option>
-                <option value="Accepted">Accepted - Chilled in Silo</option>
-                <option value="Testing">Under Lab Quality Testing</option>
-                <option value="Quarantined">Quarantined - High Temp Warning</option>
-                <option value="Approved">Approved for Pasteurization</option>
-                <option value="Rejected">Rejected - Acidic / Souring</option>
-              </select>
-              <p id="err-in-status" class="hidden text-xs text-rose-600 mt-1">Please select reception status</p>
-            </div>
-
-            <div>
-              <label class="block text-xs font-semibold text-slate-700 tracking-wide uppercase mb-1.5">Reception Date & Time <span class="text-rose-500 font-bold">*</span></label>
-              <input id="in-date" type="datetime-local" required class="w-full px-3.5 py-2.5 text-sm bg-white border border-slate-300 rounded-lg focus:border-sky-500 focus:ring-2 focus:ring-sky-100 outline-none">
-              <p id="err-in-date" class="hidden text-xs text-rose-600 mt-1">Reception date is required</p>
-            </div>
-
-            <div>
-              <label class="block text-xs font-semibold text-slate-700 tracking-wide uppercase mb-1.5">Received Volume <span class="text-rose-500 font-bold">*</span></label>
-              <div class="relative flex items-center">
-                <input id="in-liters" type="number" min="100" max="100000" required placeholder="e.g. 12500" class="w-full px-3.5 py-2.5 text-sm bg-white border border-slate-300 rounded-lg pr-14 focus:border-sky-500 focus:ring-2 focus:ring-sky-100 outline-none">
-                <span class="absolute right-3 text-xs font-semibold text-slate-500 bg-slate-100 px-2 py-0.5 rounded border border-slate-200">Liters</span>
+          <div class="grid2" style="margin-top:16px">
+            <div class="field">
+              <div class="label">Date <span class="req">*</span></div>
+              <div class="row">
+                <input type="text" id="f-date" class="grow" placeholder="DD-Mon-YYYY" data-field="date" autocomplete="off">
+                <button type="button" class="btn icon" id="date-btn" title="Pick a date">📅</button>
+                <input type="date" id="date-picker" class="sr-only" tabindex="-1" aria-hidden="true">
               </div>
-              <p id="err-in-liters" class="hidden text-xs text-rose-600 mt-1">Volume between 100 - 100,000 L required</p>
+              <p class="err" id="e-date"></p>
             </div>
-
-            <div>
-              <label class="block text-xs font-semibold text-slate-700 tracking-wide uppercase mb-1.5">Fat Content <span class="text-rose-500 font-bold">*</span></label>
-              <div class="relative flex items-center">
-                <input id="in-fat" type="number" step="0.01" min="2" max="12" required placeholder="e.g. 3.85" class="w-full px-3.5 py-2.5 text-sm bg-white border border-slate-300 rounded-lg pr-12 focus:border-sky-500 focus:ring-2 focus:ring-sky-100 outline-none">
-                <span class="absolute right-3 text-xs font-semibold text-slate-500 bg-slate-100 px-2 py-0.5 rounded border border-slate-200">%</span>
-              </div>
-              <p id="err-in-fat" class="hidden text-xs text-rose-600 mt-1">Fat % between 2.0 - 12.0 required</p>
+            <div class="field">
+              <div class="label">Name <span class="req">*</span></div>
+              <input type="text" id="f-name" data-field="name" maxlength="100">
+              <p class="err" id="e-name"></p>
             </div>
-
-            <div>
-              <label class="block text-xs font-semibold text-slate-700 tracking-wide uppercase mb-1.5">SNF (Solids-Not-Fat) <span class="text-rose-500 font-bold">*</span></label>
-              <div class="relative flex items-center">
-                <input id="in-snf" type="number" step="0.01" min="6" max="14" required placeholder="e.g. 8.75" class="w-full px-3.5 py-2.5 text-sm bg-white border border-slate-300 rounded-lg pr-12 focus:border-sky-500 focus:ring-2 focus:ring-sky-100 outline-none">
-                <span class="absolute right-3 text-xs font-semibold text-slate-500 bg-slate-100 px-2 py-0.5 rounded border border-slate-200">%</span>
-              </div>
-              <p id="err-in-snf" class="hidden text-xs text-rose-600 mt-1">SNF % between 6.0 - 14.0 required</p>
+            <div class="field span-2">
+              <div class="label">Particulars <span class="req">*</span></div>
+              <input type="text" id="f-part" data-field="part" maxlength="200">
+              <p class="err" id="e-part"></p>
             </div>
-
-            <div>
-              <label class="block text-xs font-semibold text-slate-700 tracking-wide uppercase mb-1.5">Milk Chilling Temp <span class="text-rose-500 font-bold">*</span></label>
-              <div class="relative flex items-center">
-                <input id="in-temp" type="number" step="0.1" min="-2" max="20" required placeholder="e.g. 3.4" class="w-full px-3.5 py-2.5 text-sm bg-white border border-slate-300 rounded-lg pr-12 focus:border-sky-500 focus:ring-2 focus:ring-sky-100 outline-none">
-                <span class="absolute right-3 text-xs font-semibold text-slate-500 bg-slate-100 px-2 py-0.5 rounded border border-slate-200">°C</span>
-              </div>
-              <p id="err-in-temp" class="hidden text-xs text-rose-600 mt-1">Valid temp (-2°C to 20°C) required</p>
-              <p class="text-xs text-slate-500 mt-1">Acceptable range: 2.0°C to 4.5°C</p>
+            <div class="field">
+              <div class="label">Debit <span class="req">*</span></div>
+              <input type="text" id="f-debit" class="amount" data-field="debit" inputmode="decimal" value="0.00">
+              <p class="err" id="e-debit"></p>
             </div>
-
-            <div>
-              <label class="block text-xs font-semibold text-slate-700 tracking-wide uppercase mb-1.5">Target Storage Silo <span class="text-rose-500 font-bold">*</span></label>
-              <select id="in-silo" required class="w-full px-3.5 py-2.5 text-sm bg-white border border-slate-300 rounded-lg focus:border-sky-500 focus:ring-2 focus:ring-sky-100 outline-none cursor-pointer">
-                <option value="">-- Select Target Storage Silo --</option>
-                <option value="Silo Alpha">Silo Alpha (Cold Chilled 3.2°C)</option>
-                <option value="Silo Bravo">Silo Bravo (Dedicated Organic)</option>
-                <option value="Silo Charlie">Silo Charlie (Buffer Tank)</option>
-                <option value="Silo Delta">Silo Delta (Premium A2 Tank)</option>
-              </select>
-              <p id="err-in-silo" class="hidden text-xs text-rose-600 mt-1">Target silo is required</p>
-            </div>
-
-            <div class="col-span-1 md:col-span-2 lg:col-span-4">
-              <label class="block text-xs font-semibold text-slate-700 tracking-wide uppercase mb-1.5">Quality Notes & Sensor Observations</label>
-              <textarea id="in-notes" rows="3" placeholder="Record driver remarks, odor check, sample tube IDs, or chilling anomalies..." class="w-full px-3.5 py-2.5 text-sm bg-white border border-slate-300 rounded-lg focus:border-sky-500 focus:ring-2 focus:ring-sky-100 outline-none resize-y"></textarea>
+            <div class="field">
+              <div class="label">Credit <span class="req">*</span></div>
+              <input type="text" id="f-credit" class="amount" data-field="credit" inputmode="decimal" value="0.00">
+              <p class="err" id="e-credit"></p>
             </div>
           </div>
+          <p class="hint" id="amt-hint" hidden>Enter a Debit or Credit amount greater than 0.00.</p>
 
-          <div class="pt-4 border-t border-slate-100 flex flex-wrap items-center justify-between gap-3">
-            <button type="button" onclick="resetIntakeForm()" class="px-3.5 py-2 text-xs font-semibold text-slate-700 bg-slate-100 hover:bg-slate-200 border border-slate-300 rounded-lg transition cursor-pointer">
-              🔄 Reset Form
-            </button>
-            <button type="submit" id="btn-submit-intake" class="px-5 py-2.5 text-xs font-bold tracking-wide uppercase text-white bg-sky-600 hover:bg-sky-700 rounded-lg transition shadow-xs cursor-pointer">
-              ✨ Record Milk Intake Batch
-            </button>
+          <div class="actions">
+            <button type="button" class="btn" id="btn-clear">Clear</button>
+            <button type="submit" class="btn primary" id="btn-submit" disabled>Submit</button>
           </div>
         </form>
-      </div>
 
-      <!-- Filter Toolbar for Tab 1 -->
-      <div class="frosted-glass-card rounded-2xl overflow-hidden transition-all">
-        <div class="p-4 flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 bg-gradient-to-r from-slate-50/50 to-white">
-          <div class="flex items-center gap-3 flex-1 min-w-[280px]">
-            <input id="search-intake" type="text" oninput="applyFiltersIntake()" placeholder="Search by ID, name, email, phone, location..." class="w-full max-w-md px-3.5 py-2 text-xs sm:text-sm bg-white border border-slate-300 rounded-lg focus:outline-none focus:border-sky-500 focus:ring-2 focus:ring-sky-100">
+        <div class="msg" id="entry-msg" hidden></div>
+      </section>
+
+      <!-- ===== EXPENSE REPORT (Design.md 6) ===== -->
+      <section id="page-report" hidden>
+        <h2 class="page-title">Expense Report</h2>
+        <p class="page-desc">All submitted entries, oldest first</p>
+
+        <!-- Monthly summary: 6 cards for the selected month -->
+        <div class="card">
+          <div class="summary-head">
+            <div>
+              <h3>Monthly Summary</h3>
+              <p class="hint">Values are based on the selected month. Independent of the filters above.</p>
+            </div>
+            <select id="month-pick"></select>
           </div>
-          <div class="flex items-center gap-3 text-xs text-slate-500">
-            <span>Matching Records: <strong id="filter-count-intake" class="text-slate-800 font-mono">8</strong></span>
-            <button onclick="clearFiltersIntake()" class="text-rose-600 hover:underline cursor-pointer font-medium">Clear Filters</button>
-          </div>
+          <div class="stats" id="stats-month"></div>
         </div>
 
-        <div class="p-4 bg-slate-50/60 border-t border-slate-100 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-          <div>
-            <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-600 mb-1">Category / Product Line</label>
-            <select id="filter-cat-intake" onchange="applyFiltersIntake()" class="w-full px-3 py-2 text-xs bg-white border border-slate-300 rounded-lg cursor-pointer">
-              <option value="ALL">All Categories</option>
-            </select>
+        <!-- Yearly summary: 6 cards for the selected year -->
+        <div class="card">
+          <div class="summary-head">
+            <div>
+              <h3>Yearly Summary</h3>
+              <p class="hint">Values are based on the selected year. Independent of the filters above.</p>
+            </div>
+            <select id="year-pick"></select>
           </div>
-          <div>
-            <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-600 mb-1">Operating Status</label>
-            <select id="filter-stat-intake" onchange="applyFiltersIntake()" class="w-full px-3 py-2 text-xs bg-white border border-slate-300 rounded-lg cursor-pointer">
-              <option value="ALL">All Statuses</option>
-            </select>
-          </div>
-          <div>
-            <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-600 mb-1">Date From</label>
-            <input id="filter-date-from-intake" type="date" onchange="applyFiltersIntake()" class="w-full px-3 py-2 text-xs bg-white border border-slate-300 rounded-lg">
-          </div>
-          <div>
-            <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-600 mb-1">Date To</label>
-            <input id="filter-date-to-intake" type="date" onchange="applyFiltersIntake()" class="w-full px-3 py-2 text-xs bg-white border border-slate-300 rounded-lg">
-          </div>
-        </div>
-      </div>
-
-      <!-- Data Table for Tab 1 -->
-      <div class="frosted-glass-card rounded-2xl overflow-hidden transition-all">
-        <div class="px-5 py-3.5 border-b border-slate-100 flex items-center justify-between gap-3 bg-gradient-to-r from-slate-50/70 to-white">
-          <div class="flex items-center gap-2">
-            <span class="text-sky-600 font-bold">📋</span>
-            <h3 class="text-sm font-bold text-slate-800">Registered Intake Records</h3>
-          </div>
-          <span class="text-xs text-slate-400">Click column headers to sort</span>
+          <div class="stats" id="stats-year"></div>
         </div>
 
-        <div class="overflow-x-auto min-h-[250px]">
-          <table class="w-full text-left border-collapse text-xs sm:text-sm">
-            <thead>
-              <tr class="bg-slate-50/90 border-b border-slate-200 text-slate-700 text-xs font-bold uppercase tracking-wider">
-                <th onclick="sortTableIntake('id')" class="px-4 py-3 cursor-pointer hover:bg-slate-100">Record ID ⇕</th>
-                <th onclick="sortTableIntake('name')" class="px-4 py-3 cursor-pointer hover:bg-slate-100">Supplier Name ⇕</th>
-                <th class="px-4 py-3">Phone</th>
-                <th onclick="sortTableIntake('location')" class="px-4 py-3 cursor-pointer hover:bg-slate-100">Farm Location ⇕</th>
-                <th onclick="sortTableIntake('category')" class="px-4 py-3 cursor-pointer hover:bg-slate-100">Category ⇕</th>
-                <th onclick="sortTableIntake('liters')" class="px-4 py-3 text-right cursor-pointer hover:bg-slate-100">Volume (L) ⇕</th>
-                <th onclick="sortTableIntake('fatPercentage')" class="px-4 py-3 text-right cursor-pointer hover:bg-slate-100">Fat % ⇕</th>
-                <th onclick="sortTableIntake('temperature')" class="px-4 py-3 text-right cursor-pointer hover:bg-slate-100">Temp ⇕</th>
-                <th onclick="sortTableIntake('siloId')" class="px-4 py-3 cursor-pointer hover:bg-slate-100">Silo Tank ⇕</th>
-                <th onclick="sortTableIntake('status')" class="px-4 py-3 cursor-pointer hover:bg-slate-100">Status ⇕</th>
-                <th onclick="sortTableIntake('date')" class="px-4 py-3 cursor-pointer hover:bg-slate-100">Date ⇕</th>
-                <th class="px-4 py-3 text-right">Actions</th>
-              </tr>
-            </thead>
-            <tbody id="tbody-intake" class="divide-y divide-slate-100">
-              <!-- Dynamically populated -->
-            </tbody>
-          </table>
-        </div>
+        <!-- Search and filters -->
+        <div class="card">
+          <div class="label">Search</div>
+          <input type="text" id="f-search" placeholder="Search by name, particulars, or amount">
 
-        <!-- Pagination Bar -->
-        <div class="bg-white border-t border-slate-200/80 px-4 py-3 flex flex-wrap items-center justify-between gap-4 text-xs text-slate-600">
-          <div>
-            Showing <span id="pag-start-intake" class="font-bold text-slate-900 font-mono">1</span> to <span id="pag-end-intake" class="font-bold text-slate-900 font-mono">5</span> of <span id="pag-total-intake" class="font-bold text-slate-900 font-mono">8</span> records
-          </div>
-          <div class="flex items-center gap-1" id="pag-controls-intake">
-            <!-- Pag buttons -->
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- PRIMARY TAB 2 PANEL -->
-    <div id="panel-operations" class="space-y-6 hidden">
-      <!-- Sub-Tabs Bar -->
-      <div class="bg-white/60 backdrop-blur-md border border-sky-100/90 p-1.5 rounded-2xl flex flex-wrap gap-2 shadow-xs">
-        <button id="subtab-btn-quality" onclick="switchSubTab('quality')" class="flex-1 min-w-[220px] flex items-center justify-between px-4 py-3 rounded-xl text-xs font-bold transition-all cursor-pointer bg-white text-slate-900 shadow-sm border border-sky-200/80">
-          <div class="flex items-center gap-2.5">
-            <span class="p-1.5 rounded-lg bg-gradient-to-tr from-sky-600 to-cyan-500 text-white shadow-xs">🧪</span>
-            <div class="text-left">
-              <div class="flex items-center gap-1.5">
-                <span class="text-[10px] font-extrabold uppercase px-1.5 py-0.2 rounded border bg-sky-50 text-sky-800 border-sky-200">SUB-TAB 1</span>
-                <span>Pasteurization & Quality Testing</span>
-              </div>
-              <span class="text-[10px] font-normal text-slate-500 block truncate max-w-[220px]">Chemical assays, pH & somatic cell counts</span>
+          <div class="filter-grid">
+            <div>
+              <div class="label">Date Range</div>
+              <select id="dr-range">
+                <option value="all">All Dates</option>
+                <option value="this-month">This Month</option>
+                <option value="last-month">Last Month</option>
+                <option value="this-year">This Year</option>
+                <option value="custom">Custom Range</option>
+              </select>
+            </div>
+            <div class="custom-range" hidden>
+              <div class="label">From</div>
+              <input type="text" id="dr-from" placeholder="DD-Mon-YYYY">
+            </div>
+            <div class="custom-range" hidden>
+              <div class="label">To</div>
+              <input type="text" id="dr-to" placeholder="DD-Mon-YYYY">
+            </div>
+            <div>
+              <div class="label">Main Head</div>
+              <select id="f-mh">
+                <option value="ALL">All Main Heads</option>
+                <option value="MH 1">Treesa Agencies</option>
+                <option value="MH 2">Daily Collection</option>
+              </select>
+            </div>
+            <div>
+              <div class="label">Sub-Head</div>
+              <select id="f-sh"></select>
+            </div>
+            <div>
+              <div class="label">Name</div>
+              <input type="text" id="f-name-filter" placeholder="Contains...">
+            </div>
+            <div>
+              <div class="label">Particulars</div>
+              <input type="text" id="f-part-filter" placeholder="Contains...">
+            </div>
+            <div>
+              <div class="label">Debit From</div>
+              <input type="text" id="f-dmin" class="amount" placeholder="0.00">
+            </div>
+            <div>
+              <div class="label">Debit To</div>
+              <input type="text" id="f-dmax" class="amount" placeholder="0.00">
+            </div>
+            <div>
+              <div class="label">Credit From</div>
+              <input type="text" id="f-cmin" class="amount" placeholder="0.00">
+            </div>
+            <div>
+              <div class="label">Credit To</div>
+              <input type="text" id="f-cmax" class="amount" placeholder="0.00">
             </div>
           </div>
-          <span id="badge-sub-quality" class="ml-2 px-2.5 py-0.5 text-[11px] rounded-full font-mono font-bold border bg-sky-100 text-sky-900 border-sky-300">5</span>
-        </button>
+          <p class="err" id="filter-err"></p>
+          <div class="actions">
+            <button type="button" class="btn" id="btn-clear-filters">Clear Filters</button>
+            <button type="button" class="btn primary" id="btn-filter">Filter Report</button>
+          </div>
+        </div>
 
-        <button id="subtab-btn-logistics" onclick="switchSubTab('logistics')" class="flex-1 min-w-[220px] flex items-center justify-between px-4 py-3 rounded-xl text-xs font-bold transition-all cursor-pointer text-slate-600 hover:text-slate-900 hover:bg-white/50 border border-transparent">
-          <div class="flex items-center gap-2.5">
-            <span class="p-1.5 rounded-lg bg-slate-100/80 text-slate-500">🚚</span>
-            <div class="text-left">
-              <div class="flex items-center gap-1.5">
-                <span class="text-[10px] font-extrabold uppercase px-1.5 py-0.2 rounded border bg-slate-100 text-slate-500 border-slate-200">SUB-TAB 2</span>
-                <span>Cold-Chain Logistics & Dispatch</span>
-              </div>
-              <span class="text-[10px] font-normal text-slate-500 block truncate max-w-[220px]">Outbound refrigerated fleet & temperature tracking</span>
+        <!-- Table -->
+        <div class="card" style="padding:0; overflow:hidden">
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Date</th>
+                  <th>Main Head</th>
+                  <th>Sub-Head</th>
+                  <th>Name</th>
+                  <th>Particulars</th>
+                  <th class="num">Debit</th>
+                  <th class="num">Credit</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="report-body"></tbody>
+              <tfoot id="report-foot"></tfoot>
+            </table>
+          </div>
+          <div class="pager" id="pager">
+            <div id="pager-info"></div>
+            <div class="pager-controls">
+              <label class="pager-size">Rows per page
+                <select id="page-size">
+                  <option value="10" selected>10</option>
+                  <option value="25">25</option>
+                  <option value="50">50</option>
+                </select>
+              </label>
+              <button type="button" class="pg-btn" id="pg-prev">‹ Prev</button>
+              <span id="pg-numbers"></span>
+              <button type="button" class="pg-btn" id="pg-next">Next ›</button>
             </div>
           </div>
-          <span id="badge-sub-logistics" class="ml-2 px-2.5 py-0.5 text-[11px] rounded-full font-mono font-bold border bg-slate-100 text-slate-600 border-slate-200">5</span>
-        </button>
-      </div>
+        </div>
+      </section>
+    </main>
+  </div>
 
-      <!-- Filter Toolbar for Tab 2 -->
-      <div class="frosted-glass-card rounded-2xl overflow-hidden transition-all">
-        <div class="p-4 flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 bg-gradient-to-r from-slate-50/50 to-white">
-          <div class="flex items-center gap-3 flex-1 min-w-[280px]">
-            <input id="search-sub" type="text" oninput="applyFiltersSub()" placeholder="Search sub-tab records..." class="w-full max-w-md px-3.5 py-2 text-xs sm:text-sm bg-white border border-slate-300 rounded-lg focus:outline-none focus:border-sky-500 focus:ring-2 focus:ring-sky-100">
-          </div>
-          <div class="flex items-center gap-3 text-xs text-slate-500">
-            <span>Matching Records: <strong id="filter-count-sub" class="text-slate-800 font-mono">5</strong></span>
-            <button onclick="clearFiltersSub()" class="text-rose-600 hover:underline cursor-pointer font-medium">Clear Filters</button>
-          </div>
-        </div>
-        <div class="p-4 bg-slate-50/60 border-t border-slate-100 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-          <div>
-            <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-600 mb-1">Category</label>
-            <select id="filter-cat-sub" onchange="applyFiltersSub()" class="w-full px-3 py-2 text-xs bg-white border border-slate-300 rounded-lg cursor-pointer">
-              <option value="ALL">All Categories</option>
-            </select>
-          </div>
-          <div>
-            <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-600 mb-1">Status</label>
-            <select id="filter-stat-sub" onchange="applyFiltersSub()" class="w-full px-3 py-2 text-xs bg-white border border-slate-300 rounded-lg cursor-pointer">
-              <option value="ALL">All Statuses</option>
-            </select>
-          </div>
-          <div>
-            <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-600 mb-1">Date From</label>
-            <input id="filter-date-from-sub" type="date" onchange="applyFiltersSub()" class="w-full px-3 py-2 text-xs bg-white border border-slate-300 rounded-lg">
-          </div>
-          <div>
-            <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-600 mb-1">Date To</label>
-            <input id="filter-date-to-sub" type="date" onchange="applyFiltersSub()" class="w-full px-3 py-2 text-xs bg-white border border-slate-300 rounded-lg">
-          </div>
-        </div>
-      </div>
-
-      <!-- Data Table for Tab 2 -->
-      <div class="frosted-glass-card rounded-2xl overflow-hidden transition-all">
-        <div class="px-5 py-3.5 border-b border-slate-100 flex items-center justify-between gap-3 bg-gradient-to-r from-slate-50/70 to-white">
-          <div class="flex items-center gap-2">
-            <span class="text-sky-600 font-bold">📋</span>
-            <h3 id="table-title-sub" class="text-sm font-bold text-slate-800">Quality Testing Records</h3>
-          </div>
-          <span class="text-xs text-slate-400">Click column headers to sort</span>
-        </div>
-
-        <div class="overflow-x-auto min-h-[250px]">
-          <table class="w-full text-left border-collapse text-xs sm:text-sm">
-            <thead id="thead-sub">
-              <!-- Rendered per sub-tab -->
-            </thead>
-            <tbody id="tbody-sub" class="divide-y divide-slate-100">
-              <!-- Dynamically populated -->
-            </tbody>
-          </table>
-        </div>
-
-        <div class="bg-white border-t border-slate-200/80 px-4 py-3 flex flex-wrap items-center justify-between gap-4 text-xs text-slate-600">
-          <div>
-            Showing <span id="pag-start-sub" class="font-bold text-slate-900 font-mono">1</span> to <span id="pag-end-sub" class="font-bold text-slate-900 font-mono">5</span> of <span id="pag-total-sub" class="font-bold text-slate-900 font-mono">5</span> records
-          </div>
-          <div class="flex items-center gap-1" id="pag-controls-sub">
-            <!-- Pag buttons -->
-          </div>
-        </div>
-      </div>
-    </div>
-  </main>
-
-  <!-- Delete Modal Dialog -->
-  <div id="modal-delete" class="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-xs flex items-center justify-center p-4 hidden">
-    <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6 border border-slate-200">
-      <div class="flex items-start gap-3.5">
-        <div class="p-2.5 rounded-full bg-rose-100 text-rose-600 shrink-0">🗑️</div>
-        <div>
-          <h3 class="text-base font-bold text-slate-900">Confirm Record Deletion</h3>
-          <p id="delete-modal-msg" class="text-xs sm:text-sm text-slate-600 mt-1.5 leading-relaxed">Are you sure you want to permanently delete this record? This action cannot be undone.</p>
-        </div>
-      </div>
-      <div class="mt-6 flex items-center justify-end gap-2.5">
-        <button onclick="closeDeleteModal()" class="px-4 py-2 text-xs font-semibold text-slate-700 bg-white border border-slate-300 rounded-lg hover:bg-slate-50">Cancel</button>
-        <button onclick="confirmDelete()" class="px-4 py-2 text-xs font-bold text-white bg-rose-600 hover:bg-rose-700 rounded-lg">Yes, Delete Record</button>
+  <!-- ============ POPUPS (Design.md 5.4, 5.5, 6.2) ============ -->
+  <div class="backdrop" id="modal-subhead" hidden>
+    <div class="modal" role="dialog" aria-labelledby="subhead-title">
+      <h3 id="subhead-title">Add Sub-Head <button class="icon-btn" data-close>✕</button></h3>
+      <div class="label">Sub-Head name <span class="req">*</span></div>
+      <input type="text" id="subhead-input" maxlength="40" placeholder="Up to 40 characters">
+      <p class="err" id="subhead-err"></p>
+      <p class="hint" id="subhead-target"></p>
+      <p class="hint" id="subhead-value"></p>
+      <div class="actions">
+        <button type="button" class="btn" data-close>Cancel</button>
+        <button type="button" class="btn primary" id="subhead-add" disabled>Add</button>
       </div>
     </div>
   </div>
 
-  <!-- Toast Container -->
-  <div id="toast-container" class="fixed bottom-4 right-4 z-50 flex flex-col gap-2 max-w-sm w-full pointer-events-none"></div>
+  <div class="backdrop" id="modal-remove" hidden>
+    <div class="modal" role="dialog">
+      <h3>Remove Sub-Head <button class="icon-btn" data-close>✕</button></h3>
+      <p id="remove-text"></p>
+      <p class="hint">Old entries keep this sub-head name.</p>
+      <div class="actions">
+        <button type="button" class="btn" data-close>Cancel</button>
+        <button type="button" class="btn danger" id="remove-confirm">Remove</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="backdrop" id="modal-password" hidden>
+    <div class="modal" role="dialog" aria-labelledby="pw-title">
+      <h3 id="pw-title">Change Password <button class="icon-btn" data-close>✕</button></h3>
+      <div class="field">
+        <div class="label">Current password <span class="req">*</span></div>
+        <input type="password" id="pw-current" autocomplete="current-password">
+        <p class="err" id="pw-current-err"></p>
+      </div>
+      <div class="field">
+        <div class="label">New password <span class="req">*</span></div>
+        <input type="password" id="pw-new" autocomplete="new-password">
+        <p class="hint">At least 8 characters, different from the current password.</p>
+        <p class="err" id="pw-new-err"></p>
+      </div>
+      <div class="field">
+        <div class="label">Confirm new password <span class="req">*</span></div>
+        <input type="password" id="pw-confirm" autocomplete="new-password">
+        <p class="err" id="pw-confirm-err"></p>
+      </div>
+      <p class="err" id="pw-form-err"></p>
+      <div class="actions">
+        <button type="button" class="btn" data-close>Cancel</button>
+        <button type="button" class="btn primary" id="pw-save" disabled>Save</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast" role="status" hidden></div>
+
+  <div class="backdrop" id="modal-delete" hidden>
+    <div class="modal" role="dialog">
+      <h3>Delete Row <button class="icon-btn" data-close>✕</button></h3>
+      <p>Are you sure you want to delete this row?</p>
+      <div class="actions">
+        <button type="button" class="btn" data-close>Cancel</button>
+        <button type="button" class="btn danger" id="delete-confirm">Delete</button>
+      </div>
+    </div>
+  </div>
 
   <script>
-    // --- Seed Data & State Initialization ---
-    const INITIAL_RECORDS = [
-      { id: 'RMI-2026-1001', primaryTabId: 'intake', name: 'Green Pastures Dairy Co-op', phone: '(555) 234-8901', email: 'intake@greenpastures.com', location: 'Sunrise Valley - Barn 4, WI', category: 'Grade A Whole Cow Milk', status: 'Accepted', date: '2026-10-19T06:30', liters: 14500, fatPercentage: 3.92, snfPercentage: 8.85, temperature: 3.2, siloId: 'Silo Alpha', notes: 'Morning milking batch. Fresh odor.' },
-      { id: 'RMI-2026-1002', primaryTabId: 'intake', name: 'Highland Organic Valley Farms', phone: '(555) 412-7789', email: 'shipments@highlandorganic.org', location: 'Rolling Hills Organic Sector, MN', category: 'Organic Pasture-Fed Cow Milk', status: 'Approved', date: '2026-10-19T07:15', liters: 9800, fatPercentage: 4.15, snfPercentage: 9.05, temperature: 3.6, siloId: 'Silo Bravo', notes: 'USDA Organic verified.' },
-      { id: 'RMI-2026-1003', primaryTabId: 'intake', name: 'Apex Jersey Heritage Dairy', phone: '(555) 609-3281', email: 'supply@apexjersey.net', location: 'Meadowbrook Estate - Unit 1, OH', category: 'A2 Jersey High-Fat Cream Milk', status: 'Accepted', date: '2026-10-19T08:00', liters: 6200, fatPercentage: 5.25, snfPercentage: 9.40, temperature: 3.1, siloId: 'Silo Delta', notes: 'Premium butterfat batch.' },
-      { id: 'RMI-2026-1004', primaryTabId: 'intake', name: 'Prairie Gold Farmers Collective', phone: '(555) 773-1940', email: 'logistics@prairiegolddairy.com', location: 'Central Plains Hub - Silo Bay 2, IA', category: 'Grade A Whole Cow Milk', status: 'Testing', date: '2026-10-19T09:45', liters: 22000, fatPercentage: 3.75, snfPercentage: 8.65, temperature: 4.2, siloId: 'Silo Charlie', notes: 'Rapid sample drawn.' },
-      { id: 'RMI-2026-1005', primaryTabId: 'intake', name: 'Cascade Mountain Agro-Union', phone: '(555) 902-3341', email: 'intake-team@cascademtn.com', location: 'Northwest Timberline Sector, WA', category: 'Buffalo Whole Milk', status: 'Accepted', date: '2026-10-18T14:20', liters: 7500, fatPercentage: 7.20, snfPercentage: 10.10, temperature: 3.4, siloId: 'Silo Delta', notes: 'Premium buffalo milk.' },
-      { id: 'RMI-2026-1006', primaryTabId: 'intake', name: 'Silver Lake Family Farmstead', phone: '(555) 314-5590', email: 'silverlake.dairy@gmail.com', location: 'Lakeside Pastures - Lot 7, MI', category: 'Grade A Whole Cow Milk', status: 'Quarantined', date: '2026-10-18T16:10', liters: 8400, fatPercentage: 3.60, snfPercentage: 8.40, temperature: 6.8, siloId: 'Silo Charlie', notes: 'Temp alert at arrival.' },
-      { id: 'RMI-2026-1007', primaryTabId: 'intake', name: 'Clearwater Creek Dairy Ranch', phone: '(555) 829-4112', email: 'dispatch@clearwaterdairy.com', location: 'Clearwater Valley - Sector 12, ID', category: 'Chilled Skimmed Milk', status: 'Approved', date: '2026-10-17T11:00', liters: 18000, fatPercentage: 2.10, snfPercentage: 8.90, temperature: 2.9, siloId: 'Silo Alpha', notes: 'Standardized skim ready.' },
-      { id: 'RMI-2026-1008', primaryTabId: 'intake', name: 'Sunny Ridge Dairies LLC', phone: '(555) 543-9988', email: 'operations@sunnyridgedairy.com', location: 'Sunny Ridge Road - Station 3, PA', category: 'Grade A Whole Cow Milk', status: 'Rejected', date: '2026-10-17T13:30', liters: 5000, fatPercentage: 3.40, snfPercentage: 8.20, temperature: 8.2, siloId: 'Silo Charlie', notes: 'Sour odor, pH 6.1.' },
+    // ---------- Constants (Roadmap/PRD.md and Design.md) ----------
+    const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    const LIMITS = { name: 100, part: 200, sub: 40 };
+    const MAX_ATTEMPTS = 5;
+    const LOCK_MS = 5 * 60 * 1000;
+    const KEY = 'expenseLedger.mockup.v3';
+    const TXN_FIELDS = ['date', 'name', 'part', 'debit', 'credit'];
 
-      // Sub-tab 1: Quality
-      { id: 'QLT-2026-2001', primaryTabId: 'operations', subTabId: 'quality', name: 'Dr. Emily Chen, QC Lead', phone: '(555) 789-1029', email: 'emily.chen@lactaflow.com', location: 'Central Plant 1 - Cleanroom Lab 2B', category: 'Pasteurized Whole Milk', status: 'Passed', date: '2026-10-19T08:30', phLevel: 6.68, somaticCount: 95000, antibioticResidue: 'Negative', pasteurTemp: 72.8, notes: 'HTST continuous validated.' },
-      { id: 'QLT-2026-2002', primaryTabId: 'operations', subTabId: 'quality', name: 'Liam Gallagher (Microbiology)', phone: '(555) 621-4820', email: 'liam.g@lactaflow.com', location: 'Bio-Assay Suite - Station 4', category: 'Heavy Cream 40%', status: 'Passed', date: '2026-10-19T09:15', phLevel: 6.64, somaticCount: 82000, antibioticResidue: 'Negative', pasteurTemp: 78.5, notes: 'Rich aromatic profile.' },
-      { id: 'QLT-2026-2003', primaryTabId: 'operations', subTabId: 'quality', name: 'Sofia Martinez, Food Safety', phone: '(555) 309-8472', email: 'sofia.m@lactaflow.com', location: 'Regional Testing Bay - North Wing', category: 'Homogenized A2 Whole Milk', status: 'Passed', date: '2026-10-18T15:00', phLevel: 6.72, somaticCount: 65000, antibioticResidue: 'Negative', pasteurTemp: 73.0, notes: 'Pure Beta-Casein A2 variant.' },
-      { id: 'QLT-2026-2004', primaryTabId: 'operations', subTabId: 'quality', name: 'David K. O’Connor', phone: '(555) 883-2941', email: 'david.o@lactaflow.com', location: 'Central Plant 1 - Cleanroom Lab 2B', category: 'Cultured Buttermilk', status: 'Conditional', date: '2026-10-18T17:30', phLevel: 6.42, somaticCount: 185000, antibioticResidue: 'Negative', pasteurTemp: 71.5, notes: 'Secondary check pending.' },
-      { id: 'QLT-2026-2005', primaryTabId: 'operations', subTabId: 'quality', name: 'Priya Patel, QA Chemist', phone: '(555) 472-9183', email: 'priya.patel@lactaflow.com', location: 'Bio-Assay Suite - Station 4', category: 'Standardized Skimmed Milk', status: 'Retest', date: '2026-10-17T14:10', phLevel: 6.55, somaticCount: 220000, antibioticResidue: 'Trace', pasteurTemp: 72.0, notes: 'Re-incubating duplicate sample.' },
+    // Main Head code -> label and the list name used in Defaults/default.js (PRD FR-8).
+    const HEADS = {
+      'MH 1': { label: 'Treesa Agencies', list: 'treesa' },
+      'MH 2': { label: 'Daily Collection', list: 'daily' }
+    };
 
-      // Sub-tab 2: Logistics
-      { id: 'LOG-2026-3001', primaryTabId: 'operations', subTabId: 'logistics', name: 'Marcus Vance (Fleet Master)', phone: '(555) 441-2093', email: 'logistics.ops@lactaflow.com', location: 'Midwest Cold Hub - Bay 14, Chicago IL', category: 'Whole Milk 1L Bottles', status: 'In Transit', date: '2026-10-19T05:00', tankerId: 'TK-CHILL-904', cargoTemp: 2.8, quantity: 12500, sealNumber: 'SEAL-LF-884920' },
-      { id: 'LOG-2026-3002', primaryTabId: 'operations', subTabId: 'logistics', name: 'Elena Rostova (Lead Driver)', phone: '(555) 831-9023', email: 'elena.rostova@lactaflow.com', location: 'Great Lakes Metro Logistics, Detroit MI', category: 'Organic Milk Cartons', status: 'Delivered', date: '2026-10-19T04:15', tankerId: 'REEFER-OR-210', cargoTemp: 3.1, quantity: 8400, sealNumber: 'SEAL-LF-772194' },
-      { id: 'LOG-2026-3003', primaryTabId: 'operations', subTabId: 'logistics', name: 'Jamal Washington (Dispatch)', phone: '(555) 298-6710', email: 'j.washington@lactaflow.com', location: 'St. Louis Refrigerated Distribution Depot, MO', category: 'Bulk Insulated Cream Tanker', status: 'In Transit', date: '2026-10-19T07:45', tankerId: 'TK-CREAM-550', cargoTemp: 3.4, quantity: 16000, sealNumber: 'SEAL-LF-902411' },
-      { id: 'LOG-2026-3004', primaryTabId: 'operations', subTabId: 'logistics', name: 'Carla Mendoza (Fleet Ops)', phone: '(555) 914-7265', email: 'carla.mendoza@lactaflow.com', location: 'Twin Cities Food Terminal, Minneapolis MN', category: 'Artisan Salted Butter', status: 'Scheduled', date: '2026-10-19T11:00', tankerId: 'VAN-COLD-102', cargoTemp: 1.5, quantity: 3200, sealNumber: 'SEAL-LF-441098' },
-      { id: 'LOG-2026-3005', primaryTabId: 'operations', subTabId: 'logistics', name: 'Brian Thorne (Highway)', phone: '(555) 601-3829', email: 'b.thorne@lactaflow.com', location: 'Ohio Valley Regional Depot, Columbus OH', category: 'Skimmed Milk Pails', status: 'Arrived', date: '2026-10-18T18:00', tankerId: 'TK-SKIM-801', cargoTemp: 3.8, quantity: 9500, sealNumber: 'SEAL-LF-663012' }
-    ];
+    // Source: Defaults/default.js, copied here because a file:// page cannot import a JS module.
+    // treesa <- Design/Treesa.jpeg, daily <- Design/Daily.jpeg
+    const DEFAULT_LABELS = {
+      treesa: [
+        "Treesa - SIB", "PD - IndusInd", "Salary", "Salary Advance", "Weekly Allowance", "Cash at Cochin",
+        "Triprayar - CNG", "Triprayar - Petrol", "Triprayar - Diesel", "Triprayar - Driver",
+        "Ponnani - CNG", "Ponnani - Petrol", "Ponnani - Diesel", "Ponnani - Driver",
+        "Pattambi - CNG", "Pattambi - Petrol", "Pattambi - Diesel", "Pattambi - Driver",
+        "EKM - CNG", "EKM - Petrol", "EKM - Diesel", "EKM - Driver",
+        "KSFE Kuri", "Sadhu Kuri", "Stationary", "Cash or Chq John P.C", "Office Expense",
+        "ICE - TCR", "ICE - Manjeri", "Fast Tag", "Repairs of Workshop", "Showroom Expenses",
+        "CNG - Thrissur", "Vehicle Permit", "Plant", "Manjeri Diesel", "Manjeri CNG", "Plant Diesel",
+        "Advertisement", "Tax", "Electrical Expense", "Rent", "Computer Maintenance",
+        "Internet Charge", "Mobile Charge", "Parking Charge", "GST & Tax", "Vehicle EMIs"
+      ],
+      daily: [
+        "TPR Collection - Akhil Babu", "Ponnani Collection - Sanju", "Pattambi Collection - Devadas",
+        "Lenin", "Mohandas", "Vivek", "Jeeva Farms", "Cochin Freshway", "RAK",
+        "Daily Route Jilshad", "Daily Route Rajeev", "Daily Route Praveen", "Daily Route Mahesh",
+        "Daily Route Mathew", "Daily Route Sumesh", "John P.C", "Cochin 11 - Shaji PBVR",
+        "Cochin 11 - Shaji BVR", "Anil Chegannur", "Direct Route Emmanuvel, Cochin",
+        "Shiji - Kodungallur", "Direct Route Salam, Cochin"
+      ]
+    };
 
-    let records = [];
-    const STORAGE_KEY = 'lactaflow_standalone_v1';
-    try {
-      const stored = localStorage.getItem(STORAGE_KEY);
-      records = stored ? JSON.parse(stored) : [...INITIAL_RECORDS];
-    } catch (e) {
-      records = [...INITIAL_RECORDS];
-    }
+    // Same rule as toEntries in Defaults/default.js: the stored value is the slug of the label.
+    const slug = label => label.toLowerCase().replace(/&/g, ' and ').replace(/[^a-z0-9]+/g, '_').replace(/^_+|_+$/g, '');
 
-    function save() {
-      try { localStorage.setItem(STORAGE_KEY, JSON.stringify(records)); } catch(e){}
-      updateBadgesAndStats();
-    }
-
-    let activePrimaryTab = 'intake';
-    let activeSubTab = 'quality';
-    let editingRecordId = null;
-    let pendingDeleteId = null;
-
-    let pageIntake = 1;
-    const pageSizeIntake = 5;
-    let sortIntakeField = 'date';
-    let sortIntakeDir = 'desc';
-
-    let pageSub = 1;
-    const pageSizeSub = 5;
-    let sortSubField = 'date';
-    let sortSubDir = 'desc';
-
-    // Update Header Badges & Metrics
-    function updateBadgesAndStats() {
-      const intakeList = records.filter(r => r.primaryTabId === 'intake');
-      const qualityList = records.filter(r => r.primaryTabId === 'operations' && r.subTabId === 'quality');
-      const logisticsList = records.filter(r => r.primaryTabId === 'operations' && r.subTabId === 'logistics');
-
-      document.getElementById('badge-intake-count').textContent = intakeList.length;
-      document.getElementById('badge-operations-count').textContent = qualityList.length + logisticsList.length;
-      document.getElementById('badge-sub-quality').textContent = qualityList.length;
-      document.getElementById('badge-sub-logistics').textContent = logisticsList.length;
-
-      document.getElementById('stat-batch-count').textContent = records.length + ' Batches';
-      const totalLiters = intakeList.reduce((sum, r) => sum + (Number(r.liters) || 0), 0);
-      document.getElementById('stat-intake-liters').textContent = totalLiters.toLocaleString() + ' L';
-    }
-
-    function switchPrimaryTab(tabId) {
-      activePrimaryTab = tabId;
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-
-      const btnIn = document.getElementById('tab-btn-intake');
-      const btnOp = document.getElementById('tab-btn-operations');
-      const panIn = document.getElementById('panel-intake');
-      const panOp = document.getElementById('panel-operations');
-
-      if (tabId === 'intake') {
-        btnIn.className = "relative flex items-center gap-2.5 py-3.5 px-4 text-xs sm:text-sm font-bold border-b-2 border-sky-600 text-sky-950 bg-white/90 shadow-2xs rounded-t-xl transition-all cursor-pointer";
-        btnOp.className = "relative flex items-center gap-2.5 py-3.5 px-4 text-xs sm:text-sm font-bold border-b-2 border-transparent text-slate-600 hover:text-slate-900 hover:bg-white/50 rounded-t-xl transition-all cursor-pointer";
-        panIn.classList.remove('hidden');
-        panOp.classList.add('hidden');
-        renderIntakeTable();
-      } else {
-        btnOp.className = "relative flex items-center gap-2.5 py-3.5 px-4 text-xs sm:text-sm font-bold border-b-2 border-sky-600 text-sky-950 bg-white/90 shadow-2xs rounded-t-xl transition-all cursor-pointer";
-        btnIn.className = "relative flex items-center gap-2.5 py-3.5 px-4 text-xs sm:text-sm font-bold border-b-2 border-transparent text-slate-600 hover:text-slate-900 hover:bg-white/50 rounded-t-xl transition-all cursor-pointer";
-        panOp.classList.remove('hidden');
-        panIn.classList.add('hidden');
-        renderSubTable();
-      }
-    }
-
-    function switchSubTab(subId) {
-      activeSubTab = subId;
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-
-      const btnQ = document.getElementById('subtab-btn-quality');
-      const btnL = document.getElementById('subtab-btn-logistics');
-
-      if (subId === 'quality') {
-        btnQ.className = "flex-1 min-w-[220px] flex items-center justify-between px-4 py-3 rounded-xl text-xs font-bold transition-all cursor-pointer bg-white text-slate-900 shadow-sm border border-sky-200/80";
-        btnL.className = "flex-1 min-w-[220px] flex items-center justify-between px-4 py-3 rounded-xl text-xs font-bold transition-all cursor-pointer text-slate-600 hover:text-slate-900 hover:bg-white/50 border border-transparent";
-        document.getElementById('table-title-sub').textContent = "Quality Testing Records";
-      } else {
-        btnL.className = "flex-1 min-w-[220px] flex items-center justify-between px-4 py-3 rounded-xl text-xs font-bold transition-all cursor-pointer bg-white text-slate-900 shadow-sm border border-sky-200/80";
-        btnQ.className = "flex-1 min-w-[220px] flex items-center justify-between px-4 py-3 rounded-xl text-xs font-bold transition-all cursor-pointer text-slate-600 hover:text-slate-900 hover:bg-white/50 border border-transparent";
-        document.getElementById('table-title-sub').textContent = "Cold-Chain Logistics Dispatches";
-      }
-      populateSubFilterDropdowns();
-      pageSub = 1;
-      renderSubTable();
-    }
-
-    // Status Badge Helper
-    function getStatusBadge(status) {
-      const s = (status || '').toLowerCase();
-      let badgeClass = 'badge-sky';
-      if (s.includes('accept') || s.includes('pass') || s.includes('approved') || s.includes('deliver')) badgeClass = 'badge-emerald';
-      else if (s.includes('quarantin') || s.includes('transit') || s.includes('test') || s.includes('sched')) badgeClass = 'badge-amber';
-      else if (s.includes('reject') || s.includes('alert') || s.includes('fail')) badgeClass = 'badge-rose';
-
-      return `<span class="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-semibold ${badgeClass}">● ${status}</span>`;
-    }
-
-    // --- Tab 1 Intake Table Rendering & Filtering ---
-    function populateIntakeFilterDropdowns() {
-      const intakeList = records.filter(r => r.primaryTabId === 'intake');
-      const cats = Array.from(new Set(intakeList.map(r => r.category))).filter(Boolean);
-      const stats = Array.from(new Set(intakeList.map(r => r.status))).filter(Boolean);
-
-      const catSelect = document.getElementById('filter-cat-intake');
-      catSelect.innerHTML = '<option value="ALL">All Categories</option>' + cats.map(c => `<option value="${c}">${c}</option>`).join('');
-
-      const statSelect = document.getElementById('filter-stat-intake');
-      statSelect.innerHTML = '<option value="ALL">All Statuses</option>' + stats.map(s => `<option value="${s}">${s}</option>`).join('');
-    }
-
-    function getFilteredIntakeRecords() {
-      const q = document.getElementById('search-intake').value.toLowerCase().trim();
-      const cat = document.getElementById('filter-cat-intake').value;
-      const stat = document.getElementById('filter-stat-intake').value;
-      const from = document.getElementById('filter-date-from-intake').value;
-      const to = document.getElementById('filter-date-to-intake').value;
-
-      return records.filter(r => {
-        if (r.primaryTabId !== 'intake') return false;
-        if (q) {
-          const match = [r.id, r.name, r.email, r.phone, r.location, r.category, r.status, r.notes].join(' ').toLowerCase();
-          if (!match.includes(q)) return false;
-        }
-        if (cat !== 'ALL' && r.category !== cat) return false;
-        if (stat !== 'ALL' && r.status !== stat) return false;
-        if (from && r.date.slice(0, 10) < from) return false;
-        if (to && r.date.slice(0, 10) > to) return false;
-        return true;
-      });
-    }
-
-    function renderIntakeTable() {
-      let filtered = getFilteredIntakeRecords();
-      document.getElementById('filter-count-intake').textContent = filtered.length;
-
-      // Sort
-      filtered.sort((a, b) => {
-        const valA = a[sortIntakeField];
-        const valB = b[sortIntakeField];
-        const mod = sortIntakeDir === 'asc' ? 1 : -1;
-        if (typeof valA === 'number' && typeof valB === 'number') return (valA - valB) * mod;
-        return String(valA || '').localeCompare(String(valB || '')) * mod;
-      });
-
-      // Pagination
-      const total = filtered.length;
-      const totalPages = Math.max(1, Math.ceil(total / pageSizeIntake));
-      if (pageIntake > totalPages) pageIntake = totalPages;
-      const start = total === 0 ? 0 : (pageIntake - 1) * pageSizeIntake + 1;
-      const end = Math.min(pageIntake * pageSizeIntake, total);
-      const pageItems = filtered.slice((pageIntake - 1) * pageSizeIntake, end);
-
-      document.getElementById('pag-start-intake').textContent = start;
-      document.getElementById('pag-end-intake').textContent = end;
-      document.getElementById('pag-total-intake').textContent = total;
-
-      const tbody = document.getElementById('tbody-intake');
-      if (pageItems.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="12" class="py-12 text-center text-slate-500">No matching intake records found.</td></tr>`;
-      } else {
-        tbody.innerHTML = pageItems.map(r => `
-          <tr class="hover:bg-sky-50/40 transition">
-            <td class="px-4 py-3 font-mono font-bold text-sky-900">${r.id}</td>
-            <td class="px-4 py-3 font-semibold text-slate-900">${r.name}</td>
-            <td class="px-4 py-3 text-slate-600">${r.phone}</td>
-            <td class="px-4 py-3 text-slate-600">${r.location}</td>
-            <td class="px-4 py-3 text-slate-700">${r.category}</td>
-            <td class="px-4 py-3 text-right font-mono font-bold">${Number(r.liters).toLocaleString()} L</td>
-            <td class="px-4 py-3 text-right font-mono text-amber-800">${r.fatPercentage}%</td>
-            <td class="px-4 py-3 text-right font-mono ${r.temperature > 4.5 ? 'text-rose-600 font-bold' : 'text-cyan-700'}">${r.temperature}°C</td>
-            <td class="px-4 py-3 text-slate-700">${r.siloId}</td>
-            <td class="px-4 py-3">${getStatusBadge(r.status)}</td>
-            <td class="px-4 py-3 font-mono text-slate-500">${r.date ? r.date.replace('T', ' ') : ''}</td>
-            <td class="px-4 py-3 text-right whitespace-nowrap">
-              <button onclick="editRecord('${r.id}')" title="Edit" class="p-1.5 text-slate-500 hover:text-sky-700 rounded transition cursor-pointer">✏️</button>
-              <button onclick="openDeleteModal('${r.id}')" title="Delete" class="p-1.5 text-slate-400 hover:text-rose-600 rounded transition cursor-pointer">🗑️</button>
-            </td>
-          </tr>
-        `).join('');
-      }
-
-      // Render pagination controls
-      const pagCtrl = document.getElementById('pag-controls-intake');
-      let html = `<button onclick="setPageIntake(${pageIntake - 1})" ${pageIntake <= 1 ? 'disabled class="opacity-30 p-1.5"' : 'class="p-1.5 hover:bg-slate-100 rounded"'}>◀</button>`;
-      for (let i = 1; i <= totalPages; i++) {
-        html += `<button onclick="setPageIntake(${i})" class="px-2.5 py-1 rounded text-xs font-semibold ${pageIntake === i ? 'bg-sky-600 text-white font-bold' : 'hover:bg-slate-100'}">${i}</button>`;
-      }
-      html += `<button onclick="setPageIntake(${pageIntake + 1})" ${pageIntake >= totalPages ? 'disabled class="opacity-30 p-1.5"' : 'class="p-1.5 hover:bg-slate-100 rounded"'}>▶</button>`;
-      pagCtrl.innerHTML = html;
-    }
-
-    function sortTableIntake(field) {
-      if (sortIntakeField === field) sortIntakeDir = sortIntakeDir === 'asc' ? 'desc' : 'asc';
-      else { sortIntakeField = field; sortIntakeDir = 'asc'; }
-      renderIntakeTable();
-    }
-
-    function setPageIntake(p) {
-      pageIntake = p;
-      renderIntakeTable();
-    }
-
-    function applyFiltersIntake() {
-      pageIntake = 1;
-      renderIntakeTable();
-    }
-
-    function clearFiltersIntake() {
-      document.getElementById('search-intake').value = '';
-      document.getElementById('filter-cat-intake').value = 'ALL';
-      document.getElementById('filter-stat-intake').value = 'ALL';
-      document.getElementById('filter-date-from-intake').value = '';
-      document.getElementById('filter-date-to-intake').value = '';
-      applyFiltersIntake();
-    }
-
-    // --- Tab 2 Sub-Tabs Table Rendering ---
-    function populateSubFilterDropdowns() {
-      const subList = records.filter(r => r.primaryTabId === 'operations' && r.subTabId === activeSubTab);
-      const cats = Array.from(new Set(subList.map(r => r.category))).filter(Boolean);
-      const stats = Array.from(new Set(subList.map(r => r.status))).filter(Boolean);
-
-      document.getElementById('filter-cat-sub').innerHTML = '<option value="ALL">All Categories</option>' + cats.map(c => `<option value="${c}">${c}</option>`).join('');
-      document.getElementById('filter-stat-sub').innerHTML = '<option value="ALL">All Statuses</option>' + stats.map(s => `<option value="${s}">${s}</option>`).join('');
-    }
-
-    function renderSubTable() {
-      const q = document.getElementById('search-sub').value.toLowerCase().trim();
-      const cat = document.getElementById('filter-cat-sub').value;
-      const stat = document.getElementById('filter-stat-sub').value;
-      const from = document.getElementById('filter-date-from-sub').value;
-      const to = document.getElementById('filter-date-to-sub').value;
-
-      let filtered = records.filter(r => {
-        if (r.primaryTabId !== 'operations' || r.subTabId !== activeSubTab) return false;
-        if (q) {
-          const match = Object.values(r).join(' ').toLowerCase();
-          if (!match.includes(q)) return false;
-        }
-        if (cat !== 'ALL' && r.category !== cat) return false;
-        if (stat !== 'ALL' && r.status !== stat) return false;
-        if (from && r.date.slice(0, 10) < from) return false;
-        if (to && r.date.slice(0, 10) > to) return false;
-        return true;
-      });
-
-      document.getElementById('filter-count-sub').textContent = filtered.length;
-
-      const thead = document.getElementById('thead-sub');
-      const tbody = document.getElementById('tbody-sub');
-
-      if (activeSubTab === 'quality') {
-        thead.innerHTML = `
-          <tr class="bg-slate-50/90 border-b border-slate-200 text-slate-700 text-xs font-bold uppercase">
-            <th class="px-4 py-3">QA ID</th>
-            <th class="px-4 py-3">Lead Chemist</th>
-            <th class="px-4 py-3">Lab Station</th>
-            <th class="px-4 py-3">Tested Product</th>
-            <th class="px-4 py-3 text-right">pH Level</th>
-            <th class="px-4 py-3 text-right">Somatic Count</th>
-            <th class="px-4 py-3">Antibiotic Assay</th>
-            <th class="px-4 py-3 text-right">HTST Temp</th>
-            <th class="px-4 py-3">Status</th>
-            <th class="px-4 py-3">Date</th>
-            <th class="px-4 py-3 text-right">Actions</th>
-          </tr>
-        `;
-        tbody.innerHTML = filtered.map(r => `
-          <tr class="hover:bg-sky-50/40 transition">
-            <td class="px-4 py-3 font-mono font-bold text-sky-900">${r.id}</td>
-            <td class="px-4 py-3 font-semibold text-slate-900">${r.name}</td>
-            <td class="px-4 py-3 text-slate-600">${r.location}</td>
-            <td class="px-4 py-3 text-slate-700">${r.category}</td>
-            <td class="px-4 py-3 text-right font-mono font-bold">${r.phLevel} pH</td>
-            <td class="px-4 py-3 text-right font-mono">${Number(r.somaticCount).toLocaleString()} CFU/ml</td>
-            <td class="px-4 py-3">${getStatusBadge(r.antibioticResidue)}</td>
-            <td class="px-4 py-3 text-right font-mono">${r.pasteurTemp}°C</td>
-            <td class="px-4 py-3">${getStatusBadge(r.status)}</td>
-            <td class="px-4 py-3 font-mono text-slate-500">${r.date ? r.date.replace('T', ' ') : ''}</td>
-            <td class="px-4 py-3 text-right">
-              <button onclick="openDeleteModal('${r.id}')" title="Delete" class="p-1.5 text-slate-400 hover:text-rose-600 rounded cursor-pointer">🗑️</button>
-            </td>
-          </tr>
-        `).join('');
-      } else {
-        thead.innerHTML = `
-          <tr class="bg-slate-50/90 border-b border-slate-200 text-slate-700 text-xs font-bold uppercase">
-            <th class="px-4 py-3">Dispatch ID</th>
-            <th class="px-4 py-3">Driver Lead</th>
-            <th class="px-4 py-3">Fleet Unit</th>
-            <th class="px-4 py-3">Destination Hub</th>
-            <th class="px-4 py-3">Product Line</th>
-            <th class="px-4 py-3 text-right">Quantity</th>
-            <th class="px-4 py-3 text-right">Cargo Temp</th>
-            <th class="px-4 py-3">Seal Barcode</th>
-            <th class="px-4 py-3">Status</th>
-            <th class="px-4 py-3">Date</th>
-            <th class="px-4 py-3 text-right">Actions</th>
-          </tr>
-        `;
-        tbody.innerHTML = filtered.map(r => `
-          <tr class="hover:bg-sky-50/40 transition">
-            <td class="px-4 py-3 font-mono font-bold text-sky-900">${r.id}</td>
-            <td class="px-4 py-3 font-semibold text-slate-900">${r.name}</td>
-            <td class="px-4 py-3 font-mono text-slate-700">${r.tankerId}</td>
-            <td class="px-4 py-3 text-slate-600">${r.location}</td>
-            <td class="px-4 py-3 text-slate-700">${r.category}</td>
-            <td class="px-4 py-3 text-right font-mono font-bold">${Number(r.quantity).toLocaleString()}</td>
-            <td class="px-4 py-3 text-right font-mono ${r.cargoTemp > 4.5 ? 'text-rose-600' : 'text-sky-700'}">${r.cargoTemp}°C</td>
-            <td class="px-4 py-3 font-mono text-xs text-slate-500">${r.sealNumber}</td>
-            <td class="px-4 py-3">${getStatusBadge(r.status)}</td>
-            <td class="px-4 py-3 font-mono text-slate-500">${r.date ? r.date.replace('T', ' ') : ''}</td>
-            <td class="px-4 py-3 text-right">
-              <button onclick="openDeleteModal('${r.id}')" title="Delete" class="p-1.5 text-slate-400 hover:text-rose-600 rounded cursor-pointer">🗑️</button>
-            </td>
-          </tr>
-        `).join('');
-      }
-
-      document.getElementById('pag-start-sub').textContent = filtered.length === 0 ? 0 : 1;
-      document.getElementById('pag-end-sub').textContent = filtered.length;
-      document.getElementById('pag-total-sub').textContent = filtered.length;
-    }
-
-    function applyFiltersSub() { renderSubTable(); }
-    function clearFiltersSub() {
-      document.getElementById('search-sub').value = '';
-      document.getElementById('filter-cat-sub').value = 'ALL';
-      document.getElementById('filter-stat-sub').value = 'ALL';
-      document.getElementById('filter-date-from-sub').value = '';
-      document.getElementById('filter-date-to-sub').value = '';
-      renderSubTable();
-    }
-
-    // --- Intake Form Submission & Edit Handling ---
-    function handleIntakeSubmit(e) {
-      e.preventDefault();
-
-      let hasError = false;
-      const getVal = id => document.getElementById(id).value.trim();
-      const showErr = (id, cond) => {
-        const el = document.getElementById(id);
-        if (cond) { el.classList.remove('hidden'); hasError = true; }
-        else { el.classList.add('hidden'); }
+    // Amounts are stored as whole cents so the math is exact (the real app uses Decimal).
+    function makeSeed() {
+      return {
+        account: null,
+        failed: 0,
+        lockedUntil: 0,
+        // One list per Main Head. Removing sets active to false; nothing is deleted (Rules 14).
+        lists: {
+          'MH 1': DEFAULT_LABELS.treesa.map(name => ({ name, active: true })),
+          'MH 2': DEFAULT_LABELS.daily.map(name => ({ name, active: true }))
+        },
+        entries: [
+          { id: 1, mh: 'MH 1', sh: 'Office Expense', date: '2026-10-24', name: 'Vendor Account', part: 'Operational Expense', debit: 250000, credit: 1420000 },
+          { id: 2, mh: 'MH 2', sh: 'Lenin', date: '2026-10-24', name: 'Daily Counter', part: 'Cash Receivables', debit: 0, credit: 0 }
+        ],
+        nextId: 3
       };
+    }
 
-      const name = getVal('in-name');
-      const phone = getVal('in-phone');
-      const email = getVal('in-email');
-      const location = getVal('in-location');
-      const category = getVal('in-category');
-      const status = getVal('in-status');
-      const date = getVal('in-date');
-      const liters = Number(getVal('in-liters'));
-      const fat = Number(getVal('in-fat'));
-      const snf = Number(getVal('in-snf'));
-      const temp = Number(getVal('in-temp'));
-      const silo = getVal('in-silo');
-      const notes = getVal('in-notes');
+    let state = loadState();
+    let reportFilter = defaultFilter();
+    let editingId = null;
+    let deleteId = null;
+    let lockTimer = null;
+    let page = 1;
+    let pageSize = 10;
 
-      showErr('err-in-name', !name);
-      showErr('err-in-phone', phone.replace(/\D/g, '').length < 7);
-      showErr('err-in-email', !email || !email.includes('@'));
-      showErr('err-in-location', !location);
-      showErr('err-in-category', !category);
-      showErr('err-in-status', !status);
-      showErr('err-in-date', !date);
-      showErr('err-in-liters', isNaN(liters) || liters < 100 || liters > 100000);
-      showErr('err-in-fat', isNaN(fat) || fat < 2 || fat > 12);
-      showErr('err-in-snf', isNaN(snf) || snf < 6 || snf > 14);
-      showErr('err-in-temp', isNaN(temp) || temp < -2 || temp > 20);
-      showErr('err-in-silo', !silo);
+    function defaultFilter() {
+      return { search: '', range: 'all', from: '', to: '', mh: 'ALL', sh: 'ALL', name: '', part: '', dmin: '', dmax: '', cmin: '', cmax: '' };
+    }
 
-      if (hasError) return;
+    function loadState() {
+      try {
+        const saved = localStorage.getItem(KEY);
+        return saved ? JSON.parse(saved) : makeSeed();
+      } catch (e) {
+        return makeSeed();
+      }
+    }
+    function saveState() {
+      try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) { /* storage blocked: keep working in memory */ }
+    }
 
-      if (editingRecordId) {
-        // Update
-        const idx = records.findIndex(r => r.id === editingRecordId);
-        if (idx !== -1) {
-          records[idx] = {
-            ...records[idx],
-            name, phone, email, location, category, status, date,
-            liters, fatPercentage: fat, snfPercentage: snf, temperature: temp,
-            siloId: silo, notes
-          };
-          showToast(`Record ${editingRecordId} updated successfully.`);
-        }
-        cancelEditMode();
+    // ---------- Helpers: dates and amounts ----------
+    const pad = n => String(n).padStart(2, '0');
+    const $ = id => document.getElementById(id);
+    const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+
+    // ISO (yyyy-mm-dd) -> 20-Oct-2026
+    function formatDate(iso) {
+      const [y, m, d] = iso.split('-');
+      return `${pad(d)}-${MONTHS[Number(m) - 1]}-${y}`;
+    }
+    // Accepts 20-Oct-2026 or 20/10/2026. Returns ISO or null.
+    function parseDate(text) {
+      const t = text.trim();
+      let d, m, y;
+      let match = t.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+      if (match) {
+        d = +match[1]; m = +match[2] - 1; y = +match[3];
       } else {
-        // Create
-        const newId = 'RMI-2026-' + Math.floor(1000 + Math.random() * 9000);
-        const newRec = {
-          id: newId, primaryTabId: 'intake', name, phone, email, location,
-          category, status, date, liters, fatPercentage: fat, snfPercentage: snf,
-          temperature: temp, siloId: silo, notes
-        };
-        records.unshift(newRec);
-        showToast(`New intake batch ${newId} recorded.`);
-        resetIntakeForm();
+        match = t.match(/^(\d{1,2})-([A-Za-z]{3})-(\d{4})$/);
+        if (!match) return null;
+        d = +match[1];
+        m = MONTHS.findIndex(x => x.toLowerCase() === match[2].toLowerCase());
+        y = +match[3];
+        if (m < 0) return null;
+      }
+      const check = new Date(y, m, d);
+      if (check.getFullYear() !== y || check.getMonth() !== m || check.getDate() !== d) return null;
+      return `${y}-${pad(m + 1)}-${pad(d)}`;
+    }
+    // "2,500.50" or "2500" -> cents. Returns null when invalid or negative.
+    function parseAmount(text) {
+      const t = text.trim().replace(/,/g, '');
+      if (!/^\d+(\.\d{1,2})?$/.test(t)) return null;
+      return Math.round(parseFloat(t) * 100);
+    }
+    const fmt = cents => (cents / 100).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+    // ---------- Popups ----------
+    function openModal(id) { $(id).hidden = false; }
+    function closeModal(id) { $(id).hidden = true; }
+    document.querySelectorAll('[data-close]').forEach(btn => {
+      btn.addEventListener('click', () => { btn.closest('.backdrop').hidden = true; });
+    });
+    document.querySelectorAll('.backdrop').forEach(bd => {
+      bd.addEventListener('click', e => { if (e.target === bd) bd.hidden = true; });
+    });
+
+    // ---------- Login and create account ----------
+    function renderAuth() {
+      const creating = !state.account;
+      $('auth-sub').textContent = creating ? 'Create your account to get started' : 'Please log in';
+      $('auth-confirm-wrap').hidden = !creating;
+      $('auth-btn').textContent = creating ? 'Create Account' : 'Login';
+      $('auth-pass-hint').textContent = creating ? 'Use at least 8 characters.' : '';
+      ['auth-user-err', 'auth-pass-err', 'auth-pass2-err', 'auth-form-err'].forEach(id => { $(id).textContent = ''; });
+      updateLockState();
+    }
+
+    function lockRemainingMs() { return Math.max(0, state.lockedUntil - Date.now()); }
+
+    function updateLockState() {
+      const locked = !!state.account && lockRemainingMs() > 0;
+      $('auth-btn').disabled = locked;
+      if (locked) {
+        const secs = Math.ceil(lockRemainingMs() / 1000);
+        $('auth-status').textContent = `Too many attempts. Try again in ${Math.floor(secs / 60)} min ${pad(secs % 60)} sec.`;
+        if (!lockTimer) lockTimer = setInterval(updateLockState, 1000);
+      } else {
+        $('auth-status').textContent = '';
+        clearInterval(lockTimer);
+        lockTimer = null;
+      }
+    }
+
+    $('auth-form').addEventListener('submit', e => {
+      e.preventDefault();
+      const user = $('auth-user').value.trim();
+      const pass = $('auth-pass').value;
+      $('auth-user-err').textContent = user ? '' : 'Username is required.';
+
+      if (!state.account) {
+        // Mockup stores the password in plain text. The real app stores only a PBKDF2 hash (PRD FR-3).
+        const passErr = pass.length < 8 ? 'Password must be at least 8 characters.' : '';
+        const matchErr = $('auth-pass2').value !== pass ? 'Passwords do not match.' : '';
+        $('auth-pass-err').textContent = passErr;
+        $('auth-pass2-err').textContent = matchErr;
+        if (!user || passErr || matchErr) return;
+        state.account = { username: user, password: pass };
+        saveState();
+        $('auth-pass').value = '';
+        $('auth-pass2').value = '';
+        renderAuth();
+        $('auth-status').textContent = 'Account created. Please log in.';
+        return;
       }
 
-      save();
-      populateIntakeFilterDropdowns();
-      renderIntakeTable();
-    }
-
-    function editRecord(id) {
-      const rec = records.find(r => r.id === id);
-      if (!rec) return;
-
-      editingRecordId = id;
-      document.getElementById('edit-banner-intake').classList.remove('hidden');
-      document.getElementById('edit-record-id-intake').textContent = id;
-      document.getElementById('status-badge-intake').textContent = 'EDIT MODE';
-      document.getElementById('status-badge-intake').className = 'text-[11px] font-semibold tracking-wide uppercase px-2 py-0.5 bg-amber-100 text-amber-800 border border-amber-200 rounded';
-      document.getElementById('btn-submit-intake').textContent = '✓ Update Record';
-
-      document.getElementById('in-id').value = rec.id;
-      document.getElementById('in-name').value = rec.name || '';
-      document.getElementById('in-phone').value = rec.phone || '';
-      document.getElementById('in-email').value = rec.email || '';
-      document.getElementById('in-location').value = rec.location || '';
-      document.getElementById('in-category').value = rec.category || '';
-      document.getElementById('in-status').value = rec.status || '';
-      document.getElementById('in-date').value = rec.date || '';
-      document.getElementById('in-liters').value = rec.liters || '';
-      document.getElementById('in-fat').value = rec.fatPercentage || '';
-      document.getElementById('in-snf').value = rec.snfPercentage || '';
-      document.getElementById('in-temp').value = rec.temperature || '';
-      document.getElementById('in-silo').value = rec.siloId || '';
-      document.getElementById('in-notes').value = rec.notes || '';
-
-      window.scrollTo({ top: 120, behavior: 'smooth' });
-    }
-
-    function cancelEditMode() {
-      editingRecordId = null;
-      document.getElementById('edit-banner-intake').classList.add('hidden');
-      document.getElementById('status-badge-intake').textContent = 'NEW ENTRY';
-      document.getElementById('status-badge-intake').className = 'text-[11px] font-semibold tracking-wide uppercase px-2 py-0.5 bg-emerald-100 text-emerald-800 border border-emerald-200 rounded';
-      document.getElementById('btn-submit-intake').textContent = '✨ Record Milk Intake Batch';
-      resetIntakeForm();
-    }
-
-    function resetIntakeForm() {
-      document.getElementById('form-intake').reset();
-      document.getElementById('in-id').value = '';
-      const now = new Date();
-      now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
-      document.getElementById('in-date').value = now.toISOString().slice(0, 16);
-      ['name','phone','email','location','category','status','date','liters','fat','snf','temp','silo'].forEach(f => {
-        const el = document.getElementById('err-in-' + f);
-        if (el) el.classList.add('hidden');
-      });
-    }
-
-    // --- Delete Modal ---
-    function openDeleteModal(id) {
-      pendingDeleteId = id;
-      const rec = records.find(r => r.id === id);
-      document.getElementById('delete-modal-msg').textContent = `Are you sure you want to permanently delete record ${id} (${rec ? rec.name : ''})? This action cannot be undone.`;
-      document.getElementById('modal-delete').classList.remove('hidden');
-    }
-
-    function closeDeleteModal() {
-      pendingDeleteId = null;
-      document.getElementById('modal-delete').classList.add('hidden');
-    }
-
-    function confirmDelete() {
-      if (!pendingDeleteId) return;
-      records = records.filter(r => r.id !== pendingDeleteId);
-      showToast(`Record ${pendingDeleteId} removed.`);
-      closeDeleteModal();
-      save();
-      renderIntakeTable();
-      renderSubTable();
-    }
-
-    // --- Toast Alerts ---
-    function showToast(msg) {
-      const container = document.getElementById('toast-container');
-      const div = document.createElement('div');
-      div.className = "p-3.5 rounded-xl border border-emerald-200 bg-emerald-50 text-emerald-950 shadow-lg flex items-center justify-between gap-3 text-xs font-semibold animate-slideIn";
-      div.innerHTML = `<span>✓ ${msg}</span><button onclick="this.parentElement.remove()" class="text-emerald-700 hover:text-emerald-900 cursor-pointer">✕</button>`;
-      container.appendChild(div);
-      setTimeout(() => div.remove(), 4000);
-    }
-
-    // --- CSV Export ---
-    document.getElementById('btn-export-csv').addEventListener('click', () => {
-      const activeList = activePrimaryTab === 'intake'
-        ? records.filter(r => r.primaryTabId === 'intake')
-        : records.filter(r => r.primaryTabId === 'operations' && r.subTabId === activeSubTab);
-
-      if (activeList.length === 0) return alert('No records to export');
-      const keys = Object.keys(activeList[0]);
-      let csv = keys.join(',') + '\n';
-      activeList.forEach(r => {
-        csv += keys.map(k => `"${(r[k] ?? '').toString().replace(/"/g, '""')}"`).join(',') + '\n';
-      });
-      const blob = new Blob([csv], { type: 'text/csv' });
-      const a = document.createElement('a');
-      a.href = URL.createObjectURL(blob);
-      a.download = `LactaFlow_${activePrimaryTab}_export.csv`;
-      a.click();
-      showToast('Exported CSV file.');
-    });
-
-    // --- Reset Demo Data ---
-    document.getElementById('btn-reset-data').addEventListener('click', () => {
-      if (confirm('Restore factory demo seed records? Any custom additions will be reset.')) {
-        records = [...INITIAL_RECORDS];
-        save();
-        renderIntakeTable();
-        renderSubTable();
-        showToast('Restored factory demo dataset.');
+      if (lockRemainingMs() > 0) return;
+      if (user === state.account.username && pass === state.account.password) {
+        state.failed = 0;
+        state.lockedUntil = 0;
+        saveState();
+        showApp();
+        return;
       }
+      state.failed++;
+      if (state.failed >= MAX_ATTEMPTS) {
+        state.lockedUntil = Date.now() + LOCK_MS;
+        state.failed = 0;
+        saveState();
+        updateLockState();
+      } else {
+        saveState();
+        $('auth-form-err').textContent = `Wrong username or password. ${MAX_ATTEMPTS - state.failed} tries left.`;
+      }
+      $('auth-pass').value = '';
     });
 
-    // Initialize on load
-    window.addEventListener('DOMContentLoaded', () => {
-      const now = new Date();
-      now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
-      document.getElementById('in-date').value = now.toISOString().slice(0, 16);
-      populateIntakeFilterDropdowns();
-      populateSubFilterDropdowns();
-      updateBadgesAndStats();
-      renderIntakeTable();
+    // ---------- App shell ----------
+    function showApp() {
+      $('auth').hidden = true;
+      $('app').hidden = false;
+      $('auth-pass').value = '';
+      resetEntryScreen();
+      showPage('entry');
+    }
+    function showAuth() {
+      $('app').hidden = true;
+      $('auth').hidden = false;
+      $('auth-pass').value = '';
+      renderAuth();
+    }
+    $('logout').addEventListener('click', showAuth);
+
+    function showPage(name) {
+      document.querySelectorAll('.nav-item[data-page]').forEach(b => b.classList.toggle('active', b.dataset.page === name));
+      $('page-entry').hidden = name !== 'entry';
+      $('page-report').hidden = name !== 'report';
+      if (name === 'entry') refreshEntryForm();
+      if (name === 'report') {
+        editingId = null;
+        setFilterInputs(reportFilter);
+        renderReport();
+      }
+    }
+    document.querySelectorAll('.nav-item[data-page]').forEach(b => {
+      b.addEventListener('click', () => showPage(b.dataset.page));
     });
+
+    // ---------- Main Entry ----------
+    // Reads the form values by name. Shared by Main Entry and the report edit (Architecture 4.1).
+    function readTxn(get) {
+      const errors = {};
+      const date = parseDate(get('date'));
+      const name = get('name').trim();
+      const part = get('part').trim();
+      const debit = parseAmount(get('debit'));
+      const credit = parseAmount(get('credit'));
+      if (!date) errors.date = 'Enter a date as 20-Oct-2026 or 20/10/2026.';
+      if (!name) errors.name = 'Name is required.';
+      else if (name.length > LIMITS.name) errors.name = `Name can be up to ${LIMITS.name} characters.`;
+      if (!part) errors.part = 'Particulars is required.';
+      else if (part.length > LIMITS.part) errors.part = `Particulars can be up to ${LIMITS.part} characters.`;
+      if (debit === null) errors.debit = 'Enter 0.00 or more, with up to 2 decimals.';
+      if (credit === null) errors.credit = 'Enter 0.00 or more, with up to 2 decimals.';
+      const bothZero = debit === 0 && credit === 0;
+      const valid = Object.keys(errors).length === 0 && !bothZero;
+      return { errors, valid, bothZero, values: { date, name, part, debit, credit } };
+    }
+    const formGet = f => $(f === 'date' ? 'f-date' : 'f-' + f).value;
+
+    function currentMh() { return document.querySelector('input[name="mh"]:checked').value; }
+    function listFor(mh) { return state.lists[mh]; }
+    function activeLabels(mh) { return listFor(mh).filter(s => s.active).map(s => s.name); }
+
+    // Sub-Head dropdown for the selected Main Head, starting at "-Select-" (PRD FR-11).
+    function renderSubheads(keep) {
+      const sel = $('sh-select');
+      const names = activeLabels(currentMh());
+      sel.innerHTML = '<option value="">-Select-</option>' +
+        names.map(n => `<option value="${esc(n)}">${esc(n)}</option>`).join('');
+      sel.value = names.includes(keep) ? keep : '';
+    }
+
+    // Report sub-head filter: one Main Head's labels, or all labels for All Main Heads.
+    // Includes removed labels so old entries can still be filtered.
+    function renderSubheadFilter(keep) {
+      const mh = $('f-mh').value;
+      const heads = mh === 'ALL' ? Object.keys(state.lists) : [mh];
+      const names = [...new Set(heads.flatMap(h => listFor(h).map(s => s.name)))];
+      $('f-sh').innerHTML = '<option value="ALL">All Sub-Heads</option>' +
+        names.map(n => `<option value="${esc(n)}">${esc(n)}</option>`).join('');
+      $('f-sh').value = names.includes(keep) ? keep : 'ALL';
+    }
+
+    function refreshEntryForm() {
+      const hasSh = $('sh-select').value !== '';
+
+      ['f-date', 'f-name', 'f-part', 'f-debit', 'f-credit'].forEach(id => { $(id).disabled = !hasSh; });
+      $('date-btn').disabled = !hasSh;
+      $('sh-hint').hidden = hasSh;
+      $('sh-remove').disabled = !hasSh;
+
+      const result = readTxn(formGet);
+      TXN_FIELDS.forEach(k => {
+        const el = document.querySelector(`[data-field="${k}"]`);
+        // Errors show only after the user has left the field, so new fields do not start red.
+        $('e-' + k).textContent = el.dataset.touched ? (result.errors[k] || '') : '';
+      });
+
+      $('amt-hint').hidden = !(hasSh && result.bothZero);
+      $('btn-submit').disabled = !(hasSh && result.valid);
+    }
+
+    // Blur: mark touched, and convert typed dates and amounts to the display format.
+    document.querySelectorAll('[data-field]').forEach(el => {
+      el.addEventListener('blur', () => {
+        el.dataset.touched = '1';
+        if (el.dataset.field === 'date') {
+          const iso = parseDate(el.value);
+          if (iso) el.value = formatDate(iso);   // 20/10/2026 -> 20-Oct-2026
+        }
+        if (el.dataset.field === 'debit' || el.dataset.field === 'credit') {
+          const cents = parseAmount(el.value);
+          if (cents !== null) el.value = fmt(cents);
+        }
+        refreshEntryForm();
+      });
+      el.addEventListener('input', refreshEntryForm);
+    });
+
+    // Date picker: the calendar button opens the hidden native date input.
+    $('date-btn').addEventListener('click', () => {
+      const picker = $('date-picker');
+      if (picker.showPicker) picker.showPicker(); else picker.click();
+    });
+    $('date-picker').addEventListener('change', e => {
+      if (!e.target.value) return;
+      $('f-date').value = formatDate(e.target.value);
+      $('f-date').dataset.touched = '1';
+      refreshEntryForm();
+    });
+
+    function clearTransactionFields() {
+      $('f-date').value = '';
+      $('f-name').value = '';
+      $('f-part').value = '';
+      $('f-debit').value = '0.00';
+      $('f-credit').value = '0.00';
+      document.querySelectorAll('[data-field]').forEach(el => { el.dataset.touched = ''; });
+      TXN_FIELDS.forEach(k => { $('e-' + k).textContent = ''; });
+    }
+
+    // Main Head change: the two lists are different, so the sub-head goes back to "-Select-".
+    document.querySelectorAll('input[name="mh"]').forEach(radio => {
+      radio.addEventListener('change', () => {
+        renderSubheads('');
+        clearTransactionFields();
+        refreshEntryForm();
+      });
+    });
+
+    // Changing the sub-head back to -Select- clears the transaction fields (PRD A9).
+    $('sh-select').addEventListener('change', () => {
+      if ($('sh-select').value === '') clearTransactionFields();
+      refreshEntryForm();
+    });
+
+    function showMsg(id, kind, text) {
+      const el = $(id);
+      el.className = 'msg ' + kind;
+      el.textContent = text;
+      el.hidden = false;
+    }
+
+    $('entry-form').addEventListener('submit', e => {
+      e.preventDefault();
+      const result = readTxn(formGet);
+      if (!result.valid || $('sh-select').value === '') return;
+      const v = result.values;
+      state.entries.push({
+        id: state.nextId++,
+        mh: currentMh(),
+        sh: $('sh-select').value,
+        date: v.date,
+        name: v.name,
+        part: v.part,
+        debit: v.debit,
+        credit: v.credit
+      });
+      saveState();
+      showMsg('entry-msg', 'success', `Entry saved to ${formatDate(v.date)}.`);
+      clearTransactionFields();
+      refreshEntryForm();
+    });
+
+    $('btn-clear').addEventListener('click', () => {
+      clearTransactionFields();
+      $('entry-msg').hidden = true;
+      refreshEntryForm();
+    });
+
+    function resetEntryScreen() {
+      document.querySelector('input[name="mh"][value="MH 2"]').checked = true; // Daily Collection default (FR-10)
+      renderSubheads('');
+      clearTransactionFields();
+      $('entry-msg').hidden = true;
+      refreshEntryForm();
+    }
+
+    // Add sub-head popup (+): adds to the list of the selected Main Head.
+    function updateAddHint() {
+      const head = HEADS[currentMh()];
+      $('subhead-target').textContent = `Adds to the ${head.label} list.`;
+      const name = $('subhead-input').value.trim();
+      $('subhead-value').textContent = name ? `Stored value: ${slug(name)}` : '';
+    }
+    $('sh-add').addEventListener('click', () => {
+      $('subhead-input').value = '';
+      $('subhead-err').textContent = '';
+      $('subhead-add').disabled = true;
+      updateAddHint();
+      openModal('modal-subhead');
+      $('subhead-input').focus();
+    });
+    $('subhead-input').addEventListener('input', () => {
+      const name = $('subhead-input').value.trim();
+      const dup = listFor(currentMh()).some(s => s.name.toLowerCase() === name.toLowerCase());
+      $('subhead-err').textContent = dup ? 'This Sub-Head already exists.' : '';
+      $('subhead-add').disabled = !name || dup;
+      updateAddHint();
+    });
+    $('subhead-add').addEventListener('click', () => {
+      const name = $('subhead-input').value.trim();
+      if (!name || name.length > LIMITS.sub) {
+        $('subhead-err').textContent = `Use 1 to ${LIMITS.sub} characters.`;
+        return;
+      }
+      listFor(currentMh()).push({ name, active: true });
+      saveState();
+      closeModal('modal-subhead');
+      renderSubheads(name);
+      refreshEntryForm();
+    });
+
+    // Remove sub-head popup (−): deactivates the selected label in the selected list.
+    $('sh-remove').addEventListener('click', () => {
+      const name = $('sh-select').value;
+      if (!name) return;
+      $('remove-text').textContent = `Remove "${name}" from the list?`;
+      openModal('modal-remove');
+    });
+    $('remove-confirm').addEventListener('click', () => {
+      const item = listFor(currentMh()).find(s => s.name === $('sh-select').value);
+      if (item) item.active = false;   // deactivate, never delete (Rules 14)
+      saveState();
+      closeModal('modal-remove');
+      renderSubheads('');
+      clearTransactionFields();
+      refreshEntryForm();
+    });
+
+    // ---------- Expense Report: filters ----------
+    function readFilterInputs() {
+      return {
+        search: $('f-search').value.trim(),
+        range: $('dr-range').value,
+        from: $('dr-from').value.trim(),
+        to: $('dr-to').value.trim(),
+        mh: $('f-mh').value,
+        sh: $('f-sh').value,
+        name: $('f-name-filter').value.trim(),
+        part: $('f-part-filter').value.trim(),
+        dmin: $('f-dmin').value.trim(),
+        dmax: $('f-dmax').value.trim(),
+        cmin: $('f-cmin').value.trim(),
+        cmax: $('f-cmax').value.trim()
+      };
+    }
+
+    function setFilterInputs(f) {
+      $('f-search').value = f.search;
+      $('dr-range').value = f.range;
+      $('dr-from').value = f.from;
+      $('dr-to').value = f.to;
+      $('f-mh').value = f.mh;
+      renderSubheadFilter(f.sh);
+      $('f-name-filter').value = f.name;
+      $('f-part-filter').value = f.part;
+      $('f-dmin').value = f.dmin;
+      $('f-dmax').value = f.dmax;
+      $('f-cmin').value = f.cmin;
+      $('f-cmax').value = f.cmax;
+      document.querySelectorAll('.custom-range').forEach(el => { el.hidden = f.range !== 'custom'; });
+    }
+
+    // Turns the date range into ISO bounds. Returns { from, to } ('' means no limit), or { error }.
+    function dateBounds(f) {
+      const now = new Date();
+      const y = now.getFullYear();
+      const m = now.getMonth() + 1;
+      const monthEnd = (yy, mm) => `${yy}-${pad(mm)}-${pad(new Date(yy, mm, 0).getDate())}`;
+      if (f.range === 'this-month') return { from: `${y}-${pad(m)}-01`, to: monthEnd(y, m) };
+      if (f.range === 'last-month') {
+        const ly = m === 1 ? y - 1 : y;
+        const lm = m === 1 ? 12 : m - 1;
+        return { from: `${ly}-${pad(lm)}-01`, to: monthEnd(ly, lm) };
+      }
+      if (f.range === 'this-year') return { from: `${y}-01-01`, to: `${y}-12-31` };
+      if (f.range === 'custom') {
+        const from = f.from ? parseDate(f.from) : '';
+        const to = f.to ? parseDate(f.to) : '';
+        if (f.from && !from) return { error: 'From date: enter as 20-Oct-2026 or 20/10/2026.' };
+        if (f.to && !to) return { error: 'To date: enter as 20-Oct-2026 or 20/10/2026.' };
+        if (from && to && from > to) return { error: 'From date must be before To date.' };
+        return { from: from || '', to: to || '' };
+      }
+      return { from: '', to: '' };
+    }
+
+    // Checks the filter inputs before they are applied. Returns an error message or ''.
+    function filterError(f) {
+      const bounds = dateBounds(f);
+      if (bounds.error) return bounds.error;
+      const amounts = [f.dmin, f.dmax, f.cmin, f.cmax];
+      if (amounts.some(a => a && parseAmount(a) === null)) return 'Amount filters: enter numbers like 2,500.00 with up to 2 decimals.';
+      const pairs = [[f.dmin, f.dmax], [f.cmin, f.cmax]];
+      if (pairs.some(([lo, hi]) => lo && hi && parseAmount(lo) > parseAmount(hi))) return 'The "From" amount must not be more than the "To" amount.';
+      return '';
+    }
+
+    function applyFilters() {
+      const f = readFilterInputs();
+      const err = filterError(f);
+      $('filter-err').textContent = err;
+      if (err) return;
+      reportFilter = f;
+      page = 1;
+      editingId = null;
+      renderReport();
+    }
+
+    function clearFilters() {
+      reportFilter = defaultFilter();
+      page = 1;
+      setFilterInputs(reportFilter);
+      $('filter-err').textContent = '';
+      editingId = null;
+      renderReport();
+    }
+
+    $('f-mh').addEventListener('change', () => renderSubheadFilter($('f-sh').value));
+    $('dr-range').addEventListener('change', () => {
+      document.querySelectorAll('.custom-range').forEach(el => { el.hidden = $('dr-range').value !== 'custom'; });
+    });
+    $('btn-filter').addEventListener('click', applyFilters);
+    $('btn-clear-filters').addEventListener('click', clearFilters);
+    $('f-search').addEventListener('keydown', e => { if (e.key === 'Enter') applyFilters(); });
+
+    // Rows that match the applied filters: date range, Main Head, Sub-Head, Name, Particulars,
+    // Debit and Credit min/max, and the search box (name, particulars, or amount).
+    function visibleRows() {
+      const f = reportFilter;
+      const bounds = dateBounds(f);
+      const bound = text => (text ? parseAmount(text) : null);
+      const dmin = bound(f.dmin), dmax = bound(f.dmax), cmin = bound(f.cmin), cmax = bound(f.cmax);
+      const term = f.search.toLowerCase();
+      const digits = f.search.replace(/,/g, '');
+      const numeric = /^\d+(\.\d+)?$/.test(digits);
+      const has = (text, part) => text.toLowerCase().includes(part.toLowerCase());
+
+      return state.entries
+        .filter(e => {
+          if (f.mh !== 'ALL' && e.mh !== f.mh) return false;
+          if (f.sh !== 'ALL' && e.sh !== f.sh) return false;
+          if (bounds.from && e.date < bounds.from) return false;
+          if (bounds.to && e.date > bounds.to) return false;
+          if (f.name && !has(e.name, f.name)) return false;
+          if (f.part && !has(e.part, f.part)) return false;
+          if (dmin !== null && e.debit < dmin) return false;
+          if (dmax !== null && e.debit > dmax) return false;
+          if (cmin !== null && e.credit < cmin) return false;
+          if (cmax !== null && e.credit > cmax) return false;
+          if (term) {
+            const textHit = has(e.name, term) || has(e.part, term);
+            // Amount search: "2500", "2500.00" and "2,500" all match 2,500.00.
+            const amountHit = numeric && [e.debit, e.credit].some(c => (c / 100).toFixed(2).includes(digits));
+            if (!textHit && !amountHit) return false;
+          }
+          return true;
+        })
+        .sort((a, b) => a.date.localeCompare(b.date) || a.id - b.id);
+    }
+
+    // ---------- Expense Report: table ----------
+    function headLabel(mh) { return HEADS[mh] ? HEADS[mh].label : mh; }
+
+    function renderReport() {
+      const rows = visibleRows();
+      const pages = Math.max(1, Math.ceil(rows.length / pageSize));
+      page = Math.min(Math.max(1, page), pages);
+      const start = (page - 1) * pageSize;
+      const shown = rows.slice(start, start + pageSize);
+
+      if (rows.length === 0) {
+        $('report-body').innerHTML = '<tr><td colspan="8" class="empty">No entries match these filters.</td></tr>';
+        $('report-foot').innerHTML = '';
+      } else {
+        $('report-body').innerHTML = shown.map(r => r.id === editingId ? editRowHtml(r) : viewRowHtml(r)).join('');
+        const totalDebit = rows.reduce((s, r) => s + r.debit, 0);
+        const totalCredit = rows.reduce((s, r) => s + r.credit, 0);
+        $('report-foot').innerHTML = `
+          <tr class="totals">
+            <td colspan="5">TOTAL (all ${rows.length} matching rows)</td>
+            <td class="num debit">${fmt(totalDebit)}</td>
+            <td class="num credit">${fmt(totalCredit)}</td>
+            <td></td>
+          </tr>`;
+      }
+
+      renderPager(rows.length, pages, start, shown.length);
+      renderSummaries();
+    }
+
+    function renderPager(total, pages, start, count) {
+      $('pager').hidden = total === 0;
+      $('pager-info').textContent = total === 0 ? '' : `Showing ${start + 1} to ${start + count} of ${total} entries`;
+      $('pg-prev').disabled = page <= 1;
+      $('pg-next').disabled = page >= pages;
+      // Page buttons: the first and last page, and two pages either side of the current one.
+      const nums = [];
+      for (let p = 1; p <= pages; p++) {
+        if (p === 1 || p === pages || Math.abs(p - page) <= 2) nums.push(p);
+      }
+      let html = '';
+      let last = 0;
+      nums.forEach(p => {
+        if (p - last > 1) html += '<span class="pg-gap">…</span>';
+        html += `<button type="button" class="pg-btn${p === page ? ' active' : ''}" data-page="${p}">${p}</button>`;
+        last = p;
+      });
+      $('pg-numbers').innerHTML = html;
+    }
+
+    $('pg-numbers').addEventListener('click', e => {
+      const btn = e.target.closest('[data-page]');
+      if (!btn) return;
+      page = Number(btn.dataset.page);
+      renderReport();
+    });
+    $('pg-prev').addEventListener('click', () => { page--; renderReport(); });
+    $('pg-next').addEventListener('click', () => { page++; renderReport(); });
+    $('page-size').addEventListener('change', () => {
+      pageSize = Number($('page-size').value);
+      page = 1;
+      renderReport();
+    });
+
+    function viewRowHtml(r) {
+      return `
+        <tr>
+          <td>${formatDate(r.date)}</td>
+          <td>${esc(headLabel(r.mh))}</td>
+          <td>${esc(r.sh)}</td>
+          <td>${esc(r.name)}</td>
+          <td>${esc(r.part)}</td>
+          <td class="num debit">${fmt(r.debit)}</td>
+          <td class="num credit">${fmt(r.credit)}</td>
+          <td>
+            <button class="icon-btn" data-edit="${r.id}" title="Edit">✎</button>
+            <button class="icon-btn" data-delete="${r.id}" title="Delete">🗑</button>
+          </td>
+        </tr>`;
+    }
+
+    // In inline edit, Main Head and Sub-Head are dropdowns (Design.md 6.1, PRD FR-22).
+    // Removed sub-heads stay in the list only for the entry that already uses them.
+    function mhOptionsHtml(selected) {
+      return Object.keys(HEADS).map(code =>
+        `<option value="${code}"${code === selected ? ' selected' : ''}>${HEADS[code].label}</option>`).join('');
+    }
+    function subheadOptionsHtml(mh, current) {
+      const items = listFor(mh).filter(s => s.active || s.name === current);
+      return '<option value="">-Select-</option>' + items.map(s =>
+        `<option value="${esc(s.name)}"${s.name === current ? ' selected' : ''}>${esc(s.name)}</option>`).join('');
+    }
+
+    function editRowHtml(r) {
+      return `
+        <tr>
+          <td><input class="cell-input" data-cell="date" value="${formatDate(r.date)}"><div class="err" data-err="date"></div></td>
+          <td><select class="cell-input" data-cell="mh">${mhOptionsHtml(r.mh)}</select></td>
+          <td><select class="cell-input" data-cell="sh">${subheadOptionsHtml(r.mh, r.sh)}</select><div class="err" data-err="sh"></div></td>
+          <td><input class="cell-input" data-cell="name" value="${esc(r.name)}"><div class="err" data-err="name"></div></td>
+          <td><input class="cell-input" data-cell="part" value="${esc(r.part)}"><div class="err" data-err="part"></div></td>
+          <td><input class="cell-input amount" data-cell="debit" value="${fmt(r.debit)}"><div class="err" data-err="debit"></div></td>
+          <td><input class="cell-input amount" data-cell="credit" value="${fmt(r.credit)}"><div class="err" data-err="credit"></div></td>
+          <td>
+            <button class="icon-btn" data-save="${r.id}" title="Save">✓</button>
+            <span class="hint">Esc cancels</span>
+          </td>
+        </tr>`;
+    }
+
+    $('report-body').addEventListener('click', e => {
+      const edit = e.target.closest('[data-edit]');
+      const save = e.target.closest('[data-save]');
+      const del = e.target.closest('[data-delete]');
+      if (edit) { editingId = Number(edit.dataset.edit); renderReport(); }
+      if (save) saveRowEdit(Number(save.dataset.save));
+      if (del) { deleteId = Number(del.dataset.delete); openModal('modal-delete'); }
+    });
+
+    // Changing the Main Head in an open row refreshes its Sub-Head list. The old Sub-Head is
+    // kept only if it also exists in the new list; otherwise the row shows "-Select-".
+    $('report-body').addEventListener('change', e => {
+      const mhSelect = e.target.closest('[data-cell="mh"]');
+      if (!mhSelect) return;
+      const shSelect = mhSelect.closest('tr').querySelector('[data-cell="sh"]');
+      shSelect.innerHTML = subheadOptionsHtml(mhSelect.value, shSelect.value);
+    });
+
+    function readTxnFromRow(row) {
+      return readTxn(f => row.querySelector(`[data-cell="${f}"]`).value);
+    }
+
+    function saveRowEdit(id) {
+      const row = $('report-body').querySelector(`[data-save="${id}"]`).closest('tr');
+      const result = readTxnFromRow(row);
+      TXN_FIELDS.forEach(k => { row.querySelector(`[data-err="${k}"]`).textContent = result.errors[k] || ''; });
+      if (result.bothZero) row.querySelector('[data-err="credit"]').textContent = 'Debit or Credit must be above 0.00.';
+      const mh = row.querySelector('[data-cell="mh"]').value;
+      const sh = row.querySelector('[data-cell="sh"]').value;
+      row.querySelector('[data-err="sh"]').textContent = sh ? '' : 'Select a Sub-Head.';
+      if (!result.valid || !sh) return;
+
+      const entry = state.entries.find(en => en.id === id);
+      Object.assign(entry, result.values, { mh, sh });
+      saveState();
+      editingId = null;
+      renderReport();
+    }
+
+    // Esc cancels an inline edit, or closes an open popup.
+    document.addEventListener('keydown', e => {
+      if (e.key !== 'Escape') return;
+      if (editingId !== null) { editingId = null; renderReport(); return; }
+      document.querySelectorAll('.backdrop').forEach(bd => { bd.hidden = true; });
+    });
+
+    $('delete-confirm').addEventListener('click', () => {
+      state.entries = state.entries.filter(en => en.id !== deleteId);   // only after confirmation (FR-23)
+      saveState();
+      closeModal('modal-delete');
+      editingId = null;
+      renderReport();
+    });
+
+    // ---------- Expense Report: monthly and yearly summary cards ----------
+    // Totals per sub-head for the given entries. Only sub-heads with at least one entry are ranked.
+    function summarize(list) {
+      const groups = {};
+      list.forEach(e => {
+        const g = groups[e.sh] || (groups[e.sh] = { name: e.sh, debit: 0, credit: 0 });
+        g.debit += e.debit;
+        g.credit += e.credit;
+      });
+      const subs = Object.values(groups);
+      const sum = key => subs.reduce((s, g) => s + g[key], 0);
+      // Ties are broken by name, so the result is always the same.
+      const ranked = key => [...subs].sort((a, b) => a[key] - b[key] || a.name.localeCompare(b.name));
+      const extremes = key => {
+        const sorted = ranked(key);
+        return sorted.length ? { min: sorted[0], max: sorted[sorted.length - 1] } : { min: null, max: null };
+      };
+      return {
+        debitTotal: sum('debit'),
+        creditTotal: sum('credit'),
+        debit: extremes('debit'),
+        credit: extremes('credit')
+      };
+    }
+
+    function statCard(label, value, sub, cls, valueIsAmount) {
+      const valueClass = [cls, valueIsAmount ? 'amount-value' : ''].filter(Boolean).join(' ');
+      return `
+        <div class="stat">
+          <div class="stat-label">${label}</div>
+          <div class="stat-value ${valueClass}">${value}</div>
+          ${sub ? `<div class="stat-sub ${cls}">${sub}</div>` : ''}
+        </div>`;
+    }
+
+    // The six cards, in the order the customer asked for (row 1 debit, row 2 credit).
+    function summaryCards(list) {
+      const s = summarize(list);
+      const subName = g => (g ? esc(g.name) : '—');
+      const subAmount = (g, key) => (g ? fmt(g[key]) : '0.00');
+      return [
+        statCard('1. Debit (Total Amount)', fmt(s.debitTotal), '', 'debit', true),
+        statCard('2. Most Debited Sub-Head', subName(s.debit.max), subAmount(s.debit.max, 'debit'), 'debit', false),
+        statCard('3. Least Debited Sub-Head', subName(s.debit.min), subAmount(s.debit.min, 'debit'), 'debit', false),
+        statCard('4. Credit (Total Amount)', fmt(s.creditTotal), '', 'credit', true),
+        statCard('5. Most Credited Sub-Head', subName(s.credit.max), subAmount(s.credit.max, 'credit'), 'credit', false),
+        statCard('6. Least Credited Sub-Head', subName(s.credit.min), subAmount(s.credit.min, 'credit'), 'credit', false)
+      ].join('');
+    }
+
+    function renderSummaries() {
+      // Month and year lists come from the entries that exist; the latest one is selected by default.
+      const months = [...new Set(state.entries.map(e => e.date.slice(0, 7)))].sort().reverse();
+      const years = [...new Set(state.entries.map(e => e.date.slice(0, 4)))].sort().reverse();
+      const monthSel = $('month-pick');
+      const yearSel = $('year-pick');
+      const keepM = monthSel.value;
+      const keepY = yearSel.value;
+
+      monthSel.innerHTML = months.length
+        ? months.map(m => `<option value="${m}">${MONTHS[Number(m.slice(5, 7)) - 1]} ${m.slice(0, 4)}</option>`).join('')
+        : '<option value="">No entries</option>';
+      monthSel.value = months.includes(keepM) ? keepM : (months[0] || '');
+
+      yearSel.innerHTML = years.length
+        ? years.map(y => `<option value="${y}">${y}</option>`).join('')
+        : '<option value="">No entries</option>';
+      yearSel.value = years.includes(keepY) ? keepY : (years[0] || '');
+
+      const monthEntries = monthSel.value ? state.entries.filter(e => e.date.startsWith(monthSel.value)) : [];
+      const yearEntries = yearSel.value ? state.entries.filter(e => e.date.startsWith(yearSel.value)) : [];
+      $('stats-month').innerHTML = summaryCards(monthEntries);
+      $('stats-year').innerHTML = summaryCards(yearEntries);
+    }
+
+    $('month-pick').addEventListener('change', renderSummaries);
+    $('year-pick').addEventListener('change', renderSummaries);
+
+    // ---------- Change password (PRD FR-37 to FR-41) ----------
+    let toastTimer = null;
+
+    function openPasswordModal() {
+      ['pw-current', 'pw-new', 'pw-confirm'].forEach(id => { $(id).value = ''; });
+      ['pw-current-err', 'pw-new-err', 'pw-confirm-err', 'pw-form-err'].forEach(id => { $(id).textContent = ''; });
+      $('pw-save').disabled = true;
+      openModal('modal-password');
+      $('pw-current').focus();
+    }
+
+    // Save stays disabled until all three fields have a value (FR-38).
+    ['pw-current', 'pw-new', 'pw-confirm'].forEach(id => {
+      $(id).addEventListener('input', () => {
+        $('pw-save').disabled = !['pw-current', 'pw-new', 'pw-confirm'].every(f => $(f).value.length > 0);
+      });
+    });
+    $('pw-confirm').addEventListener('keydown', e => { if (e.key === 'Enter' && !$('pw-save').disabled) $('pw-save').click(); });
+    $('change-pw').addEventListener('click', openPasswordModal);
+
+    function showToast(text) {
+      $('toast').textContent = text;
+      $('toast').hidden = false;
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => { $('toast').hidden = true; }, 3000);
+    }
+
+    $('pw-save').addEventListener('click', () => {
+      const current = $('pw-current').value;
+      const next = $('pw-new').value;
+      const repeat = $('pw-confirm').value;
+      ['pw-current-err', 'pw-new-err', 'pw-confirm-err', 'pw-form-err'].forEach(id => { $(id).textContent = ''; });
+
+      if (lockRemainingMs() > 0) {
+        $('pw-form-err').textContent = 'Too many attempts. Try again later.';
+        return;
+      }
+      // A wrong current password counts toward the same lock as login (FR-39).
+      if (current !== state.account.password) {
+        state.failed++;
+        if (state.failed >= MAX_ATTEMPTS) {
+          state.lockedUntil = Date.now() + LOCK_MS;
+          state.failed = 0;
+          saveState();
+          closeModal('modal-password');
+          updateLockState();
+          return;
+        }
+        saveState();
+        $('pw-current-err').textContent = `Wrong current password. ${MAX_ATTEMPTS - state.failed} tries left.`;
+        return;
+      }
+      if (next.length < 8) { $('pw-new-err').textContent = 'Use at least 8 characters.'; return; }
+      if (next === current) { $('pw-new-err').textContent = 'The new password must be different from the current one.'; return; }
+      if (repeat !== next) { $('pw-confirm-err').textContent = 'Passwords do not match.'; return; }
+
+      // Mockup stores the password in plain text; the real app stores only the new hash (FR-41).
+      state.account.password = next;
+      state.failed = 0;
+      saveState();
+      closeModal('modal-password');
+      showToast('Password changed.');
+    });
+
+    // ---------- Start ----------
+    renderSubheads('');
+    showAuth();
   </script>
 </body>
 </html>
