@@ -2,6 +2,14 @@
 
 All notable changes to Expense Ledger are recorded here (Rules 33). Dates use DD-Mon-YYYY.
 
+## Unreleased
+
+### Added
+- Upgrades: the version is set once, in `app/core/config.py`. `build.ps1` passes it to the exe properties, the MSI and the setup EXE.
+- Saved files now carry a data version (`state.json`). On start-up the app backs up the login and sub-head files to `Backups` and runs any needed migrations before opening. Files saved by a newer version are refused instead of being changed.
+- Update check: when `UPDATE_URL` in `config.py` is set, the app reads a small version file in the background and shows an "Update to X" button in the sidebar. It is off by default.
+- Tooltips on field headings, DD/MM/YYYY dates on screen, larger bold text, and a re-ordered Expense Report.
+
 ## 1.0.0 – 27-Oct-2026
 
 Developed by Tenwin James.

@@ -43,3 +43,7 @@ def test_leap_day_is_accepted_in_leap_year():
 def test_folder_names_match_pattern():
     assert dates.year_folder_name(date(2026, 10, 20)) == "2026"
     assert dates.month_folder_name(date(2026, 10, 20)) == "10-Oct"
+
+
+def test_format_date_slash_is_day_month_year():
+    assert dates.format_date_slash(date(2026, 10, 5)) == "05/10/2026"

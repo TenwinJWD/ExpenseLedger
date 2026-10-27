@@ -45,7 +45,7 @@ class MainEntryView(ctk.CTkFrame):
 
         form = widgets.card(self)
         form.grid(row=2, column=0, sticky="ew", padx=24)
-        form.grid_columnconfigure((0, 1), weight=1, uniform="fields")
+        form.grid_columnconfigure(tuple(range(6)), weight=1, uniform="fields")
         self._build_head_and_subhead(form)
         self._build_fields(form)
         self._build_buttons(form)
@@ -60,9 +60,9 @@ class MainEntryView(ctk.CTkFrame):
     # ----- layout -----
 
     def _build_head_and_subhead(self, form) -> None:
-        widgets.field_label(form, "Main Head").grid(row=0, column=0, columnspan=2, sticky="w", padx=20, pady=(20, 6))
+        widgets.field_label(form, "Main Head", tip="Choose Daily Collection or Treesa Agencies. Each has its own Sub-Head list.").grid(row=0, column=0, columnspan=6, sticky="w", padx=20, pady=(20, 6))
         heads = ctk.CTkFrame(form, fg_color="transparent")
-        heads.grid(row=1, column=0, columnspan=2, sticky="w", padx=20)
+        heads.grid(row=1, column=0, columnspan=6, sticky="w", padx=20)
         for code, label in models.MAIN_HEADS.items():
             ctk.CTkRadioButton(
                 heads,
@@ -76,25 +76,25 @@ class MainEntryView(ctk.CTkFrame):
                 font=widgets.text_font(theme.FONT_SIZE_BODY),
             ).pack(side="left", padx=(0, 28))
 
-        widgets.field_label(form, "Sub-Head").grid(row=2, column=0, columnspan=2, sticky="w", padx=20, pady=(16, 6))
-        row = ctk.CTkFrame(form, fg_color="transparent")
-        row.grid(row=3, column=0, columnspan=2, sticky="ew", padx=20)
-        row.grid_columnconfigure(0, weight=1)
-        self.sub_menu = widgets.SelectBox(row, values=[SELECT], variable=self.sub_var, command=self._on_sub_change, width=420)
-        self.sub_menu.grid(row=0, column=0, sticky="ew")
-        self.add_button = widgets.secondary_button(row, "+", self._open_add, width=36)
-        self.add_button.grid(row=0, column=1, padx=(8, 0))
-        self.remove_button = widgets.secondary_button(row, "−", self._open_remove, width=36)
-        self.remove_button.grid(row=0, column=2, padx=(8, 0))
+        # Sub-Head and Date share one row: Sub-Head takes four of the six columns, Date two.
+        sub_cell = self._field(form, 2, 0, "Sub-Head", required=False, span=4, tip="The category for this entry. Pick one to enable the form. Add creates a new one; Remove deletes the selected one.")
+        row = ctk.CTkFrame(sub_cell, fg_color="transparent")
+        row.pack(fill="x")
+        self.remove_button = widgets.secondary_button(row, "Remove", self._open_remove, width=100)
+        self.remove_button.pack(side="right")
+        self.add_button = widgets.secondary_button(row, "Add", self._open_add, width=70)
+        self.add_button.pack(side="right", padx=(8, 8))
+        self.sub_menu = widgets.SelectBox(row, values=[SELECT], variable=self.sub_var, command=self._on_sub_change, width=220)
+        self.sub_menu.pack(side="left", fill="x", expand=True)
         self.sub_hint = widgets.label(form, "Select a Sub-Head to enable entry.", size=theme.FONT_SIZE_LABEL, color=theme.TEXT_MUTED)
-        self.sub_hint.grid(row=4, column=0, columnspan=2, sticky="w", padx=20, pady=(6, 0))
+        self.sub_hint.grid(row=3, column=0, columnspan=6, sticky="w", padx=20, pady=(6, 0))
 
     def _build_fields(self, form) -> None:
-        # Date and Name share the first row; Particulars spans the row; Debit and Credit share the last row.
-        self.date_cell = self._field(form, 5, 0, "Date", required=True)
+        # Date sits beside Sub-Head; Name and Particulars share a row; Debit and Credit share the last row.
+        self.date_cell = self._field(form, 2, 4, "Date", required=True, span=2, tip="The day of the transaction, as DD/MM/YYYY. Use the calendar button to pick it.")
         date_row = ctk.CTkFrame(self.date_cell, fg_color="transparent")
         date_row.pack(fill="x")
-        self.date_entry = widgets.entry(date_row, placeholder="DD-Mon-YYYY", textvariable=self.date_var)
+        self.date_entry = widgets.entry(date_row, placeholder="DD/MM/YYYY", textvariable=self.date_var)
         self.date_entry.pack(side="left", fill="x", expand=True)
         self.date_button = widgets.secondary_button(date_row, theme.ICON_CALENDAR, self._open_calendar, width=36, font=widgets.icon_font(14))
         self.date_button.pack(side="left", padx=(8, 0))
@@ -102,28 +102,28 @@ class MainEntryView(ctk.CTkFrame):
         self.date_error.pack(fill="x")
         self.date_entry.bind("<FocusOut>", lambda _event: self._on_blur("date"))
 
-        self.name_cell = self._field(form, 5, 1, "Name", required=True)
+        self.name_cell = self._field(form, 4, 0, "Name", required=True, span=2, tip="Who paid or was paid for this entry.")
         self.name_entry = widgets.entry(self.name_cell, textvariable=self.name_var)
         self.name_entry.pack(fill="x")
         self.name_error = widgets.error_label(self.name_cell)
         self.name_error.pack(fill="x")
         self.name_entry.bind("<FocusOut>", lambda _event: self._on_blur("name"))
 
-        self.particulars_cell = self._field(form, 6, 0, "Particulars", required=True, span=2)
+        self.particulars_cell = self._field(form, 4, 2, "Particulars", required=True, span=4, tip="A short description of what the entry is for.")
         self.particulars_entry = widgets.entry(self.particulars_cell, textvariable=self.particulars_var)
         self.particulars_entry.pack(fill="x")
         self.particulars_error = widgets.error_label(self.particulars_cell)
         self.particulars_error.pack(fill="x")
         self.particulars_entry.bind("<FocusOut>", lambda _event: self._on_blur("particulars"))
 
-        self.debit_cell = self._field(form, 7, 0, "Debit", required=True)
+        self.debit_cell = self._field(form, 5, 0, "Debit", required=True, span=3, color=theme.DEBIT, tip="Money paid out. Enter an amount, or leave blank if this entry is a credit.")
         self.debit_entry = widgets.entry(self.debit_cell, textvariable=self.debit_var, justify="right", placeholder="0.00")
         self.debit_entry.pack(fill="x")
         self.debit_error = widgets.error_label(self.debit_cell)
         self.debit_error.pack(fill="x")
         self.debit_entry.bind("<FocusOut>", lambda _event: self._on_blur("debit"))
 
-        self.credit_cell = self._field(form, 7, 1, "Credit", required=True)
+        self.credit_cell = self._field(form, 5, 3, "Credit", required=True, span=3, color=theme.CREDIT, tip="Money received. Enter an amount, or leave blank if this entry is a debit.")
         self.credit_entry = widgets.entry(self.credit_cell, textvariable=self.credit_var, justify="right", placeholder="0.00")
         self.credit_entry.pack(fill="x")
         self.credit_error = widgets.error_label(self.credit_cell)
@@ -131,20 +131,20 @@ class MainEntryView(ctk.CTkFrame):
         self.credit_entry.bind("<FocusOut>", lambda _event: self._on_blur("credit"))
 
         self.amount_hint = widgets.label(form, "Enter a Debit or Credit amount greater than 0.00.", size=theme.FONT_SIZE_LABEL, color=theme.TEXT_MUTED)
-        self.amount_hint.grid(row=8, column=0, columnspan=2, sticky="w", padx=20, pady=(4, 0))
+        self.amount_hint.grid(row=6, column=0, columnspan=6, sticky="w", padx=20, pady=(4, 0))
 
         for entry in (self.name_entry, self.particulars_entry, self.debit_entry, self.credit_entry):
             entry.bind("<Return>", lambda _event: self._submit())
 
-    def _field(self, form, row: int, column: int, text: str, required: bool, span: int = 1) -> ctk.CTkFrame:
+    def _field(self, form, row: int, column: int, text: str, required: bool, span: int = 1, color: str = theme.TEXT, tip: str = "") -> ctk.CTkFrame:
         cell = ctk.CTkFrame(form, fg_color="transparent")
-        cell.grid(row=row, column=column, columnspan=span, sticky="ew", padx=20, pady=(12, 0))
-        widgets.field_label(cell, text, required=required).pack(fill="x", pady=(0, 6))
+        cell.grid(row=row, column=column, columnspan=span, sticky="new", padx=20, pady=(12, 0))
+        widgets.field_label(cell, text, required=required, color=color, tip=tip).pack(fill="x", pady=(0, 6))
         return cell
 
     def _build_buttons(self, form) -> None:
         bar = ctk.CTkFrame(form, fg_color="transparent")
-        bar.grid(row=9, column=0, columnspan=2, sticky="e", padx=20, pady=(18, 20))
+        bar.grid(row=7, column=0, columnspan=6, sticky="e", padx=20, pady=(18, 20))
         self.clear_button = widgets.secondary_button(bar, "Clear", self._clear)
         self.clear_button.pack(side="left", padx=(0, 10))
         self.submit_button = widgets.primary_button(bar, "Submit", self._submit, state="disabled", width=160)
@@ -194,7 +194,7 @@ class MainEntryView(ctk.CTkFrame):
         if field == "date":
             parsed = dates.parse_date(self.date_var.get())
             if parsed is not None:
-                self.date_var.set(dates.format_date(parsed))
+                self.date_var.set(dates.format_date_slash(parsed))
         if field in ("debit", "credit"):
             amount = money.parse_amount(self.debit_var.get() if field == "debit" else self.credit_var.get())
             if amount is not None:
@@ -258,7 +258,7 @@ class MainEntryView(ctk.CTkFrame):
             self._show_message(result.message, kind="warning")
             return
         self._clear_transaction()
-        self._show_message(f"Entry saved to {dates.format_date(values['date'])}.", kind="success")
+        self._show_message(f"Entry saved to {dates.format_date_slash(values['date'])}.", kind="success")
         self._update_state()
 
     def _clear(self) -> None:
@@ -294,7 +294,7 @@ class MainEntryView(ctk.CTkFrame):
     def _open_calendar(self) -> None:
         """Open the styled calendar under the date field. The chosen day fills the field (FR-13)."""
         def chosen(day: date) -> None:
-            self.date_var.set(dates.format_date(day))
+            self.date_var.set(dates.format_date_slash(day))
             self.touched.add("date")
             self._update_state()
 

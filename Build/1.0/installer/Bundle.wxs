@@ -10,7 +10,7 @@
   <Bundle
     Name="Expense Ledger"
     Manufacturer="Tenwin James"
-    Version="1.0.0.0"
+    Version="$(var.AppVersion).0"
     UpgradeCode="7A1C0E2D-5B3F-4D6A-8E9F-1A2B3C4D5E60"
     IconSourceFile="app.ico">
 
@@ -24,7 +24,7 @@
     <Chain>
       <MsiPackage
         Id="ExpenseLedgerMsi"
-        SourceFile="ExpenseLedger-1.0.0-CurrentUser.msi"
+        SourceFile="ExpenseLedger-$(var.AppVersion)-CurrentUser.msi"
         Compressed="yes"
         Vital="yes" />
     </Chain>

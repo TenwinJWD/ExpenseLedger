@@ -4,7 +4,9 @@ App decides which screen to show: create account, login, or the main frame.
 MainView is the frame after login. Its pages are placeholders until Phases 5 and 7.
 """
 
+import threading
 import tkinter as tk
+import webbrowser
 from typing import Callable
 
 import customtkinter as ctk
@@ -12,6 +14,7 @@ import customtkinter as ctk
 from app.core import config, paths, theme
 from app.services.auth_service import AuthService
 from app.services.entry_service import EntryService
+from app.services import update_service
 from app.services.subhead_service import SubheadService
 from app.storage.account_store import CorruptAccountFileError
 from app.ui import widgets
@@ -32,6 +35,7 @@ class App(ctk.CTk):
         self.subheads = subheads
         self.entries = entries
         self.view: ctk.CTkFrame | None = None
+        self.update_info: update_service.UpdateInfo | None = None
         self.title(config.APP_NAME)
         self.geometry(f"{theme.MIN_WINDOW_WIDTH}x{theme.MIN_WINDOW_HEIGHT}")
         self.minsize(theme.MIN_WINDOW_WIDTH, theme.MIN_WINDOW_HEIGHT)
@@ -45,6 +49,23 @@ class App(ctk.CTk):
             self.show_login()
         else:
             self.show_create()
+        self._start_update_check()
+
+    def _start_update_check(self) -> None:
+        """Look for a newer version in the background, once. Skipped when no update address is set."""
+        if not config.UPDATE_URL:
+            return
+        result: list = []
+        threading.Thread(target=lambda: result.append(update_service.check_for_update(config.UPDATE_URL)), daemon=True).start()
+        self._poll_update_check(result)
+
+    def _poll_update_check(self, result: list) -> None:
+        if not result:
+            self.after(500, lambda: self._poll_update_check(result))
+            return
+        self.update_info = result[0]
+        if self.update_info is not None and isinstance(self.view, MainView):
+            self.view.offer_update(self.update_info)
 
     def _set_app_icon(self) -> None:
         """The app icon in the title bar and the taskbar. Missing icon file: keep the default icon."""
@@ -67,7 +88,10 @@ class App(ctk.CTk):
         self._show(LoginView(self, self.auth, on_success=self.show_main, notice=notice))
 
     def show_main(self) -> None:
-        self._show(MainView(self, self.auth, self.subheads, self.entries, on_logout=self.show_login))
+        view = MainView(self, self.auth, self.subheads, self.entries, on_logout=self.show_login)
+        self._show(view)
+        if self.update_info is not None:
+            view.offer_update(self.update_info)
 
 
 class SidebarCanvas(GradientCanvas):
@@ -117,6 +141,8 @@ class MainView(ctk.CTkFrame):
         self.grid_rowconfigure(0, weight=1)
 
         sidebar = SidebarCanvas(self)
+        self.sidebar = sidebar
+        self._update_button = None
         sidebar.grid(row=0, column=0, sticky="nsew")
         self._build_sidebar(sidebar)
 
@@ -147,7 +173,7 @@ class MainView(ctk.CTkFrame):
     def _build_sidebar(self, sidebar: "SidebarCanvas") -> None:
         """Brand and menu at the top, in one group; Change Password, Logout, and the footer at the bottom."""
         sidebar.add(ctk.CTkLabel(sidebar, text="Expense Ledger", font=widgets.text_font(16), text_color=theme.SIDEBAR_TEXT, anchor="w"), 20, lambda _h: 22, 26)
-        sidebar.add(ctk.CTkLabel(sidebar, text="Version 1.0.0", font=widgets.text_font(theme.FONT_SIZE_LABEL, False), text_color=theme.TEXT_MUTED, anchor="w"), 20, lambda _h: 50, 18)
+        sidebar.add(ctk.CTkLabel(sidebar, text=f"Version {config.APP_VERSION}", font=widgets.text_font(theme.FONT_SIZE_LABEL), text_color=theme.TEXT_MUTED, anchor="w"), 20, lambda _h: 50, 18)
 
         for index, (key, nav_text, _title, _description) in enumerate(self.PAGES):
             top = 96 + index * 46
@@ -176,7 +202,7 @@ class MainView(ctk.CTkFrame):
         )
         sidebar.add(change_button, 20, lambda h: h - 154, 36)
 
-        footer = ctk.CTkLabel(sidebar, text=f"Developed by {config.APP_AUTHOR}", font=widgets.text_font(theme.FONT_SIZE_LABEL, False), text_color=theme.SIDEBAR_TEXT, anchor="w")
+        footer = ctk.CTkLabel(sidebar, text=f"Developed by {config.APP_AUTHOR}", font=ctk.CTkFont(family=theme.FONT_FAMILY_LIGHT, size=theme.FONT_SIZE_LABEL, weight="normal"), text_color=theme.SIDEBAR_TEXT, anchor="w")
         sidebar.add(footer, 20, lambda h: h - 36, 18)
 
     def _nav_button(self, parent, text: str, command) -> ctk.CTkButton:
@@ -205,6 +231,26 @@ class MainView(ctk.CTkFrame):
             active = name == key
             button.configure(fg_color=theme.PRIMARY_LIGHT if active else "transparent")
             self._nav_bars[name].configure(fg_color=theme.BTN_TOP if active else "transparent")
+
+    def offer_update(self, info: update_service.UpdateInfo) -> None:
+        """Add an "Update available" button to the sidebar. It opens the download page in the browser."""
+        if self._update_button is not None:
+            return
+        self._update_button = ctk.CTkButton(
+            self.sidebar,
+            text=f"Update to {info.version}",
+            command=lambda: webbrowser.open(info.url),
+            anchor="w",
+            width=196,
+            height=36,
+            corner_radius=theme.BUTTON_RADIUS,
+            fg_color=theme.PRIMARY,
+            hover_color=theme.PRIMARY_HOVER,
+            text_color="#FFFFFF",
+            font=widgets.text_font(theme.FONT_SIZE_BODY),
+        )
+        self.sidebar.add(self._update_button, 20, lambda h: h - 202, 36)
+        self.show_toast(f"Version {info.version} is available.")
 
     def open_change_password(self) -> None:
         ChangePasswordPopup(self, self.auth, on_saved=lambda: self.show_toast("Password changed."))

@@ -18,7 +18,7 @@ All data stays on your device:
 ## What the app does not do
 
 - It does not collect, send, or share any personal or financial information.
-- It does not connect to the internet or to any server.
+- It does not connect to the internet or to any server. The one exception is the optional update check: only when the developer has set an update address, the app requests one small version file from that address and sends nothing else. It is off by default.
 - It contains no analytics, telemetry, advertising, or crash reporting.
 - It does not use third-party accounts or cloud services.
 

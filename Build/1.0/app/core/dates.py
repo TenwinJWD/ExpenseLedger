@@ -19,6 +19,11 @@ def format_date(value: date) -> str:
     return f"{value.day:02d}-{MONTHS[value.month - 1]}-{value.year}"
 
 
+def format_date_slash(value: date) -> str:
+    """Return the date as DD/MM/YYYY, for example 20/10/2026. Used on screen only, since / is not allowed in file names."""
+    return f"{value.day:02d}/{value.month:02d}/{value.year}"
+
+
 def parse_date(text: str) -> date | None:
     """Parse DD-Mon-YYYY or DD/MM/YYYY. Return None if the text is not a real date."""
     text = text.strip()

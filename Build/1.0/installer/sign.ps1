@@ -26,11 +26,12 @@ param(
     [string]$AzureDlib,
     [string]$AzureMetadata,
     [string]$TimestampUrl = 'http://timestamp.acs.microsoft.com',
-    [string]$Version = '1.0.0'
+    [string]$Version = ''   # default: APP_VERSION in app\core\config.py
 )
 
 $ErrorActionPreference = 'Stop'
 $root = Split-Path -Parent $PSScriptRoot
+if (-not $Version) { $Version = (Select-String -Path (Join-Path $root 'app\core\config.py') -Pattern '^APP_VERSION = "([0-9.]+)"').Matches[0].Groups[1].Value }
 $exe = Join-Path $root 'dist\ExpenseLedger\ExpenseLedger.exe'
 $out = Join-Path $PSScriptRoot 'output'
 $msis = @("$out\ExpenseLedger-$Version.msi", "$out\ExpenseLedger-$Version-CurrentUser.msi")
