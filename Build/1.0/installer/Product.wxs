@@ -12,7 +12,7 @@
   <Package
     Name="Expense Ledger"
     Manufacturer="Tenwin James"
-    Version="1.0.0"
+    Version="$(var.AppVersion)"
     UpgradeCode="6F1E2B7A-4C3D-4E8F-9A10-2B3C4D5E6F70"
     Scope="$(var.PackageScope)"
     Compressed="yes"

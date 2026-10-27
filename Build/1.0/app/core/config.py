@@ -8,6 +8,12 @@ APP_NAME = "Expense Ledger"
 APP_VERSION = "1.0.0"
 APP_AUTHOR = "Tenwin James"  # PRD FR-36: the only place this name is set.
 
+# Update check. Leave UPDATE_URL empty to turn it off: the app then never connects to the internet.
+# Set it to the https address of the version file described in app/services/update_service.py.
+UPDATE_URL = ""
+UPDATE_TIMEOUT_SECONDS = 5
+UPDATE_MAX_BYTES = 64 * 1024
+
 # Login (PRD FR-2, FR-4, NFR-5).
 MAX_LOGIN_ATTEMPTS = 5
 LOCK_MINUTES = 5

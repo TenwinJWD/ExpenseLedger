@@ -84,6 +84,15 @@ The packaged program is built from this environment, so the build includes the l
 
 ---
 
+## Releasing a new version (upgrades)
+
+1. Set `APP_VERSION` in `Build/1.0/app/core/config.py`. This is the only place the version is typed. `build.ps1` copies it into the exe properties, the MSI and the setup EXE.
+2. Add a `## <version>` entry to `CHANGELOG.md`. A test fails if it is missing.
+3. Never change the two `UpgradeCode` values in `installer/Product.wxs` and `installer/Bundle.wxs`, or the component GUIDs in `installer/component_guids.json`. A test guards the codes.
+4. If the saved file format changes: raise `DATA_VERSION` in `app/storage/migrations.py` and add a migration function for the old version. Start-up backs up the files, runs the migration, and stops without changing anything if it fails.
+5. Run `.\build.ps1`. Installing the new setup over an old install replaces the program and keeps all data.
+6. To announce the release in the app, upload a `version.json` such as `{"version": "1.1.0", "url": "https://.../ExpenseLedger-Setup-1.1.0.exe", "notes": "What is new"}` to a web address, and set `UPDATE_URL` in `config.py` to it (https only). Users then see an "Update to 1.1.0" button in the sidebar that opens the download.
+
 ## Project documents
 
 All planning documents are in the `Roadmap` folder:

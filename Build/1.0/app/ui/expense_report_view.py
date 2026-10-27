@@ -1,7 +1,7 @@
 """Expense Report page (Design.md Section 6; PRD FR-18 to FR-23, FR-18a, FR-19a, FR-21a to FR-21c).
 
-Order on the page: Monthly Summary, Yearly Summary, the filter card, then the table with
-pagination. The summary cards ignore the filters.
+Order on the page: the filter card, the table with pagination, then Monthly Summary and
+Yearly Summary. The summary cards ignore the filters.
 """
 
 import calendar
@@ -25,6 +25,21 @@ SELECT = "-Select-"
 COLUMN_WEIGHTS = (2, 3, 3, 3, 3, 2, 2, 2)
 HEADERS = ("Date", "Main Head", "Sub-Head", "Name", "Particulars", "Debit", "Credit", "Actions")
 
+FILTER_TIPS = {
+    "Search": "Finds rows where the name, particulars or an amount contains this text.",
+    "Date Range": "Shows only entries inside this period. Custom Range lets you type From and To dates.",
+    "From": "First day to include, as DD/MM/YYYY.",
+    "To": "Last day to include, as DD/MM/YYYY.",
+    "Main Head": "Shows only entries under this Main Head.",
+    "Sub-Head": "Shows only entries under this Sub-Head.",
+    "Name": "Shows only rows whose name contains this text.",
+    "Particulars": "Shows only rows whose particulars contain this text.",
+    "Debit From": "Smallest debit amount to include.",
+    "Debit To": "Largest debit amount to include.",
+    "Credit From": "Smallest credit amount to include.",
+    "Credit To": "Largest credit amount to include.",
+}
+
 
 class ExpenseReportView(ctk.CTkFrame):
     """The whole report page. refresh() reloads the rows each time the page opens (FR-18)."""
@@ -43,24 +58,23 @@ class ExpenseReportView(ctk.CTkFrame):
         self.delete_target: Entry | None = None
 
         self.grid_columnconfigure(0, weight=1)
-        self.grid_rowconfigure(4, weight=1)
         widgets.label(self, "Expense Report", size=theme.FONT_SIZE_PAGE_TITLE).grid(row=0, column=0, sticky="w", padx=24, pady=(24, 0))
         widgets.label(self, "All submitted entries, oldest first", color=theme.TEXT_MUTED).grid(row=1, column=0, sticky="w", padx=24, pady=(2, 14))
 
-        self.month_summary = self._summary_card(2, "Monthly Summary", "Values are based on the selected month. Independent of the filters.", "month")
-        self.year_summary = self._summary_card(3, "Yearly Summary", "Values are based on the selected year. Independent of the filters.", "year")
+        self.month_summary = self._summary_card(4, "Monthly Summary", "Values are based on the selected month. Independent of the filters.", "month")
+        self.year_summary = self._summary_card(5, "Yearly Summary", "Values are based on the selected year. Independent of the filters.", "year")
 
         self.filter_card = self._build_filters()
-        self.filter_card.grid(row=4, column=0, sticky="ew", padx=24, pady=(0, 14))
+        self.filter_card.grid(row=2, column=0, sticky="ew", padx=24, pady=(0, 14))
 
         self.table_card = widgets.card(self)
-        self.table_card.grid(row=5, column=0, sticky="nsew", padx=24, pady=(0, 24))
+        self.table_card.grid(row=3, column=0, sticky="nsew", padx=24, pady=(0, 14))
         self.table_card.grid_columnconfigure(0, weight=1)
         self.table_card.grid_rowconfigure(1, weight=1)
         self.rows = ctk.CTkFrame(self.table_card, fg_color="transparent")
         self.rows.grid(row=1, column=0, sticky="nsew", padx=16, pady=(16, 0))
         self._build_pager()
-        self.grid_rowconfigure(5, weight=1)
+        self.grid_rowconfigure(3, weight=1)
 
     # ----- layout -----
 
@@ -72,7 +86,7 @@ class ExpenseReportView(ctk.CTkFrame):
         titles = ctk.CTkFrame(head, fg_color="transparent")
         titles.pack(side="left", fill="x", expand=True)
         widgets.label(titles, title, size=theme.FONT_SIZE_CARD_TITLE).pack(anchor="w")
-        widgets.label(titles, description, size=theme.FONT_SIZE_LABEL, color=theme.TEXT_MUTED).pack(anchor="w")
+        widgets.label(titles, description, size=theme.FONT_SIZE_BODY, color=theme.TEXT_MUTED).pack(anchor="w")
         menu = widgets.SelectBox(head, values=[""], command=lambda _choice: self._render_summaries(), width=180)
         menu.pack(side="right")
         stats = ctk.CTkFrame(card, fg_color="transparent")
@@ -83,9 +97,9 @@ class ExpenseReportView(ctk.CTkFrame):
         for index in range(6):
             cell = ctk.CTkFrame(stats, fg_color=theme.PRIMARY_LIGHT, border_color=theme.BORDER_SOFT, border_width=1, corner_radius=12)
             cell.grid(row=index // 3, column=index % 3, sticky="nsew", padx=6, pady=6)
-            label = widgets.label(cell, "", size=theme.FONT_SIZE_LABEL, color=theme.TEXT_MUTED)
+            label = widgets.label(cell, "", size=theme.FONT_SIZE_CARD_TITLE)
             label.pack(anchor="w", padx=14, pady=(12, 0))
-            value = widgets.label(cell, "", size=theme.FONT_SIZE_CARD_TITLE)
+            value = widgets.label(cell, "", size=theme.FONT_SIZE_VALUE)
             value.pack(anchor="w", padx=14, pady=(4, 0))
             sub = widgets.label(cell, "", size=theme.FONT_SIZE_BODY, color=theme.TEXT_MUTED)
             sub.pack(anchor="w", padx=14, pady=(2, 12))
@@ -97,22 +111,22 @@ class ExpenseReportView(ctk.CTkFrame):
     def _build_filters(self) -> ctk.CTkFrame:
         card = widgets.card(self)
         card.grid_columnconfigure((0, 1, 2, 3), weight=1)
-        widgets.field_label(card, "Search").grid(row=0, column=0, columnspan=4, sticky="w", padx=20, pady=(18, 6))
+        widgets.field_label(card, "Search", tip=FILTER_TIPS["Search"]).grid(row=0, column=0, columnspan=4, sticky="w", padx=20, pady=(18, 6))
         self.search = widgets.entry(card, placeholder="Search by name, particulars, or amount")
         self.search.grid(row=1, column=0, columnspan=4, sticky="ew", padx=20)
         self.search.bind("<Return>", lambda _event: self._apply_filters())
 
         # Row 2 holds the labels and row 3 the widgets. From and To show only for Custom Range.
-        widgets.field_label(card, "Date Range").grid(row=2, column=0, sticky="sw", padx=(20, 8), pady=(14, 0))
-        self.from_label = widgets.field_label(card, "From")
+        widgets.field_label(card, "Date Range", tip=FILTER_TIPS["Date Range"]).grid(row=2, column=0, sticky="sw", padx=(20, 8), pady=(14, 0))
+        self.from_label = widgets.field_label(card, "From", tip=FILTER_TIPS["From"])
         self.from_label.grid(row=2, column=1, sticky="sw", padx=(20, 8), pady=(14, 0))
-        self.to_label = widgets.field_label(card, "To")
+        self.to_label = widgets.field_label(card, "To", tip=FILTER_TIPS["To"])
         self.to_label.grid(row=2, column=2, sticky="sw", padx=(20, 8), pady=(14, 0))
         self.range_menu = self._menu(card, [label for label, _value in ALL_RANGES], self._on_range_change)
         self.range_menu.grid(row=3, column=0, sticky="ew", padx=(20, 8), pady=(6, 0))
-        self.from_entry = widgets.entry(card, placeholder="DD-Mon-YYYY")
+        self.from_entry = widgets.entry(card, placeholder="DD/MM/YYYY")
         self.from_entry.grid(row=3, column=1, sticky="ew", padx=(20, 8), pady=(6, 0))
-        self.to_entry = widgets.entry(card, placeholder="DD-Mon-YYYY")
+        self.to_entry = widgets.entry(card, placeholder="DD/MM/YYYY")
         self.to_entry.grid(row=3, column=2, sticky="ew", padx=(20, 8), pady=(6, 0))
 
         self.head_menu = self._menu(card, [ALL_MAIN_HEADS] + list(models.MAIN_HEADS.values()), self._on_head_change)
@@ -129,9 +143,10 @@ class ExpenseReportView(ctk.CTkFrame):
             (("Debit From", self.debit_from), ("Debit To", self.debit_to), ("Credit From", self.credit_from), ("Credit To", self.credit_to)),
         ]
         grid_row = 4
+        tints = {"Debit From": theme.DEBIT, "Debit To": theme.DEBIT, "Credit From": theme.CREDIT, "Credit To": theme.CREDIT}
         for group in layout:
             for column, (text, widget) in enumerate(group):
-                widgets.field_label(card, text).grid(row=grid_row, column=column, sticky="sw", padx=(20, 8), pady=(12, 0))
+                widgets.field_label(card, text, color=tints.get(text, theme.TEXT), tip=FILTER_TIPS[text]).grid(row=grid_row, column=column, sticky="sw", padx=(20, 8), pady=(12, 0))
                 widget.grid(row=grid_row + 1, column=column, sticky="ew", padx=(20, 8), pady=(6, 0))
             grid_row += 2
 
@@ -212,12 +227,12 @@ class ExpenseReportView(ctk.CTkFrame):
 
     def _fill_cards(self, cells, summary: rs.Summary) -> None:
         values = [
-            ("1. Debit (Total Amount)", money.format_amount(summary.debit_total), "", theme.DEBIT),
-            ("2. Most Debited Sub-Head", *self._ranked_text(summary.most_debit, "debit"), theme.DEBIT),
-            ("3. Least Debited Sub-Head", *self._ranked_text(summary.least_debit, "debit"), theme.DEBIT),
-            ("4. Credit (Total Amount)", money.format_amount(summary.credit_total), "", theme.CREDIT),
-            ("5. Most Credited Sub-Head", *self._ranked_text(summary.most_credit, "credit"), theme.CREDIT),
-            ("6. Least Credited Sub-Head", *self._ranked_text(summary.least_credit, "credit"), theme.CREDIT),
+            ("Debit (Total Amount)", money.format_amount(summary.debit_total), "", theme.DEBIT),
+            ("Most Debited Sub-Head", *self._ranked_text(summary.most_debit, "debit"), theme.DEBIT),
+            ("Least Debited Sub-Head", *self._ranked_text(summary.least_debit, "debit"), theme.DEBIT),
+            ("Credit (Total Amount)", money.format_amount(summary.credit_total), "", theme.CREDIT),
+            ("Most Credited Sub-Head", *self._ranked_text(summary.most_credit, "credit"), theme.CREDIT),
+            ("Least Credited Sub-Head", *self._ranked_text(summary.least_credit, "credit"), theme.CREDIT),
         ]
         for (label, value, sub, colour), (label_widget, value_widget, sub_widget) in zip(values, cells):
             label_widget.configure(text=label)
@@ -317,7 +332,8 @@ class ExpenseReportView(ctk.CTkFrame):
         self.edit_widgets = {}
         for column, weight in enumerate(COLUMN_WEIGHTS):
             self.rows.grid_columnconfigure(column, weight=weight)
-            widgets.label(self.rows, HEADERS[column].upper(), size=theme.FONT_SIZE_LABEL, color=theme.TEXT_MUTED).grid(row=0, column=column, sticky="w", padx=8, pady=(4, 8))
+            header_colour = theme.DEBIT if column == 5 else theme.CREDIT if column == 6 else theme.TEXT_MUTED
+            widgets.label(self.rows, HEADERS[column].upper(), size=theme.FONT_SIZE_LABEL, color=header_colour).grid(row=0, column=column, sticky="w", padx=8, pady=(4, 8))
 
         if not rows:
             widgets.label(self.rows, "No entries match these filters.", color=theme.TEXT_MUTED).grid(row=1, column=0, columnspan=8, pady=28)
@@ -337,7 +353,7 @@ class ExpenseReportView(ctk.CTkFrame):
 
     def _view_row(self, row: int, entry: Entry) -> None:
         values = (
-            dates.format_date(entry.entry_date),
+            dates.format_date_slash(entry.entry_date),
             models.MAIN_HEADS[entry.main_head],
             entry.sub_head,
             entry.name,
@@ -363,7 +379,7 @@ class ExpenseReportView(ctk.CTkFrame):
 
         date_cell = new_cell(0)
         date_entry = widgets.entry(date_cell, height=32)
-        date_entry.insert(0, dates.format_date(entry.entry_date))
+        date_entry.insert(0, dates.format_date_slash(entry.entry_date))
         date_entry.pack(fill="x")
         date_error = widgets.error_label(date_cell)
         date_error.pack(fill="x")

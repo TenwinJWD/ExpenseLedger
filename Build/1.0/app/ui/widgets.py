@@ -41,16 +41,96 @@ def label(parent, text: str, size: int = theme.FONT_SIZE_BODY, color: str = them
     return ctk.CTkLabel(parent, text=text, font=text_font(size), text_color=color, **kwargs)
 
 
-def field_label(parent, text: str, required: bool = False) -> ctk.CTkLabel:
-    """Uppercase field label. A required field gets a red asterisk (Design.md 3)."""
+def field_label(parent, text: str, required: bool = False, color: str = theme.TEXT, tip: str = ""):
+    """Uppercase field label. A required field gets a red asterisk (Design.md 3).
+    With a tip, an info icon sits beside the heading and shows the tip on hover."""
     shown = text.upper() + (" *" if required else "")
-    return ctk.CTkLabel(
-        parent,
-        text=shown,
-        font=text_font(theme.FONT_SIZE_LABEL),
-        text_color=theme.TEXT,
-        anchor="w",
-    )
+    holder = ctk.CTkFrame(parent, fg_color="transparent") if tip else parent
+    heading = ctk.CTkLabel(holder, text=shown, font=text_font(theme.FONT_SIZE_LABEL), text_color=color, anchor="w")
+    if not tip:
+        return heading
+    heading.pack(side="left")
+    info = ctk.CTkLabel(holder, text=theme.ICON_INFO, font=icon_font(13), text_color=theme.BTN_TOP, cursor="question_arrow")
+    info.pack(side="left", padx=(6, 0))
+    Tooltip(info, tip)
+    return holder
+
+
+class Tooltip:
+    """A small text box that shows next to a widget while the pointer is over it."""
+
+    KEY_COLOUR = "#010203"
+
+    def __init__(self, widget, text: str) -> None:
+        self.widget = widget
+        self.text = text
+        self.window: ctk.CTkToplevel | None = None
+        self._watch_job = None
+        widget.bind("<Enter>", self._show, add="+")
+        widget.bind("<Leave>", self._hide, add="+")
+        widget.bind("<Destroy>", lambda _event: self._close(), add="+")
+
+    def _show(self, _event=None) -> None:
+        if self.window is not None:
+            return
+        # A Toplevel is square, so the corners are made by painting the window in a key colour,
+        # making that colour see-through, and drawing a rounded frame on top.
+        window = ctk.CTkToplevel(self.widget, fg_color=self.KEY_COLOUR)
+        window.overrideredirect(True)
+        window.attributes("-topmost", True)
+        window.attributes("-transparentcolor", self.KEY_COLOUR)
+        bubble = ctk.CTkFrame(window, fg_color=theme.BG_INPUT, border_color=theme.DROPDOWN_BORDER, border_width=1, corner_radius=12)
+        bubble.pack()
+        ctk.CTkLabel(bubble, text=self.text, justify="left", wraplength=300, font=text_font(theme.FONT_SIZE_LABEL), text_color=theme.TEXT).pack(padx=12, pady=8)
+        window.withdraw()  # placed off-screen first, so it never flashes outside the app window
+        window.update_idletasks()
+        top = self.widget.winfo_toplevel()
+        left, upper = top.winfo_rootx(), top.winfo_rooty()
+        right, lower = left + top.winfo_width(), upper + top.winfo_height()
+        width, height = window.winfo_reqwidth(), window.winfo_reqheight()
+        x = max(left + 8, min(self.widget.winfo_rootx() + 22, right - width - 8))
+        y = self.widget.winfo_rooty() + self.widget.winfo_height() + 4
+        if y + height > lower - 8:
+            above = self.widget.winfo_rooty() - height - 4
+            y = above if above >= upper + 8 else max(upper + 8, lower - height - 8)
+        window.geometry(f"+{x}+{y}")
+        window.deiconify()
+        self.window = window
+        self._watch_job = self.widget.after(60, self._watch)
+
+    def _pointer_over_icon(self) -> bool:
+        try:
+            x, y = self.widget.winfo_pointerxy()
+            left, top = self.widget.winfo_rootx(), self.widget.winfo_rooty()
+            return left <= x < left + self.widget.winfo_width() and top <= y < top + self.widget.winfo_height()
+        except tk.TclError:
+            return False
+
+    def _watch(self) -> None:
+        """Close the tip as soon as the pointer is off the icon. Leave events alone are unreliable on
+        CustomTkinter labels, which are built from two widgets, so the pointer position is checked too."""
+        self._watch_job = None
+        if self.window is None:
+            return
+        if self._pointer_over_icon():
+            self._watch_job = self.widget.after(60, self._watch)
+        else:
+            self._close()
+
+    def _hide(self, _event=None) -> None:
+        if self.window is not None and not self._pointer_over_icon():
+            self._close()
+
+    def _close(self) -> None:
+        if self._watch_job is not None:
+            try:
+                self.widget.after_cancel(self._watch_job)
+            except tk.TclError:
+                pass
+            self._watch_job = None
+        if self.window is not None:
+            self.window.destroy()
+            self.window = None
 
 
 def entry(parent, show: str = "", placeholder: str = "", **kwargs) -> ctk.CTkEntry:
@@ -63,7 +143,7 @@ def entry(parent, show: str = "", placeholder: str = "", **kwargs) -> ctk.CTkEnt
         border_width=1,
         text_color=theme.TEXT,
         placeholder_text_color=theme.TEXT_MUTED,
-        font=text_font(theme.FONT_SIZE_BODY, False),
+        font=text_font(theme.FONT_SIZE_BODY),
         show=show,
         placeholder_text=placeholder,
         **kwargs,
@@ -144,7 +224,7 @@ class SelectBox(ctk.CTkFrame):
     """
 
     SEARCH_THRESHOLD = 8
-    ROW_HEIGHT = 34
+    ROW_HEIGHT = 38
     MAX_LIST_HEIGHT = 300
 
     def __init__(self, master, values=(), variable: ctk.StringVar | None = None, command=None, width: int = 260, state: str = "normal") -> None:
@@ -165,10 +245,10 @@ class SelectBox(ctk.CTkFrame):
             corner_radius=theme.INPUT_RADIUS,
             fg_color=theme.BG_INPUT,
             hover_color=theme.SURFACE_TINT,
-            border_color=theme.INPUT_BORDER,
-            border_width=1,
+            border_color=theme.DROPDOWN_BORDER,
+            border_width=2,
             text_color=theme.TEXT,
-            font=text_font(theme.FONT_SIZE_BODY, False),
+            font=text_font(theme.FONT_SIZE_BODY),
             command=self._toggle,
         )
         self._button.pack(fill="both", expand=True)
@@ -214,7 +294,7 @@ class SelectBox(ctk.CTkFrame):
 
     def _open(self) -> None:
         top = self.winfo_toplevel()
-        popup = ctk.CTkToplevel(top, fg_color=theme.BG_CARD)
+        popup = ctk.CTkToplevel(top, fg_color=theme.DROPDOWN_BORDER)  # the 2 px around the list is its border
         popup.overrideredirect(True)
         popup.attributes("-topmost", True)
         width = self._button.winfo_width()
@@ -227,7 +307,6 @@ class SelectBox(ctk.CTkFrame):
         x, y, total_pixels = _fit_inside_window(top, self._button, width, total_pixels, search_pixels)
         list_height = total_pixels / scale - search_height
         _set_popup_geometry(popup, x, y, width, list_height + search_height)
-        popup.configure(border_width=1, border_color=theme.INPUT_BORDER)
         self._popup = popup
         popup.bind("<Escape>", lambda _event: self._close())
         self._follow_job = self.after(30, self._follow)
@@ -237,14 +316,14 @@ class SelectBox(ctk.CTkFrame):
             query_box = ctk.CTkEntry(
                 popup, height=34, corner_radius=8, fg_color=theme.BG_INPUT, border_color=theme.INPUT_BORDER,
                 text_color=theme.TEXT, placeholder_text="Search", placeholder_text_color=theme.TEXT_MUTED,
-                font=text_font(theme.FONT_SIZE_BODY, False),
+                font=text_font(theme.FONT_SIZE_BODY),
             )
             query_box.pack(fill="x", padx=8, pady=(8, 4))
             query_box.bind("<KeyRelease>", lambda _event: self._fill(list_frame, query_box.get()))
             query_box.focus_set()
 
         list_frame = ctk.CTkScrollableFrame(popup, fg_color=theme.BG_CARD, corner_radius=0, height=list_height)
-        list_frame.pack(fill="both", expand=True, padx=2, pady=(0, 2))
+        list_frame.pack(fill="both", expand=True, padx=2, pady=2)
         self._fill(list_frame, "")
         top.bind("<Button-1>", self._close_if_outside, add="+")
 
@@ -269,7 +348,7 @@ class SelectBox(ctk.CTkFrame):
                 fg_color=theme.PRIMARY_LIGHT if selected else "transparent",
                 hover_color=theme.PRIMARY_LIGHT,
                 text_color=theme.TEXT,
-                font=text_font(theme.FONT_SIZE_BODY, selected),
+                font=text_font(theme.FONT_SIZE_BODY),
                 command=lambda chosen=value: self._choose(chosen),
             ).pack(side="left", fill="x", expand=True)
             if selected:
@@ -359,10 +438,24 @@ class DatePopup(ctk.CTkToplevel):
         self.top.bind("<Button-1>", self._close_if_outside, add="+")
         self.focus_set()
 
-    def _place(self) -> None:
+    def _target(self) -> tuple[int, int]:
+        """Where the calendar goes: under its button, or above it when there is no room below,
+        and always inside the app window."""
         self.update_idletasks()
-        x, y, _ = _fit_inside_window(self.top, self.anchor_widget, self.winfo_reqwidth(), self.winfo_reqheight())
-        _set_popup_geometry(self, x, y, self.winfo_reqwidth(), self.winfo_reqheight())
+        top, anchor = self.top, self.anchor_widget
+        left, upper = top.winfo_rootx(), top.winfo_rooty()
+        right, lower = left + top.winfo_width(), upper + top.winfo_height()
+        width, height = self.winfo_reqwidth(), self.winfo_reqheight()
+        x = max(left + 8, min(anchor.winfo_rootx(), right - width - 8))
+        y = anchor.winfo_rooty() + anchor.winfo_height() + 6
+        if y + height > lower - 8:
+            above = anchor.winfo_rooty() - height - 6
+            y = above if above >= upper + 8 else max(upper + 8, lower - height - 8)
+        return x, y
+
+    def _place(self) -> None:
+        x, y = self._target()
+        self.geometry(f"+{x}+{y}")
 
     def _shift(self, months: int) -> None:
         month_index = self.shown.month - 1 + months
@@ -415,8 +508,7 @@ class DatePopup(ctk.CTkToplevel):
         if not self.anchor_widget.winfo_ismapped():
             self.close()
             return
-        x = self.anchor_widget.winfo_rootx()
-        y = self.anchor_widget.winfo_rooty() + self.anchor_widget.winfo_height() + 6
+        x, y = self._target()
         if (self.winfo_rootx(), self.winfo_rooty()) != (x, y):
             self.geometry(f"+{x}+{y}")
         self._follow_job = self.after(30, self._follow)
@@ -430,7 +522,7 @@ class DatePopup(ctk.CTkToplevel):
 
 
 def text_label(parent, text: str, color: str) -> ctk.CTkLabel:
-    return ctk.CTkLabel(parent, text=text, font=text_font(theme.FONT_SIZE_BODY, False), text_color=color)
+    return ctk.CTkLabel(parent, text=text, font=text_font(theme.FONT_SIZE_BODY), text_color=color)
 
 
 def error_label(parent) -> ctk.CTkLabel:
