@@ -2,7 +2,7 @@
 
 All notable changes to Expense Ledger are recorded here (Rules 33). Dates use DD-Mon-YYYY.
 
-## 1.0.0 – not yet released
+## 1.0.0 – 27-Oct-2026
 
 Developed by Tenwin James.
 
