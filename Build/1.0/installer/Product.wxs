@@ -1,0 +1,116 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Expense Ledger installer (PRD deliverable 3, Architecture 9, Tasks T9.4 and T9.5).
+  Built in two modes (set with -d Mode=...):
+  - Dual: ExpenseLedger-1.0.0.msi. The first dialog asks "Just me" (default) or "Anyone who uses this computer".
+    Just me installs to %LOCALAPPDATA%\Apps\ExpenseLedger; all users installs to Program Files (administrator rights).
+  - User: ExpenseLedger-1.0.0-CurrentUser.msi. Current user only, no dialog. The setup EXE uses this one.
+  The desktop shortcut goes on the chosen user's desktop. Uninstall removes the program only; the user's data is kept in
+  Desktop\ExpenseLedger and %APPDATA%\ExpenseLedger, which this file never touches.
+-->
+<Wix xmlns="http://wixtoolset.org/schemas/v4/wxs" xmlns:ui="http://wixtoolset.org/schemas/v4/wxs/ui">
+  <Package
+    Name="Expense Ledger"
+    Manufacturer="Tenwin James"
+    Version="1.0.0"
+    UpgradeCode="6F1E2B7A-4C3D-4E8F-9A10-2B3C4D5E6F70"
+    Scope="$(var.PackageScope)"
+    Compressed="yes"
+    InstallerVersion="500">
+
+    <MajorUpgrade DowngradeErrorMessage="A newer version of Expense Ledger is already installed." />
+    <MediaTemplate EmbedCab="yes" />
+
+    <!-- The app icon, from the assets folder (bound with -bindpath assets). Used by Add/Remove Programs and the shortcut. -->
+    <Icon Id="AppIcon.ico" SourceFile="app.ico" />
+    <Property Id="ARPPRODUCTICON" Value="AppIcon.ico" />
+
+<?if $(var.Mode) = "Dual" ?>
+    <!-- Install scope dialog (WixUI_Advanced): "Just me" is selected by default. -->
+    <Property Id="WixAppFolder" Value="WixPerUserFolder" />
+    <Property Id="ApplicationFolderName" Value="ExpenseLedger" />
+    <WixVariable Id="WixUILicenseRtf" Value="License.rtf" />
+    <ui:WixUI Id="WixUI_Advanced" />
+<?endif?>
+
+    <Feature Id="Main" Title="Expense Ledger" Level="1">
+      <ComponentGroupRef Id="ProgramFilesGroup" />
+      <ComponentRef Id="ProgramFilesExtras" />
+      <ComponentRef Id="StartMenuShortcuts" />
+      <ComponentRef Id="DesktopShortcut" />
+    </Feature>
+
+    <!-- Uninstall removes the login file (account.json) in AppData. Entries and sub-heads are kept.
+         Only a real uninstall runs it, not an upgrade (where REMOVE is ALL but UPGRADINGPRODUCTCODE is set). -->
+    <CustomAction
+      Id="RemoveLoginFile"
+      Directory="TARGETDIR"
+      ExeCommand="cmd.exe /c del /f /q &quot;%APPDATA%\ExpenseLedger\account.json&quot;"
+      Execute="deferred"
+      Impersonate="yes"
+      Return="ignore" />
+    <InstallExecuteSequence>
+      <Custom Action="RemoveLoginFile" Before="InstallFinalize" Condition="REMOVE=&quot;ALL&quot; AND NOT UPGRADINGPRODUCTCODE" />
+    </InstallExecuteSequence>
+
+<?if $(var.Mode) = "Dual" ?>
+    <!-- The install folder. WixUI_Advanced sets its parent folder from the scope the user chose. -->
+    <StandardDirectory Id="ProgramFiles6432Folder">
+      <Directory Id="APPLICATIONFOLDER" Name="ExpenseLedger">
+        <!-- The uninstall file from the source folder (PRD deliverable 4). -->
+        <Component Id="ProgramFilesExtras" Guid="{A3B1C2D4-1111-4A5B-8C9D-0E1F2A3B4C5D}">
+          <File Id="UninstallBat" Source="uninstall.bat" KeyPath="yes" />
+        </Component>
+      </Directory>
+    </StandardDirectory>
+<?else?>
+    <!-- Current user only: the install folder is under the user's own Apps folder. -->
+    <StandardDirectory Id="LocalAppDataFolder">
+      <Directory Id="AppsFolder" Name="Apps">
+        <Directory Id="APPLICATIONFOLDER" Name="ExpenseLedger">
+          <!-- The uninstall file from the source folder (PRD deliverable 4). -->
+          <Component Id="ProgramFilesExtras" Guid="{A3B1C2D4-1111-4A5B-8C9D-0E1F2A3B4C5D}">
+            <File Id="UninstallBat" Source="uninstall.bat" KeyPath="yes" />
+          </Component>
+        </Directory>
+      </Directory>
+    </StandardDirectory>
+<?endif?>
+
+    <!-- Desktop shortcut, created on install and removed on uninstall. Its folder follows the install scope. -->
+    <StandardDirectory Id="DesktopFolder">
+      <Component Id="DesktopShortcut" Guid="{C5D3E4F6-3333-4C7D-8EAF-2A3B4C5D6E7F}">
+        <Shortcut
+          Id="DesktopAppShortcut"
+          Name="Expense Ledger"
+          Description="Expense Ledger"
+          Target="[APPLICATIONFOLDER]ExpenseLedger.exe"
+          Icon="AppIcon.ico"
+          WorkingDirectory="APPLICATIONFOLDER" />
+        <RegistryValue Root="HKCU" Key="Software\Tenwin James\ExpenseLedger" Name="DesktopShortcut" Type="integer" Value="1" KeyPath="yes" />
+      </Component>
+    </StandardDirectory>
+
+    <StandardDirectory Id="ProgramMenuFolder">
+      <Directory Id="AppMenuFolder" Name="Expense Ledger">
+        <Component Id="StartMenuShortcuts" Guid="{B4C2D3E5-2222-4B6C-9DAE-1F2A3B4C5D6E}">
+          <Shortcut
+            Id="AppShortcut"
+            Name="Expense Ledger"
+            Description="Expense Ledger"
+            Target="[APPLICATIONFOLDER]ExpenseLedger.exe"
+            Icon="AppIcon.ico"
+            WorkingDirectory="APPLICATIONFOLDER" />
+          <Shortcut
+            Id="UninstallShortcut"
+            Name="Uninstall Expense Ledger"
+            Description="Remove Expense Ledger. Your entries are kept; the login is removed."
+            Target="[APPLICATIONFOLDER]uninstall.bat"
+            WorkingDirectory="APPLICATIONFOLDER" />
+          <RemoveFolder Id="RemoveAppMenuFolder" On="uninstall" />
+          <RegistryValue Root="HKCU" Key="Software\Tenwin James\ExpenseLedger" Name="Installed" Type="integer" Value="1" KeyPath="yes" />
+        </Component>
+      </Directory>
+    </StandardDirectory>
+  </Package>
+</Wix>

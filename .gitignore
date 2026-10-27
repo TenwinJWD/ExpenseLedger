@@ -2,10 +2,10 @@
 .venv/
 Build/*/.venv/
 
-# Build outputs
-build/
-dist/
+# Build outputs (anchored: a bare build/ also matches the Build folder on Windows)
 installer/output/
+Build/*/installer/output/
+Build/*/installer/output-unsigned-backup/
 Build/*/build/
 Build/*/dist/
 
@@ -19,3 +19,4 @@ account.json
 subheads.json
 app.log
 *.xlsx
+pyinstaller.log
