@@ -65,8 +65,6 @@ ExpenseLedger/
 │   ├── core/
 │   │   ├── config.py             App name, version, lock settings, field limits, seed sub-heads
 │   │   ├── paths.py              Locations of AppData and the Excel data folder
-│   │   ├── fonts.py              Loads the bundled font files for this program only (NFR-8)
-│   │   ├── fonts/                Bundled font files (.ttf), shipped with the program
 │   │   ├── dates.py              DD-Mon-YYYY format, parsing of DD/MM/YYYY, month names
 │   │   ├── money.py              Parse and format amounts
 │   │   ├── models.py             Entry, SubHead data classes; MAIN_HEADS constant
@@ -111,7 +109,6 @@ Build outputs (not in Git): `build/`, `dist/`, `installer/output/`.
 ### 4.1 Core (`app/core/`)
 - No UI code and no file writes.
 - `config.py` holds every fixed value: app name, version `1.0.0`, `APP_AUTHOR = "Tenwin James"` (PRD FR-36), `MAX_LOGIN_ATTEMPTS = 5`, `LOCK_MINUTES = 5`, `NAME_MAX_LENGTH = 100`, `PARTICULARS_MAX_LENGTH = 200`, `SUBHEAD_MAX_LENGTH = 40`, `MIN_PASSWORD_LENGTH = 8`, and the seed sub-heads.
-- `fonts.py` registers each `.ttf` file in the `fonts/` folder for this process only, with the Windows call `AddFontResourceEx` and the `FR_PRIVATE` flag, through `ctypes`. It runs once at startup, before any window is created. It needs no admin rights and installs nothing system-wide. If a file cannot be loaded, it logs the problem to `app.log` and the app uses Segoe UI.
 - `paths.py` returns:
   - Login and sub-head files: `%APPDATA%\ExpenseLedger\`
   - Excel data: `Documents\ExpenseLedger\` (PRD FR-25)
@@ -135,11 +132,11 @@ Build outputs (not in Git): `build/`, `dist/`, `installer/output/`.
   - `append_entry(entry)` creates the file if missing (FR-27), writes the header row, adds the row, and saves.
   - `read_all_entries()` reads every daily file and returns `Entry` objects for the report.
   - `update_entry(entry, old_date)` changes a row. If the date changed, it removes the row from the old file and appends it to the new file (FR-30).
-  - `delete_entry(entry_id, date)` removes a row.
+  - `delete_entry(entry_id, date)` removes a row. The day's file is kept even when it has no entries left (Rules 16), so it can hold only the header row.
   - Saving uses a temporary file and then replaces the real file, so a crash during save does not corrupt the Excel file (NFR-4).
   - If the file is locked by Excel, it raises `ExcelFileLockedError`. The service passes this up so the UI can show the FR-29 message.
 - `subhead_store.py` reads and writes `subheads.json` in AppData. It only saves the list; it does not decide rules.
-- `defaults_store.py` appends `{ label, value }` entries to the `treesa` or `daily` list in `%APPDATA%\ExpenseLedger\Defaults\default.js`. It inserts the entry before the closing `]);` of that list, keeps the file's existing format, and never removes or edits existing entries. The `value` is the label in lower case with each run of characters other than letters and digits replaced by `_` (the same rule as `toEntries` in the file).
+- `defaults_store.py` adds a new label string at the end of the `treesa` or `daily` list in `%APPDATA%\ExpenseLedger\Defaults\default.js`. The list holds plain labels, and `toEntries()` in the file builds the `{ label, value }` pairs, so the module adds only the label. It inserts the entry before the closing `]);` of that list, keeps the file's existing format, and never removes or edits existing entries. The stored value is the label in lower case with each run of characters other than letters and digits replaced by `_`, which is the rule `toEntries` already uses.
 - `account_store.py` reads and writes `account.json` in AppData (username, password hash, salt, failed attempt count, lock-until time).
 
 ### 4.3 Services (`app/services/`)
@@ -185,15 +182,17 @@ Build outputs (not in Git): `build/`, `dist/`, `installer/output/`.
 ### 5.2 Sub-heads: `%APPDATA%\ExpenseLedger\subheads.json`
 ```json
 {
-  "subheads": [
-    { "name": "Primary Sub Head", "mandatory": false, "active": true },
-    { "name": "Secondary Sub Head", "mandatory": false, "active": true },
-    { "name": "Auxiliary Sub Head", "mandatory": false, "active": true },
-    { "name": "Special Collection", "mandatory": false, "active": true }
+  "treesa": [
+    { "name": "Treesa - SIB", "mandatory": false, "active": true },
+    { "name": "PD - IndusInd", "mandatory": false, "active": true }
+  ],
+  "daily": [
+    { "name": "Lenin", "mandatory": false, "active": true },
+    { "name": "Mohandas", "mandatory": false, "active": true }
   ]
 }
 ```
-Seed values are in `config.py`. They are written to `subheads.json` the first time the app starts, if the file does not exist. The `mandatory` flags are placeholders until the customer confirms them (PRD A4).
+There is one list per Main Head list name (`treesa` for MH 1, `daily` for MH 2). The example shows only the first items. A removed sub-head stays in its list with `active` set to false. Seed values are in `config.py`. They are written to `subheads.json` the first time the app starts, if the file does not exist. The `mandatory` flags are placeholders until the customer confirms them (PRD A4).
 
 ### 5.3 Login file: `%APPDATA%\ExpenseLedger\account.json`
 ```json
@@ -266,7 +265,7 @@ Plain-text passwords are never written (PRD FR-3). The file is never placed in t
 
 ## 7. Performance (NFR-3)
 
-- The Expense Report reads every daily file, and the date range filter narrows the rows only after they are read. Reading every file is the main risk to the 1-second target. Opening only the files inside a chosen date range is a possible later improvement, not part of v1.1.
+- The Expense Report reads every daily file, and the date range filter narrows the rows only after they are read. Reading every file is the main risk to the 1-second target. Decision (approved): the parsed rows of each file are cached in memory and reloaded only when the file changes. Measured at 10,000 entries: first load about 4.1 seconds, cached load 0.01 seconds, one save 0.03 seconds. Opening only the files inside a chosen date range is a possible later improvement, not part of v1.1.
 - Mitigation if the test in task T8.3 is slower than 1 second: keep an in-memory cache of the report rows keyed by file path and modified time, refreshed on save, update, and delete. Do not change the storage design for this.
 
 ---
@@ -284,14 +283,14 @@ Plain-text passwords are never written (PRD FR-3). The file is never placed in t
 ## 9. Packaging (Phase 9)
 
 - EXE: PyInstaller, one-folder build first (easier to debug), then one-file if it works. Output: `dist\ExpenseLedger.exe`.
-- MSI: built from the EXE with WiX Toolset v4. It installs to `Program Files\ExpenseLedger` and adds a Start Menu shortcut. On uninstall it removes the program files only. It keeps all user data in `Documents\ExpenseLedger` (Excel entries) and `%APPDATA%\ExpenseLedger` (login, sub-heads, `Defaults\default.js`, log). Version 1.1 has no option to delete data during uninstall.
+- MSI: built from the EXE with WiX Toolset v4. The install dialog asks "Just me" (default: current user, no administrator rights, installs to `%LOCALAPPDATA%\Apps\ExpenseLedger`) or "Anyone who uses this computer" (all users, installs to Program Files, needs administrator rights). It adds a desktop shortcut on the chosen user's desktop and a Start Menu shortcut. The MSI is built twice from `installer/Product.wxs`: once in Dual mode (the choice above) and once in User mode (`ExpenseLedger-1.0.0-CurrentUser.msi`, current user only). The setup program `ExpenseLedger-Setup-1.0.0.exe` (WiX Burn bundle, `installer/Bundle.wxs`) wraps the User-mode MSI, shows the license (`installer/License.rtf`), and installs for the current user. Burn can only install a per-user MSI, which is why the User build exists. On uninstall it removes the program files, the shortcuts, and the login file `%APPDATA%\ExpenseLedger\account.json` (a deferred custom action, run only for a real uninstall and not during an upgrade). It keeps the other user data: `Desktop\ExpenseLedger` (Excel entries) and `%APPDATA%\ExpenseLedger` (sub-heads, `Defaults\default.js`, log). After a reinstall, the first open shows the create-account page. Version 1.1 has no option to delete data during uninstall.
 - Uninstall: two ways, both keep user data.
   - Windows: Settings > Apps > Installed apps > Expense Ledger > Uninstall (the MSI registers the program).
   - `installer/uninstall.bat`: asks for confirmation, finds the MSI product code under the Windows uninstall list, and runs `msiexec /x`. It reports success, cancel, or an error code. WiX installs a copy into the program folder and adds a Start Menu shortcut "Uninstall Expense Ledger".
 - Version number `1.0.0` is set in `config.py` and in the WiX file.
 - Developer signature: `APP_AUTHOR` ("Tenwin James") is the single source. It is used in the sidebar footer and login About text (FR-34). The PyInstaller version-info file sets CompanyName and LegalCopyright to the same name, so the EXE Properties show it (FR-35). The WiX file sets `Manufacturer` and the publisher to the same name.
 - PyInstaller must include the `tkcalendar` data files. Check this in task T9.1.
-- PyInstaller must also include the `fonts/` folder as data files, so the font files are inside the program folder. The WiX installer copies that folder too. On uninstall the font files are removed with the program, since they are not user data.
+- PyInstaller must include the `seed/default.js` file as data, so the first run can copy it into AppData. No font files are bundled: the app uses Segoe UI (PRD NFR-8).
 
 ---
 
@@ -300,7 +299,7 @@ Plain-text passwords are never written (PRD FR-3). The file is never placed in t
 | # | Question | Default used in this document | Decide by |
 |---|----------|-------------------------------|-----------|
 | 1 | Should the user change the Excel data folder? | No. Fixed to `Documents\ExpenseLedger` in v1. | Phase 1 |
-| 2 | MSI tool | WiX Toolset v4 | Task T9.3 |
+| 2 | MSI tool | WiX Toolset v4 (chosen and installed 24-Oct-2026; .NET SDK 8 and WiX 4.0.6). The build is `installer/generate_files.py` then `wix build`. | Task T9.3 (done) |
 | 3 | Password reset | Not in v1 (PRD risk table: v1.1) | Phase 10 |
 | 4 | Mandatory sub-heads and currency name | See PRD Section 10 (A4, A6) | Customer |
 

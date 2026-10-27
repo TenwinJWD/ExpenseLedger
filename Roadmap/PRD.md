@@ -78,7 +78,7 @@ The app is installed separately on each device. Each installation has its own lo
 - FR-7: Main Entry is the default page after login.
 
 ### 6.3 Main Entry (Sub-Heads and Entry Form)
-- FR-8: **Add sub-head.** Clicking **+** opens a popup where the user types a new sub-head name. Duplicates (case-insensitive) are rejected. A new sub-head is also written to `%APPDATA%\ExpenseLedger\Defaults\default.js`, in the `treesa` list for MH 1 or the `daily` list for MH 2, as `{ label, value }`.
+- FR-8: **Add sub-head.** Clicking **+** opens a popup where the user types a new sub-head name. Duplicates (case-insensitive) are rejected. A new sub-head is also written to `%APPDATA%\ExpenseLedger\Defaults\default.js`, in the `treesa` list for MH 1 or the `daily` list for MH 2, as a new label string at the end of the list.
 - FR-9: **Remove sub-head.** Clicking **−** removes a non-mandatory sub-head from the dropdown. Removing it does not change old entries (see Rule 14).
 - FR-10: **Main Head.** The Main Head selector shows MH 1 (Treesa Agencies) and MH 2 (Daily Collection). MH 2 is selected when the screen opens.
 - FR-11: **Sub-Head dropdown.** Shows the first item "-Select-" and then the active sub-heads. It is set to "-Select-" when the screen opens and stays there until the user chooses a sub-head.
@@ -155,12 +155,12 @@ The app is installed separately on each device. Each installation has its own lo
 
 - NFR-1 Platform: Windows 10 (64-bit) and later.
 - NFR-2 Python version: 3.11 or newer for development.
-- NFR-3 Performance: Saving an entry and loading the Expense Report should each take less than 1 second for up to 10,000 entries.
+- NFR-3 Performance: Saving an entry should take less than 1 second for up to 10,000 entries. Loading the Expense Report takes about 4 seconds the first time after the app starts at 10,000 entries (approved 24-Oct-2026); later loads reuse a cache and take under 0.1 second.
 - NFR-4 Reliability: No entry is lost if the app closes unexpectedly while saving.
 - NFR-5 Security: Passwords are hashed with PBKDF2 (standard library). Login data is stored in the user's AppData folder, not in the project or the Excel data folder.
 - NFR-6 Usability: Every page must be usable with mouse and keyboard (Tab key moves between fields, Enter submits the form when it is enabled).
 - NFR-7 Maintainability: Code is split into layers (see Architecture.md) so the storage layer can be replaced later.
-- NFR-8 Fonts: The app uses font files bundled in its program folder. They are loaded for this program only, with no system-wide install and no administrator rights. Each font file must allow redistribution (the SIL Open Font License is acceptable). If a font file is missing, the app falls back to Segoe UI and shows no error.
+- NFR-8 Fonts: The app uses the Windows system font, Segoe UI. No font files are bundled, and nothing is installed. (Decided 24-Oct-2026; this replaces the earlier plan to bundle a font.)
 - NFR-9 No file locations on screen: No screen, message, popup, or tooltip shows a folder, AppData path, or file name. Messages refer to things the user knows, such as a date or a name. Locations are documented only in the planning documents and the user guide.
 
 ---
@@ -171,8 +171,8 @@ The app is installed separately on each device. Each installation has its own lo
 |---|-------------|--------|
 | 1 | Expense Ledger application | Source code (Python) |
 | 2 | Standalone program | `ExpenseLedger.exe` (PyInstaller) |
-| 3 | Installer | `ExpenseLedger-1.0.0.msi` |
-| 4 | Uninstall file | `uninstall.bat` (removes the program, keeps user data, asks for confirmation; also installed to the program folder) |
+| 3 | Installer | `ExpenseLedger-1.0.0.msi` (asks "Just me" (default) or "Anyone who uses this computer"; adds a desktop shortcut and a Start Menu entry), and `ExpenseLedger-Setup-1.0.0.exe` (single setup program that shows the license and installs for the current user) |
+| 4 | Uninstall file | `uninstall.bat` (removes the program and the login, keeps entries and sub-heads, asks for confirmation; also installed to the program folder) |
 | 5 | Documentation | PRD.md, Architecture.md, Rules.md, Design.md, Tasks.md |
 
 ---

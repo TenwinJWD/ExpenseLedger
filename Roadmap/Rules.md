@@ -42,7 +42,7 @@ These rules apply to every line of code, every document, and every change. The b
 15. **Rule 15 – Never lose an entry.** If a save fails, the form keeps every value the user typed. Show a message that says what to do next.
 16. **Rule 16 – Atomic Excel saves.** Write the workbook to a temporary file in the same folder, then replace the real file. A crash during save must not leave a broken `.xlsx`.
 17. **Rule 17 – Never auto-delete user data.** The app deletes an entry row only after the user confirms it in the delete popup. It never deletes an Excel file, a sub-head, or the account file on its own.
-18a. **Rule 18a – Write added sub-heads to the AppData `default.js`.** Every sub-head added with **+** is also appended to the `treesa` (MH 1) or `daily` (MH 2) list in `%APPDATA%\ExpenseLedger\Defaults\default.js` as `{ label, value }`, using the same slug rule as `toEntries`. Only append; never edit or remove existing entries, and never replace the file if it cannot be parsed (PRD FR-8).
+18a. **Rule 18a – Write added sub-heads to the AppData `default.js`.** Every sub-head added with **+** is also appended to the `treesa` (MH 1) or `daily` (MH 2) list in `%APPDATA%\ExpenseLedger\Defaults\default.js` as a new label string. The file's own `toEntries` rule gives the stored value. Only append; never edit or remove existing entries, and never replace the file if it cannot be parsed (PRD FR-8).
 18. **Rule 18 – Corrupt files are not overwritten.** If `subheads.json` or `account.json` cannot be read, show a message and stop. Do not replace it with defaults silently.
 
 ---

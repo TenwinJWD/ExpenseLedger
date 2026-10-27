@@ -35,7 +35,7 @@ Developed by **Tenwin James**.
 | Added sub-heads (list copy) | `%APPDATA%\ExpenseLedger\Defaults\default.js` |
 | Log | `%APPDATA%\ExpenseLedger\app.log` |
 
-Uninstalling removes the program only. Your entries, login, and sub-heads are kept.
+Uninstalling removes the program and your login. Your entries and sub-heads are kept. After a reinstall, the app asks you to create a new user and password.
 
 ---
 
@@ -66,8 +66,21 @@ The packaged program is built from this environment, so the build includes the l
 ## Packaging and uninstall
 
 - `ExpenseLedger.exe` is built with PyInstaller.
-- `ExpenseLedger-1.0.0.msi` is the installer, built with WiX Toolset v4 (to be confirmed in task T9.3).
+- `ExpenseLedger-Setup-1.0.0.exe` is a single setup program. It shows the license, then installs for the current user (no administrator rights) with a desktop shortcut and a Start Menu entry. It installs the `ExpenseLedger-1.0.0-CurrentUser.msi` inside it.
+- `ExpenseLedger-1.0.0.msi` is the installer, built with WiX Toolset v4. The install dialog asks **Just me** (the default: installs for the current user, no administrator rights) or **Anyone who uses this computer** (installs for all users, needs administrator rights). A desktop shortcut and a Start Menu entry are added for the chosen user.
 - To uninstall, use **Settings > Apps > Installed apps > Expense Ledger**, or run `installer\uninstall.bat`. Both keep your data.
+- **Windows SmartScreen warning:** an unsigned build triggers "Windows protected your PC" and may be quarantined by Windows Defender. Release builds should be digitally signed with `installer\sign.ps1` (see **Release checklist** below). For an unsigned build, click **More info**, then **Run anyway**. Only do this for the installer you received from the developer.
+
+### Release checklist (avoid Defender and SmartScreen blocks)
+
+1. Build with PyInstaller using the latest release. `upx=False` is set in `ExpenseLedger.spec` (UPX-packed files are flagged more often). Keep one-folder mode.
+2. `.\installer\sign.ps1 -Stage Exe <certificate options>`, then rebuild the MSI files.
+3. `.\installer\sign.ps1 -Stage Msi ...`, then rebuild the Burn setup.
+4. `.\installer\sign.ps1 -Stage Setup ...` (detaches, signs and reattaches the Burn engine, then signs the setup).
+5. `.\installer\sign.ps1 -Stage Verify` and keep the SHA-256 hashes it prints. Publish them with the download.
+6. Scan the files at virustotal.com.
+7. Submit each release to Microsoft as a software developer at https://www.microsoft.com/wdsi/filesubmission.
+8. Publish over HTTPS from a stable URL, with the same certificate and publisher name (Tenwin James) every release.
 
 ---
 
