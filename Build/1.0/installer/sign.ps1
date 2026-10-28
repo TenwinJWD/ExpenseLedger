@@ -1,9 +1,9 @@
 <#
-  Signs the Expense Ledger release files with Authenticode (SHA-256 + timestamp).
+  Signs the Daily Fresh release files with Authenticode (SHA-256 + timestamp).
 
   Order matters: each file must be signed before anything that wraps it is built.
     1. dist\ExpenseLedger\ExpenseLedger.exe   (sign, then rebuild the MSI files from it)
-    2. installer\output\*.msi                 (sign, then rebuild the Burn setup from the User MSI)
+    2. installer\output\<version>\*.msi                 (sign, then rebuild the Burn setup from the User MSI)
     3. Burn engine inside ExpenseLedger-Setup-*.exe (detach, sign, reattach)
     4. ExpenseLedger-Setup-*.exe              (sign the final file)
 
@@ -33,8 +33,8 @@ $ErrorActionPreference = 'Stop'
 $root = Split-Path -Parent $PSScriptRoot
 if (-not $Version) { $Version = (Select-String -Path (Join-Path $root 'app\core\config.py') -Pattern '^APP_VERSION = "([0-9.]+)"').Matches[0].Groups[1].Value }
 $exe = Join-Path $root 'dist\ExpenseLedger\ExpenseLedger.exe'
-$out = Join-Path $PSScriptRoot 'output'
-$msis = @("$out\ExpenseLedger-$Version.msi", "$out\ExpenseLedger-$Version-CurrentUser.msi")
+$out = Join-Path $PSScriptRoot "output\$Version"
+$msis = @("$out\ExpenseLedger-$Version.msi", "$out\ExpenseLedger-$Version-CurrentUser.msi", "$out\ExpenseLedger-$Version-AllUsers.msi")
 $setup = "$out\ExpenseLedger-Setup-$Version.exe"
 
 function Find-SignTool {
@@ -48,7 +48,7 @@ function Find-SignTool {
 
 function Sign-File([string]$file) {
     if (-not (Test-Path $file)) { throw "Missing file: $file" }
-    $args = @('sign', '/fd', 'SHA256', '/d', 'Expense Ledger', '/td', 'SHA256', '/tr', $TimestampUrl)
+    $args = @('sign', '/fd', 'SHA256', '/d', 'Daily Fresh', '/td', 'SHA256', '/tr', $TimestampUrl)
     if ($AzureDlib) { $args += @('/dlib', $AzureDlib, '/dmdf', $AzureMetadata) }
     elseif ($Thumbprint) { $args += @('/sha1', $Thumbprint) }
     elseif ($PfxPath) { $args += @('/f', $PfxPath, '/p', $PfxPassword) }
@@ -75,7 +75,7 @@ switch ($Stage) {
     }
     'Msi' {
         $msis | ForEach-Object { Sign-File $_ }
-        Write-Host 'Next: rebuild the Burn setup from the signed User MSI (wix build Bundle.wxs), then run -Stage Setup.'
+        Write-Host 'Next: rebuild the Burn setup from the signed AllUsers MSI (wix build Bundle.wxs), then run -Stage Setup.'
     }
     'Setup' {
         $engine = Join-Path $env:TEMP 'ExpenseLedger-burn-engine.exe'

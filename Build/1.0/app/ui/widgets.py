@@ -2,17 +2,26 @@
 
 import calendar
 import tkinter as tk
-from datetime import date
+from datetime import date, timedelta
 from typing import Callable
 
 import customtkinter as ctk
 
-from app.core import theme
+from app.core import paths, theme
 
 
 def text_font(size: int = theme.FONT_SIZE_BODY, bold: bool = True) -> ctk.CTkFont:
     """Font for text. Tkinter offers only normal and bold, so every weight above normal shows as bold."""
     return ctk.CTkFont(family=theme.FONT_FAMILY, size=size, weight="bold" if bold else "normal")
+
+
+def set_window_icon(window) -> None:
+    """Give a window the app icon. Calling iconbitmap also stops CustomTkinter from putting its own blue icon
+    on the window a moment after it opens. A missing icon file keeps the default icon."""
+    try:
+        window.iconbitmap(str(paths.asset_file("app.ico")))
+    except tk.TclError:
+        pass
 
 
 def box(parent, color: str = theme.BG_CARD) -> tk.Frame:
@@ -31,7 +40,7 @@ def card(parent, **kwargs) -> ctk.CTkFrame:
         parent,
         fg_color=theme.BG_CARD,
         border_color=theme.BORDER_SOFT,
-        border_width=1,
+        border_width=2,
         corner_radius=theme.CARD_RADIUS,
         **kwargs,
     )
@@ -42,11 +51,11 @@ def label(parent, text: str, size: int = theme.FONT_SIZE_BODY, color: str = them
 
 
 def field_label(parent, text: str, required: bool = False, color: str = theme.TEXT, tip: str = ""):
-    """Uppercase field label. A required field gets a red asterisk (Design.md 3).
+    """Field label. A required field gets an asterisk (Design.md 3).
     With a tip, an info icon sits beside the heading and shows the tip on hover."""
-    shown = text.upper() + (" *" if required else "")
+    shown = text + (" *" if required else "")
     holder = ctk.CTkFrame(parent, fg_color="transparent") if tip else parent
-    heading = ctk.CTkLabel(holder, text=shown, font=text_font(theme.FONT_SIZE_LABEL), text_color=color, anchor="w")
+    heading = ctk.CTkLabel(holder, text=shown, font=text_font(theme.FONT_SIZE_BODY), text_color=color, anchor="w")
     if not tip:
         return heading
     heading.pack(side="left")
@@ -140,7 +149,7 @@ def entry(parent, show: str = "", placeholder: str = "", **kwargs) -> ctk.CTkEnt
         corner_radius=theme.INPUT_RADIUS,
         fg_color=theme.BG_INPUT,
         border_color=theme.INPUT_BORDER,
-        border_width=1,
+        border_width=2,
         text_color=theme.TEXT,
         placeholder_text_color=theme.TEXT_MUTED,
         font=text_font(theme.FONT_SIZE_BODY),
@@ -154,31 +163,33 @@ def primary_button(parent, text: str, command, **kwargs):
     """Blue action button with the gradient (Design.md 7). Drawn by GradientButton."""
     from app.ui.gradient import GradientButton  # imported here: gradient.py imports this module
 
-    return GradientButton(parent, text=text.upper(), command=command, width=kwargs.get("width", 160), state=kwargs.get("state", "normal"))
+    return GradientButton(parent, text=text, command=command, width=kwargs.get("width", 160), state=kwargs.get("state", "normal"))
 
 
 def secondary_button(parent, text: str, command, **kwargs) -> ctk.CTkButton:
+    """White button with a blue outline and blue text (the mockup's Cancel, Add, Remove, Modify Fields)."""
     return ctk.CTkButton(
         parent,
-        text=text.upper(),
+        text=text,
         command=command,
         height=theme.BUTTON_HEIGHT,
         corner_radius=theme.BUTTON_RADIUS,
         fg_color=theme.BG_CARD,
-        hover_color=theme.SURFACE_TINT,
-        border_color=theme.INPUT_BORDER,
-        border_width=1,
-        text_color=theme.TEXT,
+        hover_color=theme.PRIMARY_LIGHT,
+        border_color=theme.PRIMARY,
+        border_width=2,
+        text_color=theme.PRIMARY,
+        text_color_disabled=theme.DISABLED_TEXT,
         font=kwargs.pop("font", None) or text_font(theme.FONT_SIZE_BODY),
         **kwargs,
     )
 
 
 def danger_button(parent, text: str, command, **kwargs) -> ctk.CTkButton:
-    """Button for REMOVE and DELETE. Matches the mockup, where it uses the primary blue (Design.md 7)."""
+    """Filled button for Remove and Delete in a confirmation popup (Design.md 7)."""
     return ctk.CTkButton(
         parent,
-        text=text.upper(),
+        text=text,
         command=command,
         height=theme.BUTTON_HEIGHT,
         corner_radius=theme.BUTTON_RADIUS,
@@ -191,22 +202,23 @@ def danger_button(parent, text: str, command, **kwargs) -> ctk.CTkButton:
 
 
 def _fit_inside_window(window, anchor, width: int, height: int, _search: int = 0) -> tuple[int, int, int]:
-    """Place a popup directly under the anchor widget, lined up with its left edge.
-    The popup is always below the field. Only when there is no room left at the bottom
-    of the window is it shortened, so it still ends inside the window. Returns (x, y, height)."""
+    """Place a popup under the anchor widget, lined up with its left edge, always inside the app window.
+    It goes below the field when it fits there. Otherwise it goes above the field when there is more room
+    up there, and as a last resort it is shortened to the room that is left. Returns (x, y, height)."""
     window.update_idletasks()
-    left = window.winfo_rootx()
-    right = left + window.winfo_width()
-    x = anchor.winfo_rootx()
-    if x + width > right - 8:  # only a date popup can be wider than the room left
-        x = max(left + 8, right - width - 8)
-    y = anchor.winfo_rooty() + anchor.winfo_height() + 4
-    # Shorten the list only when it would run off the bottom of the screen, so it stays fully visible.
-    # winfo_screenheight() is in logical pixels; window positions are physical, so convert it.
-    screen_bottom = round(window.winfo_screenheight() * ctk.ScalingTracker.get_widget_scaling(window))
-    if y + height > screen_bottom - 8:
-        height = max(60, screen_bottom - 8 - y)
-    return x, y, height
+    left, upper = window.winfo_rootx(), window.winfo_rooty()
+    right, lower = left + window.winfo_width(), upper + window.winfo_height()
+    x = max(left + 8, min(anchor.winfo_rootx(), right - width - 8))
+    below = anchor.winfo_rooty() + anchor.winfo_height() + 4
+    room_below = lower - 8 - below
+    room_above = anchor.winfo_rooty() - 4 - (upper + 8)
+    if height <= room_below:
+        return x, below, height
+    if room_above > room_below:
+        height = max(60, min(height, room_above))
+        return x, anchor.winfo_rooty() - 4 - height, height
+    height = max(60, room_below)
+    return x, below, height
 
 
 def _set_popup_geometry(popup, x: int, y: int, width: int, height: int) -> None:
@@ -245,9 +257,10 @@ class SelectBox(ctk.CTkFrame):
             corner_radius=theme.INPUT_RADIUS,
             fg_color=theme.BG_INPUT,
             hover_color=theme.SURFACE_TINT,
-            border_color=theme.DROPDOWN_BORDER,
+            border_color=theme.INPUT_BORDER,
             border_width=2,
             text_color=theme.TEXT,
+            text_color_disabled=theme.DISABLED_TEXT,
             font=text_font(theme.FONT_SIZE_BODY),
             command=self._toggle,
         )
@@ -294,9 +307,13 @@ class SelectBox(ctk.CTkFrame):
 
     def _open(self) -> None:
         top = self.winfo_toplevel()
-        popup = ctk.CTkToplevel(top, fg_color=theme.DROPDOWN_BORDER)  # the 2 px around the list is its border
+        # A Toplevel is square, so the rounded corners come from a key colour made see-through (as in Tooltip).
+        popup = ctk.CTkToplevel(top, fg_color=Tooltip.KEY_COLOUR)
         popup.overrideredirect(True)
         popup.attributes("-topmost", True)
+        popup.attributes("-transparentcolor", Tooltip.KEY_COLOUR)
+        panel = ctk.CTkFrame(popup, fg_color=theme.BG_CARD, border_color=theme.DROPDOWN_BORDER, border_width=2, corner_radius=14)
+        panel.pack(fill="both", expand=True)
         width = self._button.winfo_width()
         needs_search = len(self._values) > self.SEARCH_THRESHOLD
         search_height = 44 if needs_search else 0
@@ -314,16 +331,16 @@ class SelectBox(ctk.CTkFrame):
         query_box = None
         if needs_search:
             query_box = ctk.CTkEntry(
-                popup, height=34, corner_radius=8, fg_color=theme.BG_INPUT, border_color=theme.INPUT_BORDER,
+                panel, height=34, corner_radius=8, fg_color=theme.BG_INPUT, border_color=theme.INPUT_BORDER,
                 text_color=theme.TEXT, placeholder_text="Search", placeholder_text_color=theme.TEXT_MUTED,
                 font=text_font(theme.FONT_SIZE_BODY),
             )
-            query_box.pack(fill="x", padx=8, pady=(8, 4))
+            query_box.pack(fill="x", padx=10, pady=(10, 4))
             query_box.bind("<KeyRelease>", lambda _event: self._fill(list_frame, query_box.get()))
             query_box.focus_set()
 
-        list_frame = ctk.CTkScrollableFrame(popup, fg_color=theme.BG_CARD, corner_radius=0, height=list_height)
-        list_frame.pack(fill="both", expand=True, padx=2, pady=2)
+        list_frame = ctk.CTkScrollableFrame(panel, fg_color=theme.BG_CARD, corner_radius=0, height=list_height)
+        list_frame.pack(fill="both", expand=True, padx=8, pady=8)
         self._fill(list_frame, "")
         top.bind("<Button-1>", self._close_if_outside, add="+")
 
@@ -376,8 +393,7 @@ class SelectBox(ctk.CTkFrame):
         if not self._button.winfo_ismapped():
             self._close()
             return
-        x = self._button.winfo_rootx()
-        y = self._button.winfo_rooty() + self._button.winfo_height() + 4
+        x, y, _height = _fit_inside_window(self.winfo_toplevel(), self._button, self._popup.winfo_width(), self._popup.winfo_height())
         if (self._popup.winfo_rootx(), self._popup.winfo_rooty()) != (x, y):
             self._popup.geometry(f"+{x}+{y}")
         self._follow_job = self.after(30, self._follow)
@@ -399,23 +415,24 @@ class DatePopup(ctk.CTkToplevel):
     today has an outline, and days from the neighbouring months are dimmed.
     """
 
-    CELL = 38
+    CELL = 50
     WEEKDAYS = ("Mo", "Tu", "We", "Th", "Fr", "Sa", "Su")
 
     def __init__(self, anchor, initial: date | None, on_pick: Callable[[date], None]) -> None:
         top = anchor.winfo_toplevel()
-        super().__init__(top, fg_color=theme.BG_CARD)
+        super().__init__(top, fg_color=Tooltip.KEY_COLOUR)  # see-through corners, as in Tooltip
         self.overrideredirect(True)
         self.attributes("-topmost", True)
+        self.attributes("-transparentcolor", Tooltip.KEY_COLOUR)
         self.on_pick = on_pick
         self.anchor_widget = anchor
         self.selected = initial or date.today()
         self.shown = date(self.selected.year, self.selected.month, 1)
         self.top = top
-        self.configure(border_width=1, border_color=theme.INPUT_BORDER)
-
-        frame = ctk.CTkFrame(self, fg_color=theme.BG_CARD, corner_radius=0)
-        frame.pack(fill="both", expand=True, padx=12, pady=12)
+        panel = ctk.CTkFrame(self, fg_color=theme.BG_CARD, border_color=theme.INPUT_BORDER, border_width=2, corner_radius=14)
+        panel.pack(fill="both", expand=True)
+        frame = ctk.CTkFrame(panel, fg_color=theme.BG_CARD, corner_radius=0)
+        frame.pack(fill="both", expand=True, padx=14, pady=14)
         header = box(frame, theme.BG_CARD)
         header.pack(fill="x")
         ctk.CTkButton(header, text="‹", width=32, height=32, corner_radius=8, fg_color="transparent", hover_color=theme.PRIMARY_LIGHT, text_color=theme.TEXT, font=text_font(16), command=lambda: self._shift(-1)).pack(side="left")
@@ -470,6 +487,9 @@ class DatePopup(ctk.CTkToplevel):
             text_label(self.grid_frame, name, theme.TEXT_MUTED).grid(row=0, column=column, padx=2, pady=(0, 4))
         today = date.today()
         weeks = calendar.Calendar(firstweekday=0).monthdatescalendar(self.shown.year, self.shown.month)
+        while len(weeks) < 6:  # always six rows, so the calendar keeps the same size in every month
+            last = weeks[-1][-1]
+            weeks.append([last + timedelta(days=offset) for offset in range(1, 8)])
         for row, week in enumerate(weeks, start=1):
             for column, day in enumerate(week):
                 in_month = day.month == self.shown.month
@@ -485,7 +505,7 @@ class DatePopup(ctk.CTkToplevel):
                     border_color=theme.BTN_TOP if day == today and not chosen else theme.BG_CARD,
                     border_width=1 if day == today and not chosen else 0,
                     text_color="#FFFFFF" if chosen else (theme.TEXT if in_month else theme.DISABLED_TEXT),
-                    font=text_font(theme.FONT_SIZE_BODY, chosen),
+                    font=text_font(theme.FONT_SIZE_CARD_TITLE - 2, chosen),
                     command=lambda picked=day: self._choose(picked),
                 ).grid(row=row, column=column, padx=2, pady=2)
 
@@ -525,6 +545,7 @@ def text_label(parent, text: str, color: str) -> ctk.CTkLabel:
     return ctk.CTkLabel(parent, text=text, font=text_font(theme.FONT_SIZE_BODY), text_color=color)
 
 
-def error_label(parent) -> ctk.CTkLabel:
-    """Red message under a field. Empty text hides it visually."""
-    return ctk.CTkLabel(parent, text="", font=text_font(theme.FONT_SIZE_LABEL), text_color=theme.ERROR, anchor="w")
+def error_label(parent, fixed: bool = False) -> ctk.CTkLabel:
+    """Red message under a field. Empty text hides it visually. A fixed one keeps its height, so the form never shifts."""
+    extra = {"height": 22} if fixed else {}
+    return ctk.CTkLabel(parent, text="", font=text_font(theme.FONT_SIZE_LABEL), text_color=theme.ERROR, anchor="w", **extra)

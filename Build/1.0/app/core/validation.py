@@ -72,3 +72,17 @@ def check_entry(
             "credit": credit,
         }
     return EntryCheck(errors=errors, values=values, both_zero=both_zero, valid=valid)
+
+
+FORBIDDEN_NAME_CHARACTERS = ('"', "\\")
+
+
+def name_error(name: str, max_length: int) -> str:
+    """The message for an invalid Main Entry or Sub-Head name (already trimmed), or an empty string if it is fine."""
+    if not name:
+        return "Enter a name."
+    if len(name) > max_length:
+        return f"Use up to {max_length} characters."
+    if any(character in name for character in FORBIDDEN_NAME_CHARACTERS):
+        return "Quotation marks and backslashes cannot be used."
+    return ""

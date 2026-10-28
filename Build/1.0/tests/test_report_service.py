@@ -212,3 +212,31 @@ def test_page_slice_and_clamping():
     assert rs.page_slice(rows, 3, 10) == (list(range(20, 25)), 3)
     assert rs.page_slice(rows, 9, 10) == (list(range(20, 25)), 3)
     assert rs.page_slice([], 1, 10) == ([], 1)
+
+
+# ----- Dashboard series and the newest-first order -----
+
+def test_sort_is_newest_first(rows):
+    assert [e.entry_date for e in rs.sort_newest_first(rows)] == sorted((e.entry_date for e in rows), reverse=True)
+
+
+def test_monthly_series_has_twelve_months_and_sums_each(rows):
+    bars = rs.monthly_series(rows, 2026)
+    assert [bar.label for bar in bars][:3] == ["Jan", "Feb", "Mar"] and len(bars) == 12
+    debit, credit = rs.totals([e for e in rows if e.entry_date.year == 2026])
+    assert sum((bar.debit for bar in bars), Decimal("0")) == debit
+    assert sum((bar.credit for bar in bars), Decimal("0")) == credit
+
+
+def test_monthly_series_ignores_other_years(rows):
+    assert all(bar.debit == 0 and bar.credit == 0 for bar in rs.monthly_series(rows, 1999))
+
+
+def test_daily_series_has_a_bar_for_every_day_of_the_month(rows):
+    assert len(rs.daily_series(rows, 2026, 2)) == 28
+    assert len(rs.daily_series(rows, 2024, 2)) == 29
+    october = rs.daily_series(rows, 2026, 10)
+    assert len(october) == 31
+    debit, credit = rs.totals(rs.entries_in_month(rows, 2026, 10))
+    assert sum((bar.debit for bar in october), Decimal("0")) == debit
+    assert sum((bar.credit for bar in october), Decimal("0")) == credit

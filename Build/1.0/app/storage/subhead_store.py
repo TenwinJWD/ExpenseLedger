@@ -1,6 +1,6 @@
 """Reads and writes the sub-head lists, subheads.json in the AppData folder (Architecture 5.2).
 
-The file has one list per Main Head list name ("treesa" and "daily"). A removed sub-head
+The file has one list per Main Entry ("treesa" and "daily" for the first two; a new Main Entry gets its own). A removed sub-head
 stays in the file with active set to false (Rules 14). A corrupt file is reported and is
 never overwritten (Rules 18).
 """
@@ -10,7 +10,6 @@ import os
 from pathlib import Path
 
 from app.core import config
-from app.core.models import MAIN_HEAD_LIST_NAME
 
 ITEM_KEYS = ("name", "mandatory", "active")
 
@@ -60,10 +59,9 @@ class SubheadStore:
     def _check_shape(data: object) -> None:
         if not isinstance(data, dict):
             raise CorruptSubheadFileError("not an object")
-        for list_name in MAIN_HEAD_LIST_NAME.values():
-            items = data.get(list_name)
+        for list_name, items in data.items():
             if not isinstance(items, list):
-                raise CorruptSubheadFileError(f"missing list {list_name}")
+                raise CorruptSubheadFileError(f"bad list {list_name}")
             for item in items:
                 if not isinstance(item, dict) or any(key not in item for key in ITEM_KEYS):
                     raise CorruptSubheadFileError(f"bad item in {list_name}")

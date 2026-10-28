@@ -1,6 +1,7 @@
 """Main Entry page (Design.md Section 5; PRD FR-7 to FR-17).
 
-The form stays disabled until a sub-head is chosen, and Submit stays disabled until
+One page serves every Main Entry: the sidebar item picks it (show). The "Transactions" list is the
+Main Entry's sub-head list. The form stays disabled until one is chosen, and Submit stays disabled until
 the form is valid. Errors show under a field only after the user has left that field.
 """
 
@@ -12,24 +13,25 @@ import customtkinter as ctk
 from app.core import config, dates, models, money, theme
 from app.core.validation import check_entry
 from app.services.entry_service import EntryService
+from app.services.main_entry_service import MainEntryService
 from app.services.subhead_service import SubheadService
 from app.ui import widgets
-from app.ui.subhead_popup import AddSubheadPopup, RemoveSubheadPopup
 
 SELECT = "-Select-"
 TRANSACTION_FIELDS = ("date", "name", "particulars", "debit", "credit")
 
 
 class MainEntryView(ctk.CTkFrame):
-    """The entry form, with the Main Head and Sub-Head choices above it."""
+    """The entry form of one Main Entry, with the Transactions choice above it."""
 
-    def __init__(self, master, subheads: SubheadService, entries: EntryService) -> None:
+    def __init__(self, master, main_entries: MainEntryService, subheads: SubheadService, entries: EntryService) -> None:
         super().__init__(master, fg_color="transparent")
+        self.main_entries = main_entries
         self.subheads = subheads
         self.entries = entries
+        self.main_head = models.DEFAULT_MAIN_HEAD
         self.touched: set[str] = set()
 
-        self.head_var = ctk.StringVar(value=models.DEFAULT_MAIN_HEAD)
         self.sub_var = ctk.StringVar(value=SELECT)
         self.date_var = ctk.StringVar()
         self.name_var = ctk.StringVar()
@@ -40,18 +42,15 @@ class MainEntryView(ctk.CTkFrame):
             variable.trace_add("write", lambda *_args: self._update_state())
 
         self.grid_columnconfigure(0, weight=1)
-        widgets.label(self, "Main Entry", size=theme.FONT_SIZE_PAGE_TITLE).grid(row=0, column=0, sticky="w", padx=24, pady=(24, 0))
-        widgets.label(self, "Record a daily collection or a Treesa Agencies entry", color=theme.TEXT_MUTED).grid(row=1, column=0, sticky="w", padx=24, pady=(2, 16))
-
         form = widgets.card(self)
-        form.grid(row=2, column=0, sticky="ew", padx=24)
-        form.grid_columnconfigure(tuple(range(6)), weight=1, uniform="fields")
+        form.grid(row=0, column=0, sticky="ew", padx=24, pady=(20, 0))
+        form.grid_columnconfigure((0, 1), weight=1, uniform="fields")  # every field is half the width of the card
         self._build_head_and_subhead(form)
         self._build_fields(form)
         self._build_buttons(form)
 
         self.message = ctk.CTkLabel(self, text="", font=widgets.text_font(theme.FONT_SIZE_BODY), corner_radius=theme.BUTTON_RADIUS, padx=14, pady=10, anchor="w")
-        self.message.grid(row=3, column=0, sticky="ew", padx=24, pady=(14, 0))
+        self.message.grid(row=1, column=0, sticky="ew", padx=24, pady=(14, 0))
         self.message.grid_remove()
 
         self._reload_subheads("")
@@ -60,78 +59,68 @@ class MainEntryView(ctk.CTkFrame):
     # ----- layout -----
 
     def _build_head_and_subhead(self, form) -> None:
-        widgets.field_label(form, "Main Head", tip="Choose Daily Collection or Treesa Agencies. Each has its own Sub-Head list.").grid(row=0, column=0, columnspan=6, sticky="w", padx=20, pady=(20, 6))
-        heads = ctk.CTkFrame(form, fg_color="transparent")
-        heads.grid(row=1, column=0, columnspan=6, sticky="w", padx=20)
-        for code, label in models.MAIN_HEADS.items():
-            ctk.CTkRadioButton(
-                heads,
-                text=label,
-                variable=self.head_var,
-                value=code,
-                command=self._on_head_change,
-                fg_color=theme.PRIMARY,
-                hover_color=theme.PRIMARY_HOVER,
-                text_color=theme.TEXT,
-                font=widgets.text_font(theme.FONT_SIZE_BODY),
-            ).pack(side="left", padx=(0, 28))
+        header = ctk.CTkFrame(form, fg_color="transparent")
+        header.grid(row=0, column=0, columnspan=2, sticky="ew", padx=20, pady=(20, 0))
+        titles = ctk.CTkFrame(header, fg_color="transparent")
+        titles.pack(side="left", fill="x", expand=True)
+        widgets.label(titles, "New Transaction", size=theme.FONT_SIZE_CARD_TITLE).pack(anchor="w")
+        self.subtitle = widgets.label(titles, "", color=theme.TEXT_MUTED)
+        self.subtitle.pack(anchor="w")
 
-        # Sub-Head and Date share one row: Sub-Head takes four of the six columns, Date two.
-        sub_cell = self._field(form, 2, 0, "Sub-Head", required=False, span=4, tip="The category for this entry. Pick one to enable the form. Add creates a new one; Remove deletes the selected one.")
+        # Two equal columns: Transactions and Date, Name and Particulars, Debit and Credit.
+        sub_cell = self._field(form, 2, 0, "Transactions", required=False, span=1, tip="The choices for this Main Entry. Pick one to enable the form. Modify Fields (in the sidebar) edits the list.")
         row = ctk.CTkFrame(sub_cell, fg_color="transparent")
         row.pack(fill="x")
-        self.remove_button = widgets.secondary_button(row, "Remove", self._open_remove, width=100)
-        self.remove_button.pack(side="right")
-        self.add_button = widgets.secondary_button(row, "Add", self._open_add, width=70)
-        self.add_button.pack(side="right", padx=(8, 8))
         self.sub_menu = widgets.SelectBox(row, values=[SELECT], variable=self.sub_var, command=self._on_sub_change, width=220)
         self.sub_menu.pack(side="left", fill="x", expand=True)
-        self.sub_hint = widgets.label(form, "Select a Sub-Head to enable entry.", size=theme.FONT_SIZE_LABEL, color=theme.TEXT_MUTED)
-        self.sub_hint.grid(row=3, column=0, columnspan=6, sticky="w", padx=20, pady=(6, 0))
+        self.sub_hint = widgets.label(form, "Select a Transaction to enable entry.", size=theme.FONT_SIZE_LABEL, color=theme.TEXT_MUTED)
+        self.sub_hint.grid(row=3, column=0, columnspan=2, sticky="w", padx=20, pady=(6, 0))
 
     def _build_fields(self, form) -> None:
         # Date sits beside Sub-Head; Name and Particulars share a row; Debit and Credit share the last row.
-        self.date_cell = self._field(form, 2, 4, "Date", required=True, span=2, tip="The day of the transaction, as DD/MM/YYYY. Use the calendar button to pick it.")
+        self.date_cell = self._field(form, 2, 1, "Date", required=True, span=1, tip="The day of the transaction, as DD/MM/YYYY. Use the calendar button to pick it.")
         date_row = ctk.CTkFrame(self.date_cell, fg_color="transparent")
         date_row.pack(fill="x")
         self.date_entry = widgets.entry(date_row, placeholder="DD/MM/YYYY", textvariable=self.date_var)
-        self.date_entry.pack(side="left", fill="x", expand=True)
-        self.date_button = widgets.secondary_button(date_row, theme.ICON_CALENDAR, self._open_calendar, width=36, font=widgets.icon_font(14))
-        self.date_button.pack(side="left", padx=(8, 0))
-        self.date_error = widgets.error_label(self.date_cell)
+        self.date_entry.pack(fill="x")
+        # The calendar button sits inside the field's right end, so the field is as wide as all the others.
+        self.date_button = widgets.secondary_button(date_row, theme.ICON_CALENDAR, self._open_calendar, width=34, font=widgets.icon_font(14))
+        self.date_button.configure(height=28, border_width=0, fg_color=theme.BG_INPUT)
+        self.date_button.place(relx=1.0, rely=0.5, x=-8, anchor="e")
+        self.date_error = widgets.error_label(self.date_cell, fixed=True)
         self.date_error.pack(fill="x")
         self.date_entry.bind("<FocusOut>", lambda _event: self._on_blur("date"))
 
-        self.name_cell = self._field(form, 4, 0, "Name", required=True, span=2, tip="Who paid or was paid for this entry.")
+        self.name_cell = self._field(form, 4, 0, "Name", required=True, span=1, tip="Who paid or was paid for this entry.")
         self.name_entry = widgets.entry(self.name_cell, textvariable=self.name_var)
         self.name_entry.pack(fill="x")
-        self.name_error = widgets.error_label(self.name_cell)
+        self.name_error = widgets.error_label(self.name_cell, fixed=True)
         self.name_error.pack(fill="x")
         self.name_entry.bind("<FocusOut>", lambda _event: self._on_blur("name"))
 
-        self.particulars_cell = self._field(form, 4, 2, "Particulars", required=True, span=4, tip="A short description of what the entry is for.")
+        self.particulars_cell = self._field(form, 4, 1, "Particulars", required=True, span=1, tip="A short description of what the entry is for.")
         self.particulars_entry = widgets.entry(self.particulars_cell, textvariable=self.particulars_var)
         self.particulars_entry.pack(fill="x")
-        self.particulars_error = widgets.error_label(self.particulars_cell)
+        self.particulars_error = widgets.error_label(self.particulars_cell, fixed=True)
         self.particulars_error.pack(fill="x")
         self.particulars_entry.bind("<FocusOut>", lambda _event: self._on_blur("particulars"))
 
-        self.debit_cell = self._field(form, 5, 0, "Debit", required=True, span=3, color=theme.DEBIT, tip="Money paid out. Enter an amount, or leave blank if this entry is a credit.")
+        self.debit_cell = self._field(form, 5, 0, "Debit", required=True, span=1, color=theme.DEBIT, tip="Money paid out. Enter an amount, or leave blank if this entry is a credit.")
         self.debit_entry = widgets.entry(self.debit_cell, textvariable=self.debit_var, justify="right", placeholder="0.00")
         self.debit_entry.pack(fill="x")
-        self.debit_error = widgets.error_label(self.debit_cell)
+        self.debit_error = widgets.error_label(self.debit_cell, fixed=True)
         self.debit_error.pack(fill="x")
         self.debit_entry.bind("<FocusOut>", lambda _event: self._on_blur("debit"))
 
-        self.credit_cell = self._field(form, 5, 3, "Credit", required=True, span=3, color=theme.CREDIT, tip="Money received. Enter an amount, or leave blank if this entry is a debit.")
+        self.credit_cell = self._field(form, 5, 1, "Credit", required=True, span=1, color=theme.CREDIT, tip="Money received. Enter an amount, or leave blank if this entry is a debit.")
         self.credit_entry = widgets.entry(self.credit_cell, textvariable=self.credit_var, justify="right", placeholder="0.00")
         self.credit_entry.pack(fill="x")
-        self.credit_error = widgets.error_label(self.credit_cell)
+        self.credit_error = widgets.error_label(self.credit_cell, fixed=True)
         self.credit_error.pack(fill="x")
         self.credit_entry.bind("<FocusOut>", lambda _event: self._on_blur("credit"))
 
         self.amount_hint = widgets.label(form, "Enter a Debit or Credit amount greater than 0.00.", size=theme.FONT_SIZE_LABEL, color=theme.TEXT_MUTED)
-        self.amount_hint.grid(row=6, column=0, columnspan=6, sticky="w", padx=20, pady=(4, 0))
+        self.amount_hint.grid(row=6, column=0, columnspan=2, sticky="w", padx=20, pady=(4, 0))
 
         for entry in (self.name_entry, self.particulars_entry, self.debit_entry, self.credit_entry):
             entry.bind("<Return>", lambda _event: self._submit())
@@ -144,21 +133,30 @@ class MainEntryView(ctk.CTkFrame):
 
     def _build_buttons(self, form) -> None:
         bar = ctk.CTkFrame(form, fg_color="transparent")
-        bar.grid(row=7, column=0, columnspan=6, sticky="e", padx=20, pady=(18, 20))
-        self.clear_button = widgets.secondary_button(bar, "Clear", self._clear)
+        bar.grid(row=7, column=0, columnspan=2, sticky="e", padx=20, pady=(18, 20))
+        self.clear_button = widgets.secondary_button(bar, "Cancel", self._clear)
         self.clear_button.pack(side="left", padx=(0, 10))
         self.submit_button = widgets.primary_button(bar, "Submit", self._submit, state="disabled", width=160)
         self.submit_button.pack(side="left")
 
     # ----- data -----
 
+    def show(self, main_head: str) -> None:
+        """Open the form for a Main Entry. Each Main Entry has its own list, so the choice goes back to -Select-."""
+        if main_head != self.main_head:
+            self.main_head = main_head
+            self._clear_transaction()
+            self._hide_message()
+            self.sub_var.set(SELECT)
+
     def refresh(self) -> None:
         """Reload the sub-heads each time the page opens (Architecture 4.4)."""
+        self.subtitle.configure(text=f"Record an entry for {self.main_entries.label(self.main_head)}")
         self._reload_subheads(self.sub_var.get())
         self._update_state()
 
     def _reload_subheads(self, keep: str) -> None:
-        names = self.subheads.active_names(self.head_var.get())
+        names = self.subheads.active_names(self.main_head)
         self.sub_menu.configure(values=[SELECT] + names)
         self.sub_var.set(keep if keep in names else SELECT)
 
@@ -175,13 +173,6 @@ class MainEntryView(ctk.CTkFrame):
         self.touched.clear()
 
     # ----- events -----
-
-    def _on_head_change(self) -> None:
-        # The two Main Heads have different sub-head lists, so the choice goes back to -Select-.
-        self._reload_subheads("")
-        self._clear_transaction()
-        self._hide_message()
-        self._update_state()
 
     def _on_sub_change(self, choice: str) -> None:
         if choice == SELECT:
@@ -207,8 +198,7 @@ class MainEntryView(ctk.CTkFrame):
         for entry in (self.date_entry, self.name_entry, self.particulars_entry, self.debit_entry, self.credit_entry):
             entry.configure(state=field_state)
         self.date_button.configure(state=field_state)
-        self.sub_hint.grid_remove() if has_sub_head else self.sub_hint.grid()
-        self.remove_button.configure(state="normal" if has_sub_head else "disabled")
+        self.sub_hint.configure(text="" if has_sub_head else "Select a Transaction to enable entry.")
 
         check = check_entry(
             has_sub_head,
@@ -223,16 +213,19 @@ class MainEntryView(ctk.CTkFrame):
         self._show_error(self.particulars_error, "particulars", check.errors)
         self._show_error(self.debit_error, "debit", check.errors)
         self._show_error(self.credit_error, "credit", check.errors)
-        self.amount_hint.grid_remove() if not (has_sub_head and check.both_zero) else self.amount_hint.grid()
+        self.amount_hint.configure(text="Enter a Debit or Credit amount greater than 0.00." if has_sub_head and check.both_zero else "")
         self.submit_button.configure(state="normal" if check.valid else "disabled")
 
     def _show_error(self, label: ctk.CTkLabel, field: str, errors: dict[str, str]) -> None:
-        label.configure(text=errors.get(field, "") if field in self.touched else "")
+        text = errors.get(field, "") if field in self.touched else ""
+        if field == "date" and text:
+            text = "Use DD/MM/YYYY."  # short, so the Date column never grows
+        label.configure(text=text)
 
     def _submit(self) -> None:
         if str(self.submit_button.cget("state")) == "disabled":
             return
-        head = self.head_var.get()
+        head = self.main_head
         check = check_entry(
             self._chosen_sub_head() is not None,
             self.date_var.get(),
@@ -262,29 +255,6 @@ class MainEntryView(ctk.CTkFrame):
         self._update_state()
 
     def _clear(self) -> None:
-        self._clear_transaction()
-        self._hide_message()
-        self._update_state()
-
-    # ----- sub-head popups (PRD FR-8, FR-9) -----
-
-    def _open_add(self) -> None:
-        AddSubheadPopup(self, self.subheads, self.head_var.get(), on_added=self._on_added)
-
-    def _on_added(self, name: str, warning: str) -> None:
-        self._reload_subheads(name)
-        self._update_state()
-        if warning:
-            self._show_message(warning, kind="warning")
-
-    def _open_remove(self) -> None:
-        name = self._chosen_sub_head()
-        if name is None:
-            return
-        RemoveSubheadPopup(self, self.subheads, self.head_var.get(), name, on_removed=self._on_removed)
-
-    def _on_removed(self) -> None:
-        self._reload_subheads("")
         self._clear_transaction()
         self._hide_message()
         self._update_state()

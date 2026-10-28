@@ -17,6 +17,7 @@ class ChangePasswordPopup(ctk.CTkToplevel):
         self.auth = auth
         self.on_saved = on_saved
         self.title("Change Password")
+        widgets.set_window_icon(self)
         self.geometry("420x440")
         self.resizable(False, False)
         self.transient(master)

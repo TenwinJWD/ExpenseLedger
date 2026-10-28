@@ -1,7 +1,8 @@
 """The app window: the start-up routing, and the main frame with the sidebar (Design.md Section 2).
 
 App decides which screen to show: create account, login, or the main frame.
-MainView is the frame after login. Its pages are placeholders until Phases 5 and 7.
+MainView is the frame after login: a sidebar (Dashboard, Main Entry with one item per Main Entry,
+Transaction List), a top bar with the page title and the user menu, and the page itself.
 """
 
 import threading
@@ -11,16 +12,19 @@ from typing import Callable
 
 import customtkinter as ctk
 
-from app.core import config, paths, theme
+from app.core import config, models, paths, theme
 from app.services.auth_service import AuthService
 from app.services.entry_service import EntryService
+from app.services.main_entry_service import MainEntryService
 from app.services import update_service
 from app.services.subhead_service import SubheadService
 from app.storage.account_store import CorruptAccountFileError
 from app.ui import widgets
 from app.ui.expense_report_view import ExpenseReportView
-from app.ui.gradient import GradientCanvas
+from app.ui.dashboard_view import DashboardView
+from app.ui.gradient import gradient_color
 from app.ui.main_entry_view import MainEntryView
+from app.ui.modify_fields_view import ModifyFieldsView
 from app.ui.change_password_popup import ChangePasswordPopup
 from app.ui.create_account_view import CreateAccountView
 from app.ui.login_view import LoginView
@@ -29,9 +33,10 @@ from app.ui.login_view import LoginView
 class App(ctk.CTk):
     """The window. It shows one screen at a time."""
 
-    def __init__(self, auth: AuthService, subheads: SubheadService, entries: EntryService) -> None:
+    def __init__(self, auth: AuthService, main_entries: MainEntryService, subheads: SubheadService, entries: EntryService) -> None:
         super().__init__()
         self.auth = auth
+        self.main_entries = main_entries
         self.subheads = subheads
         self.entries = entries
         self.view: ctk.CTkFrame | None = None
@@ -69,9 +74,10 @@ class App(ctk.CTk):
 
     def _set_app_icon(self) -> None:
         """The app icon in the title bar and the taskbar. Missing icon file: keep the default icon."""
+        widgets.set_window_icon(self)
         try:
             self._icon = tk.PhotoImage(file=str(paths.asset_file("app-icon.png")))
-            self.iconphoto(True, self._icon)
+            self.iconphoto(True, self._icon)  # the larger picture, for the taskbar and Alt+Tab
         except tk.TclError:
             pass
 
@@ -88,76 +94,65 @@ class App(ctk.CTk):
         self._show(LoginView(self, self.auth, on_success=self.show_main, notice=notice))
 
     def show_main(self) -> None:
-        view = MainView(self, self.auth, self.subheads, self.entries, on_logout=self.show_login)
+        view = MainView(self, self.auth, self.main_entries, self.subheads, self.entries, on_logout=self.show_login)
         self._show(view)
         if self.update_info is not None:
             view.offer_update(self.update_info)
 
 
-class SidebarCanvas(GradientCanvas):
-    """The sidebar: a gradient canvas that places its items and keeps each background matched to the gradient."""
+class ShadowEdge(tk.Canvas):
+    """A soft shadow down the right edge of the sidebar, so it stands out from the page."""
+
+    WIDTH = 10
 
     def __init__(self, master) -> None:
-        super().__init__(master, theme.SIDE_TOP, theme.SIDE_BOTTOM, width=theme.SIDEBAR_WIDTH, bg=theme.SIDE_BOTTOM)
-        self._items: list[tuple] = []
-
-    def add(self, widget, x: int, y_of: Callable[[int], int], height: int) -> None:
-        """Place a widget at x and at a height that may depend on the window height (for bottom items)."""
-        self._items.append((widget, x, y_of, height))
-        widget.place(x=x, y=y_of(max(1, self.winfo_height())))
-
-    def on_repaint(self) -> None:
-        height = max(1, self.winfo_height())
-        for widget, x, y_of, item_height in self._items:
-            y = y_of(height)
-            widget.place_configure(x=x, y=y)
-            colour = self.colour_at(y + item_height / 2)
-            if isinstance(widget, tk.Canvas):
-                widget.configure(bg=colour)
-            else:
-                widget.configure(bg_color=colour)
+        super().__init__(master, width=self.WIDTH, highlightthickness=0, bd=0, bg=theme.BG_PAGE)
+        for x in range(self.WIDTH):
+            self.create_line(x, 0, x, 5000, fill=gradient_color(theme.SIDE_SHADOW, theme.BG_PAGE, (x / (self.WIDTH - 1)) ** 0.6))
 
 
 class MainView(ctk.CTkFrame):
-    """Sidebar on the left, page on the right."""
+    """Sidebar on the left; the top bar and the page on the right."""
 
-    PAGES = (
-        ("entry", "Main Entry", "Main Entry", "Record a daily collection or a Treesa Agencies entry"),
-        ("report", "Expense Report", "Expense Report", "All submitted entries, oldest first"),
-    )
-
-    def __init__(self, master, auth: AuthService, subheads: SubheadService, entries: EntryService, on_logout: Callable[[], None]) -> None:
+    def __init__(self, master, auth: AuthService, main_entries: MainEntryService, subheads: SubheadService, entries: EntryService, on_logout: Callable[[], None]) -> None:
         super().__init__(master, fg_color=theme.BG_PAGE)
         self.auth = auth
+        self.main_entries = main_entries
         self.subheads = subheads
         self.entries = entries
         self.on_logout = on_logout
         self._toast_job = None
-        self._nav_buttons: dict[str, ctk.CTkButton] = {}
-        self._nav_bars: dict[str, ctk.CTkFrame] = {}
+        self._nav_buttons: dict = {}
         self._pages: dict[str, ctk.CTkFrame] = {}
+        self._update_button = None
+        self.current_page = "entry"
+        self.current_main = models.DEFAULT_MAIN_HEAD
 
-        self.grid_columnconfigure(1, weight=1)
+        self.grid_columnconfigure(2, weight=1)
         self.grid_rowconfigure(0, weight=1)
 
-        sidebar = SidebarCanvas(self)
-        self.sidebar = sidebar
-        self._update_button = None
-        sidebar.grid(row=0, column=0, sticky="nsew")
-        self._build_sidebar(sidebar)
+        self.sidebar = ctk.CTkFrame(self, fg_color=theme.SIDE_TOP, corner_radius=0, width=theme.SIDEBAR_WIDTH)
+        self.sidebar.grid(row=0, column=0, sticky="nsew")
+        self.sidebar.grid_propagate(False)
+        ShadowEdge(self).grid(row=0, column=1, sticky="ns")
+        self._build_sidebar()
 
         self.content = ctk.CTkFrame(self, fg_color=theme.BG_PAGE, corner_radius=0)
-        self.content.grid(row=0, column=1, sticky="nsew")
-        self.content.grid_rowconfigure(0, weight=1)
+        self.content.grid(row=0, column=2, sticky="nsew")
+        self.content.grid_rowconfigure(1, weight=1)
         self.content.grid_columnconfigure(0, weight=1)
-        for key, _nav_text, title, description in self.PAGES:
-            if key == "entry":
-                page = MainEntryView(self.content, self.subheads, self.entries)
-            elif key == "report":
-                page = ScrollablePage(self.content, lambda parent: ExpenseReportView(parent, self.subheads, self.entries))
-            else:
-                page = PlaceholderPage(self.content, title, description)
-            self._pages[key] = page
+        self._build_top_bar()
+
+        self.page_area = ctk.CTkFrame(self.content, fg_color=theme.BG_PAGE, corner_radius=0)
+        self.page_area.grid(row=1, column=0, sticky="nsew")
+        self.page_area.grid_rowconfigure(0, weight=1)
+        self.page_area.grid_columnconfigure(0, weight=1)
+        self._pages = {
+            "dashboard": ScrollablePage(self.page_area, lambda parent: DashboardView(parent, self.main_entries, self.entries)),
+            "entry": ScrollablePage(self.page_area, lambda parent: MainEntryView(parent, self.main_entries, self.subheads, self.entries, )),
+            "modify": ScrollablePage(self.page_area, lambda parent: ModifyFieldsView(parent, self.main_entries, self.subheads, on_back=self._back_to_entry, on_entries_changed=self._entries_changed, notify=self.show_toast)),
+            "report": ScrollablePage(self.page_area, lambda parent: ExpenseReportView(parent, self.main_entries, self.subheads, self.entries)),
+        }
         self.toast = ctk.CTkLabel(
             self.content,
             text="",
@@ -168,42 +163,53 @@ class MainView(ctk.CTkFrame):
             padx=16,
             pady=10,
         )
-        self.show_page("entry")
+        self.show_entry(self._first_active_id(models.DEFAULT_MAIN_HEAD))
 
-    def _build_sidebar(self, sidebar: "SidebarCanvas") -> None:
-        """Brand and menu at the top, in one group; Change Password, Logout, and the footer at the bottom."""
-        sidebar.add(ctk.CTkLabel(sidebar, text="Expense Ledger", font=widgets.text_font(16), text_color=theme.SIDEBAR_TEXT, anchor="w"), 20, lambda _h: 22, 26)
-        sidebar.add(ctk.CTkLabel(sidebar, text=f"Version {config.APP_VERSION}", font=widgets.text_font(theme.FONT_SIZE_LABEL), text_color=theme.TEXT_MUTED, anchor="w"), 20, lambda _h: 50, 18)
+    # ----- sidebar -----
 
-        for index, (key, nav_text, _title, _description) in enumerate(self.PAGES):
-            top = 96 + index * 46
-            bar = ctk.CTkFrame(sidebar, width=4, height=40, corner_radius=2, fg_color="transparent")
-            button = self._nav_button(sidebar, nav_text, lambda page=key: self.show_page(page))
-            sidebar.add(bar, 12, lambda _h, y=top: y, 40)
-            sidebar.add(button, 20, lambda _h, y=top: y, 40)
-            self._nav_buttons[key] = button
-            self._nav_bars[key] = bar
+    def _build_sidebar(self) -> None:
+        """Brand on top, the menu under it, and the version and author at the bottom."""
+        brand = ctk.CTkFrame(self.sidebar, fg_color="transparent")
+        brand.pack(fill="x", padx=18, pady=(22, 18))
+        ctk.CTkLabel(brand, text="DF", width=40, height=40, corner_radius=10, fg_color=theme.PRIMARY, text_color="#FFFFFF", font=widgets.text_font(16)).pack(side="left")
+        ctk.CTkLabel(brand, text=config.APP_NAME, text_color=theme.TEXT, font=widgets.text_font(18)).pack(side="left", padx=(10, 0))
 
-        logout = self._nav_button(sidebar, "Logout", self.on_logout)
-        sidebar.add(logout, 12, lambda h: h - 96, 40)
+        self.bottom = ctk.CTkFrame(self.sidebar, fg_color="transparent")
+        self.bottom.pack(side="bottom", fill="x", padx=18, pady=(0, 18))
+        self.modify_button = self._nav_button(self.bottom, "Modify Fields", lambda: self.show_modify(self.current_main))
+        self.modify_button.pack(fill="x", pady=(0, 12))
+        self.version_label = ctk.CTkLabel(self.bottom, text=f"Version {config.APP_VERSION}", font=widgets.text_font(theme.FONT_SIZE_BODY, bold=False), text_color=theme.TEXT_MUTED, anchor="w")
+        self.version_label.pack(fill="x")
+        ctk.CTkLabel(self.bottom, text=f"Developed by {config.APP_AUTHOR}", font=widgets.text_font(theme.FONT_SIZE_LABEL, bold=False), text_color=theme.TEXT_MUTED, anchor="w").pack(fill="x")
 
-        change_button = ctk.CTkButton(
-            sidebar,
-            text="Change Password",
-            command=self.open_change_password,
-            anchor="w",
-            width=196,
-            height=36,
-            corner_radius=theme.BUTTON_RADIUS,
-            fg_color="transparent",
-            hover_color="#24242C",
-            text_color=theme.SIDEBAR_TEXT,
-            font=widgets.text_font(theme.FONT_SIZE_BODY),
-        )
-        sidebar.add(change_button, 20, lambda h: h - 154, 36)
+        self.nav = ctk.CTkFrame(self.sidebar, fg_color="transparent")
+        self.nav.pack(fill="x", padx=12)
+        self._build_nav()
 
-        footer = ctk.CTkLabel(sidebar, text=f"Developed by {config.APP_AUTHOR}", font=ctk.CTkFont(family=theme.FONT_FAMILY_LIGHT, size=theme.FONT_SIZE_LABEL, weight="normal"), text_color=theme.SIDEBAR_TEXT, anchor="w")
-        sidebar.add(footer, 20, lambda h: h - 36, 18)
+    def _build_nav(self) -> None:
+        """Dashboard, Main Entry with one item per active Main Entry, and Transaction List. Rebuilt when the Main Entries change."""
+        for child in self.nav.winfo_children():
+            child.destroy()
+        self._nav_buttons = {}
+        self._nav_buttons["dashboard"] = self._nav_button(self.nav, "Dashboard", self.show_dashboard)
+        self._nav_buttons["dashboard"].pack(fill="x", pady=2)
+        self._nav_buttons["entry"] = self._nav_button(self.nav, "Main Entry", lambda: self.show_entry(self.current_main))
+        self._nav_buttons["entry"].pack(fill="x", pady=2)
+
+        # CustomTkinter frames default to 200 px tall, so these are made 1 px tall and grow to fit their buttons.
+        children = ctk.CTkFrame(self.nav, fg_color="transparent", height=1)
+        children.pack(fill="x", padx=(14, 0), pady=(0, 2))
+        ctk.CTkFrame(children, fg_color=theme.BORDER_SOFT, corner_radius=0, width=2, height=1).pack(side="left", fill="y")
+        column = ctk.CTkFrame(children, fg_color="transparent", height=1)
+        column.pack(side="left", fill="x", expand=True, padx=(10, 0))
+        for item in self.main_entries.active():
+            button = self._nav_button(column, item.name, lambda main_head=item.id: self.show_entry(main_head))
+            button.pack(fill="x", pady=2)
+            self._nav_buttons[("entry", item.id)] = button
+
+        self._nav_buttons["report"] = self._nav_button(self.nav, "Transaction List", self.show_report)
+        self._nav_buttons["report"].pack(fill="x", pady=(10, 2))
+        self._highlight()
 
     def _nav_button(self, parent, text: str, command) -> ctk.CTkButton:
         return ctk.CTkButton(
@@ -211,37 +217,105 @@ class MainView(ctk.CTkFrame):
             text=text,
             command=command,
             anchor="w",
-            width=196,
             height=40,
             corner_radius=theme.BUTTON_RADIUS,
             fg_color="transparent",
-            hover_color="#24242C",
+            hover_color=theme.SIDE_HOVER,
             text_color=theme.SIDEBAR_TEXT,
             font=widgets.text_font(theme.FONT_SIZE_BODY),
         )
 
-    def show_page(self, key: str) -> None:
+    def _highlight(self) -> None:
+        """Mark the open page: a pale pill for Dashboard, Main Entry, and Transaction List; a solid pill for the open Main Entry."""
+        in_entry = self.current_page in ("entry", "modify")
+        modifying = self.current_page == "modify"
+        self.modify_button.configure(fg_color=theme.PRIMARY_LIGHT if modifying else "transparent", text_color=theme.PRIMARY if modifying else theme.SIDEBAR_TEXT)
+        for key, button in self._nav_buttons.items():
+            if isinstance(key, tuple):
+                solid = in_entry and key[1] == self.current_main
+                button.configure(fg_color=theme.PRIMARY if solid else "transparent", hover_color=theme.PRIMARY_HOVER if solid else theme.SIDE_HOVER, text_color="#FFFFFF" if solid else theme.SIDEBAR_TEXT)
+            else:
+                active = (key == "entry" and in_entry) or key == self.current_page
+                button.configure(fg_color=theme.PRIMARY_LIGHT if active else "transparent", text_color=theme.PRIMARY if active else theme.SIDEBAR_TEXT)
+
+    # ----- top bar -----
+
+    def _build_top_bar(self) -> None:
+        bar = ctk.CTkFrame(self.content, fg_color="transparent", height=64)
+        bar.grid(row=0, column=0, sticky="ew", padx=24, pady=(8, 0))
+        bar.grid_propagate(False)
+        bar.grid_columnconfigure(0, weight=1)
+        self.title_label = ctk.CTkLabel(bar, text="", font=widgets.text_font(theme.FONT_SIZE_CARD_TITLE), text_color=theme.TEXT, anchor="w")
+        self.title_label.grid(row=0, column=0, sticky="w")
+        bar.grid_rowconfigure(0, weight=1)
+        self.user_button = ctk.CTkButton(
+            bar, text=theme.ICON_USER, font=widgets.icon_font(15), width=40, height=40, corner_radius=20,
+            fg_color=theme.BG_CARD, hover_color=theme.PRIMARY_LIGHT, border_color=theme.BORDER_SOFT, border_width=1,
+            text_color=theme.PRIMARY, command=self._open_user_menu,
+        )
+        self.user_button.grid(row=0, column=1, sticky="e")
+
+    def _open_user_menu(self) -> None:
+        menu = tk.Menu(self, tearoff=0, font=(theme.FONT_FAMILY, 11))
+        menu.add_command(label="Change Password", command=self.open_change_password)
+        menu.add_separator()
+        menu.add_command(label="Logout", command=self.on_logout)
+        try:
+            menu.tk_popup(self.user_button.winfo_rootx() - 90, self.user_button.winfo_rooty() + self.user_button.winfo_height() + 4)
+        finally:
+            menu.grab_release()
+
+    # ----- pages -----
+
+    def _first_active_id(self, preferred: str) -> str:
+        active = [item.id for item in self.main_entries.active()]
+        return preferred if preferred in active else (active[0] if active else preferred)
+
+    def _open(self, key: str, title: str) -> None:
         """Show one page and highlight its menu item (FR-7)."""
-        for name, page in self._pages.items():
+        self.current_page = key
+        for page in self._pages.values():
             page.grid_forget()
         page = self._pages[key]
         page.refresh()  # every page reloads its data when it opens (Design.md 5, PRD FR-11 and FR-18)
         page.grid(row=0, column=0, sticky="nsew")
-        for name, button in self._nav_buttons.items():
-            active = name == key
-            button.configure(fg_color=theme.PRIMARY_LIGHT if active else "transparent")
-            self._nav_bars[name].configure(fg_color=theme.BTN_TOP if active else "transparent")
+        self.title_label.configure(text=title)
+        self._highlight()
+
+    def show_dashboard(self) -> None:
+        self._open("dashboard", "Dashboard")
+
+    def show_entry(self, main_head: str) -> None:
+        self.current_main = self._first_active_id(main_head)
+        self._pages["entry"].inner.show(self.current_main)
+        self._open("entry", f"Main Entry · {self.main_entries.label(self.current_main)}")
+
+    def show_modify(self, main_head: str) -> None:
+        self.current_main = self._first_active_id(main_head)
+        self._pages["modify"].inner.show(self.current_main)
+        self._open("modify", f"Modify Fields · {self.main_entries.label(self.current_main)}")
+
+    def show_report(self) -> None:
+        self._open("report", "Transaction List")
+
+    def _back_to_entry(self) -> None:
+        self.show_entry(self._pages["modify"].inner.main_head)
+
+    def _entries_changed(self) -> None:
+        """The Main Entries changed on the Modify Fields page: redraw the sidebar."""
+        self.current_main = self._first_active_id(self.current_main)
+        self._build_nav()
+
+    # ----- update, password, toast -----
 
     def offer_update(self, info: update_service.UpdateInfo) -> None:
         """Add an "Update available" button to the sidebar. It opens the download page in the browser."""
         if self._update_button is not None:
             return
         self._update_button = ctk.CTkButton(
-            self.sidebar,
+            self.bottom,
             text=f"Update to {info.version}",
             command=lambda: webbrowser.open(info.url),
-            anchor="w",
-            width=196,
             height=36,
             corner_radius=theme.BUTTON_RADIUS,
             fg_color=theme.PRIMARY,
@@ -249,7 +323,7 @@ class MainView(ctk.CTkFrame):
             text_color="#FFFFFF",
             font=widgets.text_font(theme.FONT_SIZE_BODY),
         )
-        self.sidebar.add(self._update_button, 20, lambda h: h - 202, 36)
+        self._update_button.pack(fill="x", pady=(0, 12), before=self.modify_button)
         self.show_toast(f"Version {info.version} is available.")
 
     def open_change_password(self) -> None:
@@ -265,7 +339,7 @@ class MainView(ctk.CTkFrame):
 
 
 class ScrollablePage(ctk.CTkScrollableFrame):
-    """Puts a long page in a frame that scrolls, and passes refresh() on to the page inside."""
+    """Puts a page in a frame that scrolls, and passes refresh() on to the page inside (self.inner)."""
 
     def __init__(self, master, build: Callable[[ctk.CTkFrame], ctk.CTkFrame]) -> None:
         super().__init__(master, fg_color=theme.BG_PAGE, corner_radius=0)
@@ -274,19 +348,3 @@ class ScrollablePage(ctk.CTkScrollableFrame):
 
     def refresh(self) -> None:
         self.inner.refresh()
-
-
-class PlaceholderPage(ctk.CTkFrame):
-    """Title and description only. The real forms and tables arrive in Phases 5 and 7.
-
-    Real pages keep the same refresh() method. MainView calls it each time the page opens.
-    """
-
-    def __init__(self, master, title: str, description: str) -> None:
-        super().__init__(master, fg_color="transparent")
-        self.grid_columnconfigure(0, weight=1)
-        widgets.label(self, title, size=theme.FONT_SIZE_PAGE_TITLE).grid(row=0, column=0, sticky="w", padx=24, pady=(24, 0))
-        widgets.label(self, description, color=theme.TEXT_MUTED).grid(row=1, column=0, sticky="w", padx=24, pady=(2, 18))
-
-    def refresh(self) -> None:
-        """Nothing to load yet."""

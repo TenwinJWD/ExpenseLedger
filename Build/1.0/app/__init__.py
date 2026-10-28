@@ -1,1 +1,1 @@
-"""Expense Ledger application package."""
+"""Daily Fresh application package."""

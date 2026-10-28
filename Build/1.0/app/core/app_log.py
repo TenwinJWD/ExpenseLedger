@@ -16,7 +16,7 @@ from app.core import paths
 LOG_NAME = "expenseledger"
 MAX_BYTES = 512 * 1024
 BACKUP_COUNT = 2
-CRASH_MESSAGE = "Something went wrong. Your saved entries are safe. Please close and open Expense Ledger again."
+CRASH_MESSAGE = "Something went wrong. Your saved entries are safe. Please close and open Daily Fresh again."
 
 _logger = logging.getLogger(LOG_NAME)
 
@@ -34,7 +34,7 @@ def setup() -> None:
         _logger.addHandler(logging.NullHandler())  # no log is better than no app
     sys.excepthook = _on_error
     tkinter.Tk.report_callback_exception = _on_tk_error
-    _logger.info("Expense Ledger started")
+    _logger.info("Daily Fresh started")
 
 
 def _on_error(exc_type, exc, tb) -> None:
@@ -45,6 +45,6 @@ def _on_error(exc_type, exc, tb) -> None:
 def _on_tk_error(_widget, exc_type, exc, tb) -> None:
     _logger.error("Error in a screen action", exc_info=(exc_type, exc, tb))
     try:
-        messagebox.showerror("Expense Ledger", CRASH_MESSAGE)
+        messagebox.showerror("Daily Fresh", CRASH_MESSAGE)
     except tkinter.TclError:
         pass

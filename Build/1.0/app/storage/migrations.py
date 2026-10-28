@@ -28,7 +28,7 @@ DATA_VERSION = 1
 STATE_FILE = "state.json"
 BACKUP_FOLDER = "Backups"
 KEEP_BACKUPS = 5
-BACKED_UP = ("account.json", "subheads.json", "Defaults")
+BACKED_UP = ("account.json", "subheads.json", "main_entries.json", "settings.json", "Defaults")
 
 _logger = logging.getLogger("expenseledger")
 

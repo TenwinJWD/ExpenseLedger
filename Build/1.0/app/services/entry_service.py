@@ -15,8 +15,9 @@ from app.storage.excel_store import ExcelFileLockedError, ExcelStore
 class EntryService:
     """Saves and reads the entries."""
 
-    def __init__(self, store: ExcelStore) -> None:
+    def __init__(self, store: ExcelStore, subheads=None) -> None:
         self.store = store
+        self.subheads = subheads  # when given, rows saved under an old sub-head name show the new name
 
     def save_entry(
         self,
@@ -47,7 +48,14 @@ class EntryService:
         return Result(True)
 
     def all_entries(self) -> list[Entry]:
-        return self.store.read_all_entries()
+        entries = self.store.read_all_entries()
+        if self.subheads is not None:
+            renamed: dict[str, dict[str, str]] = {}
+            for entry in entries:
+                if entry.main_head not in renamed:
+                    renamed[entry.main_head] = self.subheads.renamed_map(entry.main_head)
+                entry.sub_head = renamed[entry.main_head].get(entry.sub_head, entry.sub_head)
+        return entries
 
     def update_entry(self, entry: Entry, old_date: date) -> Result:
         """Save changes made in the report's inline edit (PRD FR-22)."""

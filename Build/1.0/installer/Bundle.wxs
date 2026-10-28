@@ -1,14 +1,14 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
-  Expense Ledger setup program (ExpenseLedger-Setup-1.0.0.exe).
-  A single .exe that shows the license, then installs ExpenseLedger-1.0.0.msi.
-  The .msi is still built on its own and can be installed directly.
-  The install-scope choice ("Just me" or "Anyone who uses this computer") is the MSI's own dialog.
+  Daily Fresh setup program (ExpenseLedger-Setup-1.0.0.exe).
+  A single .exe that shows the license, then installs ExpenseLedger-1.0.0-AllUsers.msi once for every Windows user
+  on the PC (it asks for administrator approval). Each user has their own login and ledger folder.
+  The .msi files are still built on their own and can be installed directly.
 -->
 <Wix xmlns="http://wixtoolset.org/schemas/v4/wxs"
      xmlns:bal="http://wixtoolset.org/schemas/v4/wxs/bal">
   <Bundle
-    Name="Expense Ledger"
+    Name="Daily Fresh"
     Manufacturer="Tenwin James"
     Version="$(var.AppVersion).0"
     UpgradeCode="7A1C0E2D-5B3F-4D6A-8E9F-1A2B3C4D5E60"
@@ -24,7 +24,7 @@
     <Chain>
       <MsiPackage
         Id="ExpenseLedgerMsi"
-        SourceFile="ExpenseLedger-$(var.AppVersion)-CurrentUser.msi"
+        SourceFile="ExpenseLedger-$(var.AppVersion)-AllUsers.msi"
         Compressed="yes"
         Vital="yes" />
     </Chain>

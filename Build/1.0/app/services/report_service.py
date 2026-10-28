@@ -3,6 +3,7 @@
 Everything here works on plain lists of Entry objects, so it can be tested without any screen.
 """
 
+import calendar
 from dataclasses import dataclass, field
 from datetime import date, timedelta
 from decimal import Decimal
@@ -146,6 +147,10 @@ def sort_oldest_first(entries: list[Entry]) -> list[Entry]:
     return sorted(entries, key=lambda entry: (entry.entry_date, entry.id))
 
 
+def sort_newest_first(entries: list[Entry]) -> list[Entry]:
+    return sorted(entries, key=lambda entry: (entry.entry_date, entry.id), reverse=True)
+
+
 def totals(entries: list[Entry]) -> tuple[Decimal, Decimal]:
     """Total debit and total credit of the given rows (PRD FR-20)."""
     return (
@@ -170,6 +175,38 @@ def summarize(entries: list[Entry]) -> Summary:
         summary.least_debit, summary.most_debit = by_debit[0], by_debit[-1]
         summary.least_credit, summary.most_credit = by_credit[0], by_credit[-1]
     return summary
+
+
+@dataclass
+class Bar:
+    """One bar group of a Dashboard chart: a month of the year, or a day of the month."""
+
+    label: str
+    debit: Decimal
+    credit: Decimal
+
+
+def monthly_series(entries: list[Entry], year: int) -> list[Bar]:
+    """Debit and credit for each month of the year, January to December (Dashboard yearly chart)."""
+    bars = [Bar(calendar.month_abbr[month], Decimal("0.00"), Decimal("0.00")) for month in range(1, 13)]
+    for entry in entries:
+        if entry.entry_date.year == year:
+            bar = bars[entry.entry_date.month - 1]
+            bar.debit += entry.debit
+            bar.credit += entry.credit
+    return bars
+
+
+def daily_series(entries: list[Entry], year: int, month: int) -> list[Bar]:
+    """Debit and credit for each day of the month (Dashboard monthly chart)."""
+    days = calendar.monthrange(year, month)[1]
+    bars = [Bar(str(day), Decimal("0.00"), Decimal("0.00")) for day in range(1, days + 1)]
+    for entry in entries:
+        if entry.entry_date.year == year and entry.entry_date.month == month:
+            bar = bars[entry.entry_date.day - 1]
+            bar.debit += entry.debit
+            bar.credit += entry.credit
+    return bars
 
 
 def month_key(entry: Entry) -> str:

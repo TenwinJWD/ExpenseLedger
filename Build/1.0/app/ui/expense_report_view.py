@@ -1,36 +1,41 @@
-"""Expense Report page (Design.md Section 6; PRD FR-18 to FR-23, FR-18a, FR-19a, FR-21a to FR-21c).
+"""Transaction List page (Design.md Section 6; PRD FR-18 to FR-23, FR-18a, FR-19a).
 
-Order on the page: the filter card, the table with pagination, then Monthly Summary and
-Yearly Summary. The summary cards ignore the filters.
+Order on the page: the filter card, then the table with pagination, newest entry first. The Monthly and
+Yearly Summary cards now live on the Dashboard.
 """
 
-import calendar
+import tkinter as tk
 from datetime import date
 
 import customtkinter as ctk
 
-from app.core import config, dates, models, money, theme
+from app.core import config, dates, money, theme
 from app.core.models import Entry
 from app.core.validation import check_entry
 from app.services import report_service as rs
 from app.services.entry_service import EntryService
+from app.services.main_entry_service import MainEntryService
 from app.services.subhead_service import SubheadService
 from app.ui import widgets
 
 ALL_RANGES = (("All Dates", "all"), ("This Month", "this-month"), ("Last Month", "last-month"),
               ("This Year", "this-year"), ("Custom Range", "custom"))
-ALL_MAIN_HEADS = "All Main Heads"
+ALL_MAIN_ENTRIES = "All Main Entries"
 ALL_SUB_HEADS = "All Sub-Heads"
 SELECT = "-Select-"
 COLUMN_WEIGHTS = (2, 3, 3, 3, 3, 2, 2, 2)
-HEADERS = ("Date", "Main Head", "Sub-Head", "Name", "Particulars", "Debit", "Credit", "Actions")
+COLUMN_MIN_WIDTHS = (104, 100, 110, 100, 100, 100, 100, 120)
+CELL_PADX = 10
+LINE_COLOUR = "#000000"  # the lines of the table
+HEADERS = ("Date", "Main Entry", "Sub-Head", "Name", "Particulars", "Debit", "Credit", "Actions")
+AMOUNT_COLUMNS = (5, 6)
 
 FILTER_TIPS = {
     "Search": "Finds rows where the name, particulars or an amount contains this text.",
     "Date Range": "Shows only entries inside this period. Custom Range lets you type From and To dates.",
     "From": "First day to include, as DD/MM/YYYY.",
     "To": "Last day to include, as DD/MM/YYYY.",
-    "Main Head": "Shows only entries under this Main Head.",
+    "Main Entry": "Shows only entries under this Main Entry.",
     "Sub-Head": "Shows only entries under this Sub-Head.",
     "Name": "Shows only rows whose name contains this text.",
     "Particulars": "Shows only rows whose particulars contain this text.",
@@ -42,10 +47,11 @@ FILTER_TIPS = {
 
 
 class ExpenseReportView(ctk.CTkFrame):
-    """The whole report page. refresh() reloads the rows each time the page opens (FR-18)."""
+    """The whole Transaction List page. refresh() reloads the rows each time the page opens (FR-18)."""
 
-    def __init__(self, master, subheads: SubheadService, entries: EntryService) -> None:
+    def __init__(self, master, main_entries: MainEntryService, subheads: SubheadService, entries: EntryService) -> None:
         super().__init__(master, fg_color="transparent")
+        self.main_entries = main_entries
         self.subheads = subheads
         self.entries = entries
         self.all_rows: list[Entry] = []
@@ -58,104 +64,74 @@ class ExpenseReportView(ctk.CTkFrame):
         self.delete_target: Entry | None = None
 
         self.grid_columnconfigure(0, weight=1)
-        widgets.label(self, "Expense Report", size=theme.FONT_SIZE_PAGE_TITLE).grid(row=0, column=0, sticky="w", padx=24, pady=(24, 0))
-        widgets.label(self, "All submitted entries, oldest first", color=theme.TEXT_MUTED).grid(row=1, column=0, sticky="w", padx=24, pady=(2, 14))
-
-        self.month_summary = self._summary_card(4, "Monthly Summary", "Values are based on the selected month. Independent of the filters.", "month")
-        self.year_summary = self._summary_card(5, "Yearly Summary", "Values are based on the selected year. Independent of the filters.", "year")
-
         self.filter_card = self._build_filters()
-        self.filter_card.grid(row=2, column=0, sticky="ew", padx=24, pady=(0, 14))
+        self.filter_card.grid(row=0, column=0, sticky="ew", padx=24, pady=(20, 14))
 
         self.table_card = widgets.card(self)
-        self.table_card.grid(row=3, column=0, sticky="nsew", padx=24, pady=(0, 14))
+        self.table_card.grid(row=1, column=0, sticky="nsew", padx=24, pady=(0, 24))
         self.table_card.grid_columnconfigure(0, weight=1)
         self.table_card.grid_rowconfigure(1, weight=1)
-        self.rows = ctk.CTkFrame(self.table_card, fg_color="transparent")
-        self.rows.grid(row=1, column=0, sticky="nsew", padx=16, pady=(16, 0))
+        # The table has its own dark outline, with lines between the rows and the columns (drawn in _render_table).
+        self.rows = ctk.CTkFrame(self.table_card, fg_color="transparent", border_width=2, border_color=LINE_COLOUR, corner_radius=0)
+        self.rows.grid(row=1, column=0, sticky="nsew", padx=16, pady=16)
         self._build_pager()
-        self.grid_rowconfigure(3, weight=1)
+        self.grid_rowconfigure(1, weight=1)
 
     # ----- layout -----
 
-    def _summary_card(self, row: int, title: str, description: str, kind: str) -> ctk.CTkFrame:
-        card = widgets.card(self)
-        card.grid(row=row, column=0, sticky="ew", padx=24, pady=(0, 14))
-        head = ctk.CTkFrame(card, fg_color="transparent")
-        head.pack(fill="x", padx=20, pady=(16, 10))
-        titles = ctk.CTkFrame(head, fg_color="transparent")
-        titles.pack(side="left", fill="x", expand=True)
-        widgets.label(titles, title, size=theme.FONT_SIZE_CARD_TITLE).pack(anchor="w")
-        widgets.label(titles, description, size=theme.FONT_SIZE_BODY, color=theme.TEXT_MUTED).pack(anchor="w")
-        menu = widgets.SelectBox(head, values=[""], command=lambda _choice: self._render_summaries(), width=180)
-        menu.pack(side="right")
-        stats = ctk.CTkFrame(card, fg_color="transparent")
-        stats.pack(fill="x", padx=20, pady=(0, 18))
-        for column in range(3):
-            stats.grid_columnconfigure(column, weight=1)
-        cells = []
-        for index in range(6):
-            cell = ctk.CTkFrame(stats, fg_color=theme.PRIMARY_LIGHT, border_color=theme.BORDER_SOFT, border_width=1, corner_radius=12)
-            cell.grid(row=index // 3, column=index % 3, sticky="nsew", padx=6, pady=6)
-            label = widgets.label(cell, "", size=theme.FONT_SIZE_CARD_TITLE)
-            label.pack(anchor="w", padx=14, pady=(12, 0))
-            value = widgets.label(cell, "", size=theme.FONT_SIZE_VALUE)
-            value.pack(anchor="w", padx=14, pady=(4, 0))
-            sub = widgets.label(cell, "", size=theme.FONT_SIZE_BODY, color=theme.TEXT_MUTED)
-            sub.pack(anchor="w", padx=14, pady=(2, 12))
-            cells.append((label, value, sub))
-        setattr(self, f"{kind}_menu", menu)
-        setattr(self, f"{kind}_cells", cells)
-        return card
-
     def _build_filters(self) -> ctk.CTkFrame:
         card = widgets.card(self)
-        card.grid_columnconfigure((0, 1, 2, 3), weight=1)
-        widgets.field_label(card, "Search", tip=FILTER_TIPS["Search"]).grid(row=0, column=0, columnspan=4, sticky="w", padx=20, pady=(18, 6))
+        card.grid_columnconfigure((0, 1, 2, 3), weight=1, uniform="filters")
+
+        head = ctk.CTkFrame(card, fg_color="transparent")
+        head.grid(row=0, column=0, columnspan=4, sticky="ew", padx=20, pady=(18, 0))
+        titles = ctk.CTkFrame(head, fg_color="transparent")
+        titles.pack(side="left", fill="x", expand=True)
+        widgets.label(titles, "Filters", size=theme.FONT_SIZE_CARD_TITLE).pack(anchor="w")
+        widgets.label(titles, "Newest entry first", color=theme.TEXT_MUTED).pack(anchor="w")
+        widgets.primary_button(head, "Filter Report", self._apply_filters, width=150).pack(side="right")
+        widgets.secondary_button(head, "Clear Filters", self._clear_filters, width=140).pack(side="right", padx=(0, 10))
+
+        widgets.field_label(card, "Search", tip=FILTER_TIPS["Search"]).grid(row=1, column=0, columnspan=3, sticky="w", padx=(20, 8), pady=(14, 0))
         self.search = widgets.entry(card, placeholder="Search by name, particulars, or amount")
-        self.search.grid(row=1, column=0, columnspan=4, sticky="ew", padx=20)
+        self.search.grid(row=2, column=0, columnspan=3, sticky="ew", padx=(20, 8), pady=(6, 0))
         self.search.bind("<Return>", lambda _event: self._apply_filters())
+        self.head_menu = self._menu(card, [ALL_MAIN_ENTRIES], self._on_head_change)
 
-        # Row 2 holds the labels and row 3 the widgets. From and To show only for Custom Range.
-        widgets.field_label(card, "Date Range", tip=FILTER_TIPS["Date Range"]).grid(row=2, column=0, sticky="sw", padx=(20, 8), pady=(14, 0))
-        self.from_label = widgets.field_label(card, "From", tip=FILTER_TIPS["From"])
-        self.from_label.grid(row=2, column=1, sticky="sw", padx=(20, 8), pady=(14, 0))
-        self.to_label = widgets.field_label(card, "To", tip=FILTER_TIPS["To"])
-        self.to_label.grid(row=2, column=2, sticky="sw", padx=(20, 8), pady=(14, 0))
         self.range_menu = self._menu(card, [label for label, _value in ALL_RANGES], self._on_range_change)
-        self.range_menu.grid(row=3, column=0, sticky="ew", padx=(20, 8), pady=(6, 0))
-        self.from_entry = widgets.entry(card, placeholder="DD/MM/YYYY")
-        self.from_entry.grid(row=3, column=1, sticky="ew", padx=(20, 8), pady=(6, 0))
-        self.to_entry = widgets.entry(card, placeholder="DD/MM/YYYY")
-        self.to_entry.grid(row=3, column=2, sticky="ew", padx=(20, 8), pady=(6, 0))
-
-        self.head_menu = self._menu(card, [ALL_MAIN_HEADS] + list(models.MAIN_HEADS.values()), self._on_head_change)
         self.sub_menu = self._menu(card, [ALL_SUB_HEADS], lambda _choice: None)
         self.name_filter = widgets.entry(card, placeholder="Contains...")
         self.particulars_filter = widgets.entry(card, placeholder="Contains...")
+        self.from_entry = widgets.entry(card, placeholder="DD/MM/YYYY")
+        self.to_entry = widgets.entry(card, placeholder="DD/MM/YYYY")
         self.debit_from = widgets.entry(card, placeholder="0.00", justify="right")
         self.debit_to = widgets.entry(card, placeholder="0.00", justify="right")
         self.credit_from = widgets.entry(card, placeholder="0.00", justify="right")
         self.credit_to = widgets.entry(card, placeholder="0.00", justify="right")
 
-        layout = [
-            (("Main Head", self.head_menu), ("Sub-Head", self.sub_menu), ("Name", self.name_filter), ("Particulars", self.particulars_filter)),
-            (("Debit From", self.debit_from), ("Debit To", self.debit_to), ("Credit From", self.credit_from), ("Credit To", self.credit_to)),
-        ]
-        grid_row = 4
         tints = {"Debit From": theme.DEBIT, "Debit To": theme.DEBIT, "Credit From": theme.CREDIT, "Credit To": theme.CREDIT}
-        for group in layout:
-            for column, (text, widget) in enumerate(group):
-                widgets.field_label(card, text, color=tints.get(text, theme.TEXT), tip=FILTER_TIPS[text]).grid(row=grid_row, column=column, sticky="sw", padx=(20, 8), pady=(12, 0))
-                widget.grid(row=grid_row + 1, column=column, sticky="ew", padx=(20, 8), pady=(6, 0))
-            grid_row += 2
+        layout = [
+            (1, 3, (("Main Entry", self.head_menu),)),
+            (3, 4, (("Date Range", self.range_menu), ("Sub-Head", self.sub_menu), ("Name", self.name_filter), ("Particulars", self.particulars_filter))),
+            (5, 0, (("From", self.from_entry), ("To", self.to_entry))),  # shown only for Custom Range
+            (7, 0, (("Debit From", self.debit_from), ("Debit To", self.debit_to), ("Credit From", self.credit_from), ("Credit To", self.credit_to))),
+        ]
+        self.custom_widgets = []
+        for grid_row, first_column, group in layout:
+            for offset, (text, widget) in enumerate(group):
+                column = first_column if len(group) == 1 else offset
+                label = widgets.field_label(card, text, color=tints.get(text, theme.TEXT), tip=FILTER_TIPS[text])
+                if text == "Main Entry":
+                    label.grid(row=grid_row, column=column, sticky="w", padx=(8, 20), pady=(14, 0))
+                    widget.grid(row=grid_row + 1, column=column, sticky="ew", padx=(8, 20), pady=(6, 0))
+                else:
+                    label.grid(row=grid_row, column=column, sticky="w", padx=(20, 8), pady=(14, 0))
+                    widget.grid(row=grid_row + 1, column=column, sticky="ew", padx=(20, 8), pady=(6, 0))
+                if text in ("From", "To"):
+                    self.custom_widgets += [label, widget]
 
         self.filter_error = widgets.error_label(card)
-        self.filter_error.grid(row=grid_row, column=0, columnspan=4, sticky="ew", padx=20, pady=(12, 0))
-        buttons = ctk.CTkFrame(card, fg_color="transparent")
-        buttons.grid(row=grid_row + 1, column=0, columnspan=4, sticky="e", padx=20, pady=(12, 20))
-        widgets.secondary_button(buttons, "Clear Filters", self._clear_filters, width=150).pack(side="left", padx=(0, 10))
-        widgets.primary_button(buttons, "Filter Report", self._apply_filters, width=160).pack(side="left")
+        self.filter_error.grid(row=9, column=0, columnspan=4, sticky="ew", padx=20, pady=(10, 14))
         self._on_range_change(ALL_RANGES[0][0])
         return card
 
@@ -163,8 +139,8 @@ class ExpenseReportView(ctk.CTkFrame):
         return widgets.SelectBox(parent, values=values, command=command, width=220)
 
     def _build_pager(self) -> None:
-        bar = ctk.CTkFrame(self.table_card, fg_color=theme.SURFACE_TINT, corner_radius=0)
-        bar.grid(row=2, column=0, sticky="ew", padx=0, pady=(12, 0))
+        bar = ctk.CTkFrame(self.table_card, fg_color=theme.SURFACE_SOFT, corner_radius=0)
+        bar.grid(row=2, column=0, sticky="ew", padx=2, pady=(0, 2))
         bar.grid_columnconfigure(0, weight=1)
         self.pager_info = widgets.label(bar, "", size=theme.FONT_SIZE_BODY, color=theme.TEXT_MUTED)
         self.pager_info.grid(row=0, column=0, sticky="w", padx=16, pady=12)
@@ -186,15 +162,27 @@ class ExpenseReportView(ctk.CTkFrame):
     # ----- data and rendering -----
 
     def refresh(self) -> None:
-        """Reload the rows and the sub-head choices each time the page opens (FR-18, FR-11)."""
+        """Reload the rows and the choices each time the page opens (FR-18, FR-11)."""
         self.all_rows = self.entries.all_entries()
+        self._refresh_head_menu()
         self._refresh_sub_head_menu()
-        self._render_summaries()
         self._render_table()
+
+    def _refresh_head_menu(self) -> None:
+        names = [item.name for item in self.main_entries.items()]
+        self.head_menu.configure(values=[ALL_MAIN_ENTRIES] + names)
+        if self.head_menu.get() not in names:
+            self.head_menu.set(ALL_MAIN_ENTRIES)
+
+    def _head_choice_id(self) -> str:
+        """The id of the Main Entry chosen in the filter, or ALL."""
+        choice = self.head_menu.get()
+        return "ALL" if choice == ALL_MAIN_ENTRIES else self.main_entries.id_for_label(choice)
 
     def _refresh_sub_head_menu(self) -> None:
         names = []
-        heads = list(models.MAIN_HEADS) if self.filters.main_head == "ALL" else [self.filters.main_head]
+        chosen = self._head_choice_id()
+        heads = [item.id for item in self.main_entries.items()] if chosen == "ALL" else [chosen]
         for head in heads:
             for item in self.subheads.items(head):
                 if item.name not in names:
@@ -202,49 +190,6 @@ class ExpenseReportView(ctk.CTkFrame):
         self.sub_menu.configure(values=[ALL_SUB_HEADS] + names)
         current = self.sub_menu.get()
         self.sub_menu.set(current if current in names else ALL_SUB_HEADS)
-
-    def _render_summaries(self) -> None:
-        today = date.today()
-        months = sorted({(e.entry_date.year, e.entry_date.month) for e in self.all_rows}, reverse=True)
-        month_labels = [f"{calendar.month_abbr[m]} {y}" for y, m in months] or ["No entries"]
-        self.month_menu.configure(values=month_labels)
-        if self.month_menu.get() not in month_labels:
-            self.month_menu.set(month_labels[0])
-        years = sorted({e.entry_date.year for e in self.all_rows}, reverse=True)
-        year_labels = [str(y) for y in years] or [str(today.year)]
-        self.year_menu.configure(values=year_labels)
-        if self.year_menu.get() not in year_labels:
-            self.year_menu.set(year_labels[0])
-
-        if months:
-            year, month = months[month_labels.index(self.month_menu.get())]
-            month_rows = rs.entries_in_month(self.all_rows, year, month)
-            self._fill_cards(self.month_cells, rs.summarize(month_rows))
-        else:
-            self._fill_cards(self.month_cells, rs.summarize([]))
-        year_rows = rs.entries_in_year(self.all_rows, int(self.year_menu.get())) if self.all_rows else []
-        self._fill_cards(self.year_cells, rs.summarize(year_rows))
-
-    def _fill_cards(self, cells, summary: rs.Summary) -> None:
-        values = [
-            ("Debit (Total Amount)", money.format_amount(summary.debit_total), "", theme.DEBIT),
-            ("Most Debited Sub-Head", *self._ranked_text(summary.most_debit, "debit"), theme.DEBIT),
-            ("Least Debited Sub-Head", *self._ranked_text(summary.least_debit, "debit"), theme.DEBIT),
-            ("Credit (Total Amount)", money.format_amount(summary.credit_total), "", theme.CREDIT),
-            ("Most Credited Sub-Head", *self._ranked_text(summary.most_credit, "credit"), theme.CREDIT),
-            ("Least Credited Sub-Head", *self._ranked_text(summary.least_credit, "credit"), theme.CREDIT),
-        ]
-        for (label, value, sub, colour), (label_widget, value_widget, sub_widget) in zip(values, cells):
-            label_widget.configure(text=label)
-            value_widget.configure(text=value, text_color=colour)
-            sub_widget.configure(text=sub, text_color=colour if sub else theme.TEXT_MUTED)
-
-    @staticmethod
-    def _ranked_text(item: rs.Ranked | None, kind: str) -> tuple[str, str]:
-        if item is None:
-            return "—", "0.00"
-        amount = item.debit if kind == "debit" else item.credit
-        return item.name, money.format_amount(amount)
 
     def _apply_filters(self) -> None:
         self.filters = self._read_filters()
@@ -259,14 +204,12 @@ class ExpenseReportView(ctk.CTkFrame):
 
     def _read_filters(self) -> rs.Filters:
         range_value = dict(ALL_RANGES).get(self.range_menu.get(), "all")
-        head = self.head_menu.get()
-        head_code = next((code for code, label in models.MAIN_HEADS.items() if label == head), "ALL")
         sub = self.sub_menu.get()
         return rs.Filters(
             date_range=range_value,
             from_text=self.from_entry.get(),
             to_text=self.to_entry.get(),
-            main_head=head_code,
+            main_head=self._head_choice_id(),
             sub_head="ALL" if sub == ALL_SUB_HEADS else sub,
             name_text=self.name_filter.get(),
             particulars_text=self.particulars_filter.get(),
@@ -282,7 +225,7 @@ class ExpenseReportView(ctk.CTkFrame):
         self.range_menu.set(ALL_RANGES[0][0])
         self.from_entry.delete(0, "end")
         self.to_entry.delete(0, "end")
-        self.head_menu.set(ALL_MAIN_HEADS)
+        self.head_menu.set(ALL_MAIN_ENTRIES)
         self.sub_menu.set(ALL_SUB_HEADS)
         for widget in (self.name_filter, self.particulars_filter, self.debit_from, self.debit_to, self.credit_from, self.credit_to):
             widget.delete(0, "end")
@@ -297,18 +240,12 @@ class ExpenseReportView(ctk.CTkFrame):
 
     def _on_range_change(self, choice: str) -> None:
         custom = choice == "Custom Range"
-        for widget in (self.from_label, self.from_entry, self.to_label, self.to_entry):
+        for widget in self.custom_widgets:
             widget.grid() if custom else widget.grid_remove()
 
-    def _on_head_change(self, choice: str) -> None:
-        head = next((code for code, label in models.MAIN_HEADS.items() if label == choice), None)
-        names = []
-        for code in ([head] if head else list(models.MAIN_HEADS)):
-            for item in self.subheads.items(code):
-                if item.name not in names:
-                    names.append(item.name)
-        self.sub_menu.configure(values=[ALL_SUB_HEADS] + names)
+    def _on_head_change(self, _choice: str) -> None:
         self.sub_menu.set(ALL_SUB_HEADS)
+        self._refresh_sub_head_menu()
 
     def _on_page_size(self, choice: str) -> None:
         self.page_size = int(choice)
@@ -322,7 +259,7 @@ class ExpenseReportView(ctk.CTkFrame):
         self._render_table()
 
     def _visible_rows(self) -> list[Entry]:
-        return rs.sort_oldest_first(rs.filter_entries(self.all_rows, self.resolved))
+        return rs.sort_newest_first(rs.filter_entries(self.all_rows, self.resolved))
 
     def _render_table(self) -> None:
         rows = self._visible_rows()
@@ -331,30 +268,42 @@ class ExpenseReportView(ctk.CTkFrame):
             child.destroy()
         self.edit_widgets = {}
         for column, weight in enumerate(COLUMN_WEIGHTS):
-            self.rows.grid_columnconfigure(column, weight=weight)
-            header_colour = theme.DEBIT if column == 5 else theme.CREDIT if column == 6 else theme.TEXT_MUTED
-            widgets.label(self.rows, HEADERS[column].upper(), size=theme.FONT_SIZE_LABEL, color=header_colour).grid(row=0, column=column, sticky="w", padx=8, pady=(4, 8))
+            self.rows.grid_columnconfigure(column, weight=weight, minsize=COLUMN_MIN_WIDTHS[column])
+        # The header and the total sit on tinted bars drawn behind their labels, in the same grid as the rows,
+        # so every column lines up.
+        for column in range(8):
+            # Each heading is its own rounded box with a black outline.
+            cell = ctk.CTkFrame(self.rows, fg_color=theme.SURFACE_TINT, border_width=2, border_color=LINE_COLOUR, corner_radius=10, height=44)
+            cell.grid(row=0, column=column, sticky="nsew", padx=3, pady=4)
+            widgets.label(cell, HEADERS[column], fg_color="transparent").pack(side="right" if column in AMOUNT_COLUMNS else "left", padx=CELL_PADX, pady=8)
 
         if not rows:
             widgets.label(self.rows, "No entries match these filters.", color=theme.TEXT_MUTED).grid(row=1, column=0, columnspan=8, pady=28)
         for index, entry in enumerate(page_rows, start=1):
+            # Data rows sit on the odd grid rows; the even rows hold the line under each row.
             if entry.id == self.editing_id:
-                self._edit_row(index, entry)
+                self._edit_row(2 * index - 1, entry)
             else:
-                self._view_row(index, entry)
+                self._view_row(2 * index - 1, entry)
+            tk.Frame(self.rows, bg=LINE_COLOUR, height=2, bd=0, highlightthickness=0).grid(row=2 * index, column=0, columnspan=8, sticky="ew")
 
         debit, credit = rs.totals(rows)
-        total_row = len(page_rows) + 1
-        ctk.CTkFrame(self.rows, height=1, fg_color=theme.ROW_BORDER).grid(row=total_row, column=0, columnspan=8, sticky="ew", pady=(10, 0))
-        widgets.label(self.rows, f"TOTAL (all {len(rows)} matching rows)").grid(row=total_row + 1, column=0, columnspan=5, sticky="w", padx=8, pady=8)
-        widgets.label(self.rows, money.format_amount(debit), color=theme.DEBIT).grid(row=total_row + 1, column=5, sticky="e", padx=8)
-        widgets.label(self.rows, money.format_amount(credit), color=theme.CREDIT).grid(row=total_row + 1, column=6, sticky="e", padx=8)
+        total_row = 2 * len(page_rows) + 1
+        for column in range(1, 8):
+            tk.Frame(self.rows, bg=LINE_COLOUR, width=2, bd=0, highlightthickness=0).grid(row=1, column=column, rowspan=max(1, total_row - 1), sticky="nsw")
+        ctk.CTkFrame(self.rows, fg_color=theme.SURFACE_SOFT, corner_radius=0, height=1).grid(row=total_row, column=0, columnspan=8, sticky="nsew")
+        widgets.label(self.rows, f"Total (all {len(rows)} matching rows)", fg_color=theme.SURFACE_SOFT).grid(row=total_row, column=0, columnspan=5, sticky="w", padx=CELL_PADX, pady=(20, 12))
+        widgets.label(self.rows, money.format_amount(debit), color=theme.DEBIT, fg_color=theme.SURFACE_SOFT).grid(row=total_row, column=5, sticky="e", padx=CELL_PADX, pady=(20, 12))
+        widgets.label(self.rows, money.format_amount(credit), color=theme.CREDIT, fg_color=theme.SURFACE_SOFT).grid(row=total_row, column=6, sticky="e", padx=CELL_PADX, pady=(20, 12))
         self._render_pager(len(rows), page_rows)
+
+    def _link(self, parent, text: str, command, colour: str = theme.TEXT) -> ctk.CTkButton:
+        return ctk.CTkButton(parent, text=text, command=command, width=44, height=28, corner_radius=8, fg_color="transparent", hover_color=theme.PRIMARY_LIGHT, text_color=colour, font=widgets.text_font(theme.FONT_SIZE_BODY, bold=False))
 
     def _view_row(self, row: int, entry: Entry) -> None:
         values = (
             dates.format_date_slash(entry.entry_date),
-            models.MAIN_HEADS[entry.main_head],
+            self.main_entries.label(entry.main_head),
             entry.sub_head,
             entry.name,
             entry.particulars,
@@ -363,11 +312,12 @@ class ExpenseReportView(ctk.CTkFrame):
         )
         for column, text in enumerate(values):
             colour = theme.DEBIT if column == 5 else theme.CREDIT if column == 6 else theme.TEXT
-            widgets.label(self.rows, text, color=colour).grid(row=row, column=column, sticky="w", padx=8, pady=6)
+            widgets.label(self.rows, text, color=colour, anchor="e" if column in AMOUNT_COLUMNS else "w", wraplength=170 if column in (1, 2, 3, 4) else 0).grid(row=row, column=column, sticky="e" if column in AMOUNT_COLUMNS else "w", padx=CELL_PADX, pady=7)
         actions = ctk.CTkFrame(self.rows, fg_color="transparent")
         actions.grid(row=row, column=7, sticky="w", padx=8)
-        ctk.CTkButton(actions, text=theme.ICON_EDIT, font=widgets.icon_font(12), width=32, height=28, fg_color="transparent", hover_color=theme.PRIMARY_LIGHT, text_color=theme.TEXT, command=lambda e=entry: self._start_edit(e)).pack(side="left")
-        ctk.CTkButton(actions, text=theme.ICON_DELETE, font=widgets.icon_font(12), width=32, height=28, fg_color="transparent", hover_color=theme.PRIMARY_LIGHT, text_color=theme.TEXT, command=lambda e=entry: self._open_delete(e)).pack(side="left", padx=(4, 0))
+        self._link(actions, "Edit", lambda e=entry: self._start_edit(e)).pack(side="left")
+        widgets.label(actions, "·", color=theme.TEXT_MUTED).pack(side="left")
+        self._link(actions, "Delete", lambda e=entry: self._open_delete(e)).pack(side="left")
 
     def _edit_row(self, row: int, entry: Entry) -> None:
         widgets_map = {}
@@ -386,8 +336,8 @@ class ExpenseReportView(ctk.CTkFrame):
         widgets_map["date"] = (date_entry, date_error)
 
         head_cell = new_cell(1)
-        head_menu = self._menu(head_cell, list(models.MAIN_HEADS.values()), self._edit_head_changed)
-        head_menu.set(models.MAIN_HEADS[entry.main_head])
+        head_menu = self._menu(head_cell, self._edit_head_values(entry.main_head), self._edit_head_changed)
+        head_menu.set(self.main_entries.label(entry.main_head))
         head_menu.pack(fill="x")
         head_error = widgets.error_label(head_cell)
         head_error.pack(fill="x")
@@ -419,14 +369,15 @@ class ExpenseReportView(ctk.CTkFrame):
         for widget, _error in widgets_map.values():
             widget.bind("<Escape>", lambda _event: self._cancel_edit())
 
+    def _edit_head_values(self, current: str) -> list[str]:
+        return [item.name for item in self.main_entries.items() if item.active or item.id == current]
+
     def _edit_sub_values(self, main_head: str, current: str) -> list[str]:
         names = [item.name for item in self.subheads.items(main_head) if item.active or item.name == current]
         return [SELECT] + names
 
     def _edit_head_changed(self, choice: str) -> None:
-        code = next((c for c, label in models.MAIN_HEADS.items() if label == choice), None)
-        if code is None:
-            return
+        code = self.main_entries.id_for_label(choice)
         sub_menu = self.edit_widgets["sub_head"][0]
         sub_menu.configure(values=self._edit_sub_values(code, ""))
         sub_menu.set(SELECT)
@@ -443,8 +394,7 @@ class ExpenseReportView(ctk.CTkFrame):
 
     def _save_edit(self, original: Entry) -> None:
         widgets_map = self.edit_widgets
-        head_label = widgets_map["main_head"][0].get()
-        head_code = next((c for c, label in models.MAIN_HEADS.items() if label == head_label), original.main_head)
+        head_code = self.main_entries.id_for_label(widgets_map["main_head"][0].get())
         sub_choice = widgets_map["sub_head"][0].get()
         check = check_entry(
             sub_choice != SELECT,
@@ -488,6 +438,7 @@ class ExpenseReportView(ctk.CTkFrame):
         self.delete_target = entry
         popup = ctk.CTkToplevel(self, fg_color=theme.BG_CARD)
         popup.title("Delete Row")
+        widgets.set_window_icon(popup)
         popup.geometry("420x200")
         popup.resizable(False, False)
         popup.transient(self.winfo_toplevel())
@@ -538,7 +489,7 @@ class ExpenseReportView(ctk.CTkFrame):
             ctk.CTkButton(
                 self.page_numbers, text=str(number), width=32, height=32, corner_radius=8,
                 fg_color=theme.PRIMARY if active else theme.BG_CARD,
-                hover_color=theme.PRIMARY_HOVER if active else theme.SURFACE_TINT,
+                hover_color=theme.PRIMARY_HOVER if active else theme.PRIMARY_LIGHT,
                 border_color=theme.INPUT_BORDER, border_width=0 if active else 1,
                 text_color="#FFFFFF" if active else theme.TEXT,
                 font=widgets.text_font(theme.FONT_SIZE_BODY),

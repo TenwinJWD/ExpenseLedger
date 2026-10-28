@@ -10,9 +10,10 @@ All data stays on your device:
 
 | What | Where |
 |---|---|
-| Your entries (Excel files) | `Documents\ExpenseLedger\<YYYY>\<MM-Mon>\<DD-Mon-YYYY>.xlsx` |
+| Your entries (Excel files) | In the folder you choose on the first run (default `Desktop\ExpenseLedger`), as `<YYYY>\<MM-Mon>\<DD-Mon-YYYY>.xlsx` |
 | Login account | `%APPDATA%\ExpenseLedger\account.json` (the password is stored only as a PBKDF2 hash, never as plain text) |
 | Sub-heads | `%APPDATA%\ExpenseLedger\subheads.json` |
+| Chosen data folder | `%APPDATA%\ExpenseLedger\settings.json` |
 | Log | `%APPDATA%\ExpenseLedger\app.log` |
 
 ## What the app does not do

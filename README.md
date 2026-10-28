@@ -1,6 +1,6 @@
 # Expense Ledger
 
-A Windows desktop app for recording daily collection and expense entries under two main heads, keeping every entry in Excel files by date, and reviewing them in an Expense Report.
+A Windows desktop app for recording daily collection and expense entries under Main Entries, keeping every entry in Excel files by date, and reviewing them in a Transaction List and a Dashboard.
 
 Developed by **Tenwin James**.
 
@@ -11,17 +11,19 @@ Developed by **Tenwin James**.
 ## What the app does
 
 - **Login:** the first run creates one account (username and password). Five wrong passwords lock the login for 5 minutes.
-- **Main Entry:** choose a main head, then a sub-head, then enter the date, name, particulars, debit, and credit.
-  - Main heads: **Treesa Agencies** and **Daily Collection** (Daily Collection is selected when the page opens).
-  - Sub-heads come from the lists in `Defaults/default.js` (48 for Treesa Agencies and 22 for Daily Collection). You can add sub-heads with **+** and remove them with **−**.
-  - The fields stay disabled until a sub-head is chosen. Submit stays disabled until the entry is valid.
-  - Dates can be typed as `20-Oct-2026` or `20/10/2026`, or picked from the calendar. They always display as `20-Oct-2026`.
-- **Expense Report:** all entries, oldest first.
+- **Light theme** with the Nunito font (shipped with the app), following the mockups in `Design/design`.
+- **Dashboard:** the Monthly Summary and the Yearly Summary. Each shows the total debit and credit, the most and least debited and credited sub-heads, and a bar chart (each day of the month, each month of the year). It can be limited to one Main Entry.
+- **Main Entry:** the sidebar lists one item per Main Entry (starting with **Treesa Agencies** and **Daily Collection**). Open one, choose a **Transactions** item, then enter the date, name, particulars, debit, and credit.
+  - **Add** and **Remove** next to Transactions change the list quickly. Transactions are the old sub-heads, so the lists in `Defaults/default.js` still apply (48 for Treesa Agencies and 22 for Daily Collection).
+  - The fields stay disabled until a Transactions item is chosen. Submit stays disabled until the entry is valid.
+  - Dates can be typed as `20-Oct-2026` or `20/10/2026`, or picked from the calendar. They display as `20/10/2026`.
+- **Modify Fields** (button on the Main Entry page): one card to add, rename, and remove Main Entries, and one card to add, rename, and remove the Transactions items of a Main Entry. Removing only hides an item: entries already saved keep working. A renamed item is shown under its new name everywhere, including old entries.
+- **Transaction List:** all entries, newest first.
   - Search by name, particulars, or amount.
-  - Filter by date range (This Month, Last Month, This Year, or a custom range), main head, sub-head, name, particulars, and debit or credit amounts.
-  - Edit a row with the pencil icon, and delete a row after confirming.
+  - Filter by date range (This Month, Last Month, This Year, or a custom range), Main Entry, sub-head, name, particulars, and debit or credit amounts.
+  - Edit a row, and delete a row after confirming.
   - Totals for the rows shown.
-  - Monthly and yearly summary cards: the total debit and credit, plus the most and least debited and credited sub-heads, with their amounts.
+- The user icon (top right) opens **Change Password** and **Logout**.
 
 ---
 
@@ -29,9 +31,11 @@ Developed by **Tenwin James**.
 
 | What | Where |
 |---|---|
-| Daily entries (Excel) | `Documents\ExpenseLedger\<YYYY>\<MM-Mon>\<DD-Mon-YYYY>.xlsx` |
+| Daily entries (Excel) | `<the folder each user chooses on the first run>\<YYYY>\<MM-Mon>\<DD-Mon-YYYY>.xlsx` (default `Desktop\ExpenseLedger`) |
+| Chosen data folder | `%APPDATA%\ExpenseLedger\settings.json` |
 | Login account | `%APPDATA%\ExpenseLedger\account.json` (the password is stored as a hash, never as plain text) |
-| Sub-heads | `%APPDATA%\ExpenseLedger\subheads.json` |
+| Main Entries | `%APPDATA%\ExpenseLedger\main_entries.json` |
+| Sub-heads (the Transactions items) | `%APPDATA%\ExpenseLedger\subheads.json` |
 | Added sub-heads (list copy) | `%APPDATA%\ExpenseLedger\Defaults\default.js` |
 | Log | `%APPDATA%\ExpenseLedger\app.log` |
 
@@ -66,9 +70,10 @@ The packaged program is built from this environment, so the build includes the l
 ## Packaging and uninstall
 
 - `ExpenseLedger.exe` is built with PyInstaller.
-- `ExpenseLedger-Setup-1.0.0.exe` is a single setup program. It shows the license, then installs for the current user (no administrator rights) with a desktop shortcut and a Start Menu entry. It installs the `ExpenseLedger-1.0.0-CurrentUser.msi` inside it.
+- `ExpenseLedger-Setup-1.0.0.exe` is a single setup program. It shows the license, asks for administrator approval, and installs once for every Windows user on the PC, with a desktop shortcut and a Start Menu entry. It installs the `ExpenseLedger-1.0.0-AllUsers.msi` inside it. Each Windows user then has their own login and their own data folder (chosen on their first run), so people sharing a PC, or on different PCs, never see each other's ledger.
+- `ExpenseLedger-1.0.0-AllUsers.msi` and `ExpenseLedger-1.0.0-CurrentUser.msi` are the same installer for all users (no dialog) and for the current user only (no administrator rights). Use the current-user one for a PC where nobody can approve administrator prompts.
 - `ExpenseLedger-1.0.0.msi` is the installer, built with WiX Toolset v4. The install dialog asks **Just me** (the default: installs for the current user, no administrator rights) or **Anyone who uses this computer** (installs for all users, needs administrator rights). A desktop shortcut and a Start Menu entry are added for the chosen user.
-- To uninstall, use **Settings > Apps > Installed apps > Expense Ledger**, or run `installer\uninstall.bat`. Both keep your data.
+- To uninstall, use **Settings > Apps > Installed apps > Expense Ledger**, or use the **Uninstall Expense Ledger** Start Menu shortcut (`uninstall.bat` / `uninstall.ps1`). The shortcut asks "Do you want to remove Expense Ledger?" in a window, not a terminal, and shows the result the same way. All keep your data.
 - **Windows SmartScreen warning:** an unsigned build triggers "Windows protected your PC" and may be quarantined by Windows Defender. Release builds should be digitally signed with `installer\sign.ps1` (see **Release checklist** below). For an unsigned build, click **More info**, then **Run anyway**. Only do this for the installer you received from the developer.
 
 ### Release checklist (avoid Defender and SmartScreen blocks)

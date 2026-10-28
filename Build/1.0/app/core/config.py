@@ -4,8 +4,8 @@ Every number used in the app is named here (Rules 6). Values come from
 Roadmap/PRD.md and Roadmap/Architecture.md.
 """
 
-APP_NAME = "Expense Ledger"
-APP_VERSION = "1.0.0"
+APP_NAME = "Daily Fresh"
+APP_VERSION = "1.0.1"
 APP_AUTHOR = "Tenwin James"  # PRD FR-36: the only place this name is set.
 
 # Update check. Leave UPDATE_URL empty to turn it off: the app then never connects to the internet.
@@ -13,6 +13,9 @@ APP_AUTHOR = "Tenwin James"  # PRD FR-36: the only place this name is set.
 UPDATE_URL = ""
 UPDATE_TIMEOUT_SECONDS = 5
 UPDATE_MAX_BYTES = 64 * 1024
+
+# Text size: the whole window is drawn at 110% (fonts and layout), which reads better than 100%.
+UI_SCALE = 1.1
 
 # Login (PRD FR-2, FR-4, NFR-5).
 MAX_LOGIN_ATTEMPTS = 5
@@ -24,6 +27,7 @@ PBKDF2_ITERATIONS = 600_000
 NAME_MAX_LENGTH = 100
 PARTICULARS_MAX_LENGTH = 200
 SUBHEAD_MAX_LENGTH = 40
+MAIN_ENTRY_MAX_LENGTH = 30
 
 # Expense Report pagination (PRD FR-18a).
 PAGE_SIZE_CHOICES = (10, 25, 50)

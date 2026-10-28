@@ -23,7 +23,7 @@ class CreateAccountView(GradientCanvas):
         card.pack_propagate(False)
         card.place(relx=0.5, rely=0.5, anchor="center")
 
-        widgets.label(card, "Expense Ledger", size=theme.FONT_SIZE_PAGE_TITLE).pack(pady=(24, 2))
+        widgets.label(card, "Daily Fresh", size=theme.FONT_SIZE_PAGE_TITLE).pack(pady=(24, 2))
         widgets.label(card, "Create your account to get started", color=theme.TEXT_MUTED).pack(pady=(0, 16))
 
         body = widgets.box(card, theme.BG_CARD)

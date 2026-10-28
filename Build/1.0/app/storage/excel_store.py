@@ -17,7 +17,7 @@ from pathlib import Path
 import openpyxl
 
 from app.core import dates
-from app.core.models import MAIN_HEADS, Entry
+from app.core.models import DEFAULT_MAIN_ENTRIES, Entry
 
 SHEET_NAME = "Entries"
 HEADERS = ("ID", "Main Head", "Sub Head", "Date", "Name", "Particulars", "Debit", "Credit", "Created At")
@@ -29,11 +29,25 @@ class ExcelFileLockedError(Exception):
     """The daily file is open in Excel, so it cannot be replaced. Nothing was lost."""
 
 
-class ExcelStore:
-    """Reads and writes the daily workbook files under one root folder."""
+class _DefaultHeads:
+    """Main Entry names for a store made without the Main Entry service (tests, tools)."""
 
-    def __init__(self, root: Path) -> None:
+    def label(self, main_head: str) -> str:
+        return next((item["name"] for item in DEFAULT_MAIN_ENTRIES if item["id"] == main_head), main_head)
+
+    def id_for_label(self, label: str) -> str:
+        return next((item["id"] for item in DEFAULT_MAIN_ENTRIES if item["name"] == label), label)
+
+
+class ExcelStore:
+    """Reads and writes the daily workbook files under one root folder.
+
+    heads turns a Main Entry id into the name saved in Excel and back (label() and id_for_label()).
+    """
+
+    def __init__(self, root: Path, heads=None) -> None:
         self.root = root
+        self.heads = heads or _DefaultHeads()
         # Parsed rows per file, reused until the file changes on disk (Architecture 7).
         self._cache: dict[Path, tuple[int, list[Entry]]] = {}
 
@@ -138,12 +152,11 @@ class ExcelStore:
             temp_path.unlink(missing_ok=True)
             raise ExcelFileLockedError(str(error)) from error
 
-    @staticmethod
-    def _to_row(entry: Entry) -> list:
+    def _to_row(self, entry: Entry) -> list:
         created = f"{dates.format_date(entry.created_at.date())} {entry.created_at:%H:%M}"
         return [
             entry.id,
-            MAIN_HEADS[entry.main_head],
+            self.heads.label(entry.main_head),
             entry.sub_head,
             dates.format_date(entry.entry_date),
             entry.name,
@@ -153,10 +166,8 @@ class ExcelStore:
             created,
         ]
 
-    @staticmethod
-    def _from_row(row) -> Entry:
-        main_head_label = str(row[1])
-        main_head = next(code for code, label in MAIN_HEADS.items() if label == main_head_label)
+    def _from_row(self, row) -> Entry:
+        main_head = self.heads.id_for_label(str(row[1]))
         created_text = str(row[8])
         created_date_text, created_time_text = created_text.rsplit(" ", 1)
         created_date = dates.parse_date(created_date_text)
