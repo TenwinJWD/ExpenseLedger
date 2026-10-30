@@ -93,6 +93,11 @@ def account_file() -> Path:
     return app_data_dir() / "account.json"
 
 
+def entry_index_file() -> Path:
+    """The SQLite index of the Excel files. Only a cache: deleting it just makes the next start slower."""
+    return app_data_dir() / "entries-index.db"
+
+
 def subheads_file() -> Path:
     """The sub-head lists for both Main Heads."""
     return app_data_dir() / "subheads.json"

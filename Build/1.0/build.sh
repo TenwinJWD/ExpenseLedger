@@ -58,5 +58,5 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass -File ./build.ps1 "${args[@]}"
 
 echo
 version=$(sed -n 's/^APP_VERSION = "\(.*\)"/\1/p' app/core/config.py)
-echo "Done. Version $version is in installer/output/$version (a rebuild of the same version replaces that folder):"
+echo "Done. The build created installer/output/$version with the installers (build files are in its work folder); a rebuild of the same version replaces that folder:"
 ls -1 "installer/output/$version"/ExpenseLedger-Setup-*.exe "installer/output/$version"/*.msi 2>/dev/null || true

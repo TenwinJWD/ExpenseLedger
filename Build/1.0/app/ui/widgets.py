@@ -35,31 +35,31 @@ def icon_font(size: int = 12) -> ctk.CTkFont:
 
 
 def card(parent, **kwargs) -> ctk.CTkFrame:
-    """A raised card with a soft outline (Design.md 1.3)."""
+    """A white rounded card with a hairline outline."""
     return ctk.CTkFrame(
         parent,
         fg_color=theme.BG_CARD,
         border_color=theme.BORDER_SOFT,
-        border_width=2,
+        border_width=1,
         corner_radius=theme.CARD_RADIUS,
         **kwargs,
     )
 
 
-def label(parent, text: str, size: int = theme.FONT_SIZE_BODY, color: str = theme.TEXT, **kwargs) -> ctk.CTkLabel:
-    return ctk.CTkLabel(parent, text=text, font=text_font(size), text_color=color, **kwargs)
+def label(parent, text: str, size: int = theme.FONT_SIZE_BODY, color: str = theme.TEXT, bold: bool = True, **kwargs) -> ctk.CTkLabel:
+    return ctk.CTkLabel(parent, text=text, font=text_font(size, bold), text_color=color, **kwargs)
 
 
-def field_label(parent, text: str, required: bool = False, color: str = theme.TEXT, tip: str = ""):
+def field_label(parent, text: str, required: bool = False, color: str = theme.TEXT, tip: str = "", size: int = theme.FONT_SIZE_BODY):
     """Field label. A required field gets an asterisk (Design.md 3).
     With a tip, an info icon sits beside the heading and shows the tip on hover."""
     shown = text + (" *" if required else "")
     holder = ctk.CTkFrame(parent, fg_color="transparent") if tip else parent
-    heading = ctk.CTkLabel(holder, text=shown, font=text_font(theme.FONT_SIZE_BODY), text_color=color, anchor="w")
+    heading = ctk.CTkLabel(holder, text=shown, font=text_font(size), text_color=color, anchor="w")
     if not tip:
         return heading
     heading.pack(side="left")
-    info = ctk.CTkLabel(holder, text=theme.ICON_INFO, font=icon_font(13), text_color=theme.BTN_TOP, cursor="question_arrow")
+    info = ctk.CTkLabel(holder, text=theme.ICON_INFO, font=icon_font(13), text_color=theme.TEXT_MUTED, cursor="question_arrow")
     info.pack(side="left", padx=(6, 0))
     Tooltip(info, tip)
     return holder
@@ -80,7 +80,7 @@ class Tooltip:
         widget.bind("<Destroy>", lambda _event: self._close(), add="+")
 
     def _show(self, _event=None) -> None:
-        if self.window is not None:
+        if self.window is not None or not self.text:
             return
         # A Toplevel is square, so the corners are made by painting the window in a key colour,
         # making that colour see-through, and drawing a rounded frame on top.
@@ -142,32 +142,104 @@ class Tooltip:
             self.window = None
 
 
-def entry(parent, show: str = "", placeholder: str = "", **kwargs) -> ctk.CTkEntry:
-    kwargs.setdefault("height", theme.INPUT_HEIGHT)  # table cells pass a smaller height
+class EllipsisLabel(ctk.CTkLabel):
+    """A one-line label. Text that does not fit is cut with an ellipsis, and the full text shows in a tip on hover."""
+
+    def __init__(self, master, text: str, size: int = theme.FONT_SIZE_BODY, color: str = theme.TEXT, bold: bool = True, **kwargs) -> None:
+        kwargs.setdefault("width", 10)  # the grid cell sets the real width
+        super().__init__(master, text=text, font=text_font(size, bold), text_color=color, **kwargs)
+        self.full_text = text
+        self._shown = text
+        self._measure_font = text_font(size, bold)
+        self._tip = Tooltip(self, "")
+        self.bind("<Configure>", lambda _event: self._fit(), add="+")
+
+    def _fit(self) -> None:
+        scale = ctk.ScalingTracker.get_widget_scaling(self)
+        room = self.winfo_width() / scale - 8
+        if room <= 0:
+            return
+        font, text = self._measure_font, self.full_text
+        shown = text
+        if font.measure(text) > room:
+            low, high = 0, len(text)
+            while low < high:  # the longest start of the text that still fits with the ellipsis
+                middle = (low + high + 1) // 2
+                if font.measure(text[:middle].rstrip() + "\u2026") <= room:
+                    low = middle
+                else:
+                    high = middle - 1
+            shown = text[:low].rstrip() + "\u2026"
+        self._tip.text = text if shown != text else ""
+        if shown != self._shown:
+            self._shown = shown
+            self.configure(text=shown)
+
+
+def entry(parent, show: str = "", placeholder: str = "", font_size: int = theme.FONT_SIZE_BODY, **kwargs) -> ctk.CTkEntry:
+    kwargs.setdefault("height", theme.INPUT_HEIGHT)  # table cells and filters pass a smaller height
     return ctk.CTkEntry(
         parent,
         corner_radius=theme.INPUT_RADIUS,
         fg_color=theme.BG_INPUT,
         border_color=theme.INPUT_BORDER,
-        border_width=2,
+        border_width=1,
         text_color=theme.TEXT,
         placeholder_text_color=theme.TEXT_MUTED,
-        font=text_font(theme.FONT_SIZE_BODY),
+        font=text_font(font_size, bold=font_size == theme.FONT_SIZE_BODY),
         show=show,
         placeholder_text=placeholder,
         **kwargs,
     )
 
 
-def primary_button(parent, text: str, command, **kwargs):
-    """Blue action button with the gradient (Design.md 7). Drawn by GradientButton."""
-    from app.ui.gradient import GradientButton  # imported here: gradient.py imports this module
+class PrimaryButton(ctk.CTkButton):
+    """The yellow action button: dark text, a thin dark outline, and a flat grey look while disabled.
 
-    return GradientButton(parent, text=text, command=command, width=kwargs.get("width", 160), state=kwargs.get("state", "normal"))
+    It is a CustomTkinter button, so its corners are smoothed and its size and text follow the app scaling.
+    """
+
+    def __init__(self, master, text: str, command, width: int = 160, state: str = "normal") -> None:
+        super().__init__(
+            master,
+            text=text,
+            command=command,
+            width=width,
+            height=theme.BUTTON_HEIGHT,
+            corner_radius=theme.BUTTON_RADIUS,
+            fg_color=theme.PRIMARY,
+            hover_color=theme.PRIMARY_HOVER,
+            border_color=theme.PRIMARY,
+            border_width=1,
+            text_color=theme.ON_PRIMARY,
+            text_color_disabled=theme.DISABLED_TEXT,
+            font=text_font(theme.FONT_SIZE_BODY),
+        )
+        self._apply_state(state)
+
+    def _apply_state(self, state: str) -> None:
+        disabled = state == "disabled"
+        super().configure(
+            state=state,
+            fg_color=theme.DISABLED_BG if disabled else theme.PRIMARY,
+            border_color=theme.DISABLED_BG if disabled else theme.PRIMARY,
+            hover=not disabled,
+        )
+
+    def configure(self, require_redraw: bool = False, **kwargs) -> None:
+        if "state" in kwargs:
+            self._apply_state(kwargs.pop("state"))
+        if kwargs or require_redraw:
+            super().configure(require_redraw=require_redraw, **kwargs)
+
+
+def primary_button(parent, text: str, command, **kwargs) -> PrimaryButton:
+    """Yellow pill action button."""
+    return PrimaryButton(parent, text, command, width=kwargs.get("width", 160), state=kwargs.get("state", "normal"))
 
 
 def secondary_button(parent, text: str, command, **kwargs) -> ctk.CTkButton:
-    """White button with a blue outline and blue text (the mockup's Cancel, Add, Remove, Modify Fields)."""
+    """White pill with a thin slate outline (Export, Import, Browse, Prev, Next)."""
     return ctk.CTkButton(
         parent,
         text=text,
@@ -176,9 +248,9 @@ def secondary_button(parent, text: str, command, **kwargs) -> ctk.CTkButton:
         corner_radius=theme.BUTTON_RADIUS,
         fg_color=theme.BG_CARD,
         hover_color=theme.PRIMARY_LIGHT,
-        border_color=theme.PRIMARY,
-        border_width=2,
-        text_color=theme.PRIMARY,
+        border_color=theme.INK,
+        border_width=1,
+        text_color=theme.INK,
         text_color_disabled=theme.DISABLED_TEXT,
         font=kwargs.pop("font", None) or text_font(theme.FONT_SIZE_BODY),
         **kwargs,
@@ -186,16 +258,32 @@ def secondary_button(parent, text: str, command, **kwargs) -> ctk.CTkButton:
 
 
 def danger_button(parent, text: str, command, **kwargs) -> ctk.CTkButton:
-    """Filled button for Remove and Delete in a confirmation popup (Design.md 7)."""
+    """Filled slate button for Remove and Delete in a confirmation popup (Design.md 7)."""
     return ctk.CTkButton(
         parent,
         text=text,
         command=command,
         height=theme.BUTTON_HEIGHT,
         corner_radius=theme.BUTTON_RADIUS,
-        fg_color=theme.PRIMARY,
-        hover_color=theme.PRIMARY_HOVER,
-        text_color="#FFFFFF",
+        fg_color=theme.HIGHLIGHT,
+        hover_color=theme.HIGHLIGHT_HOVER,
+        text_color=theme.ON_HIGHLIGHT,
+        font=kwargs.pop("font", None) or text_font(theme.FONT_SIZE_BODY),
+        **kwargs,
+    )
+
+
+def cancel_button(parent, text: str, command, **kwargs) -> ctk.CTkButton:
+    """Red pill for the cancel types: Cancel, and Clear Filters."""
+    return ctk.CTkButton(
+        parent,
+        text=text,
+        command=command,
+        height=theme.BUTTON_HEIGHT,
+        corner_radius=theme.BUTTON_RADIUS,
+        fg_color=theme.CANCEL,
+        hover_color=theme.CANCEL_HOVER,
+        text_color=theme.ON_CANCEL,
         font=kwargs.pop("font", None) or text_font(theme.FONT_SIZE_BODY),
         **kwargs,
     )
@@ -236,11 +324,15 @@ class SelectBox(ctk.CTkFrame):
     """
 
     SEARCH_THRESHOLD = 8
-    ROW_HEIGHT = 38
+    ROW_HEIGHT = 30
     MAX_LIST_HEIGHT = 300
+    LIST_PADDING = 44  # room the scrolling frame keeps around its rows, so a short list shows every item without a scrollbar
 
-    def __init__(self, master, values=(), variable: ctk.StringVar | None = None, command=None, width: int = 260, state: str = "normal") -> None:
-        super().__init__(master, fg_color="transparent", width=width, height=theme.INPUT_HEIGHT)
+    def __init__(self, master, values=(), variable: ctk.StringVar | None = None, command=None, width: int = 260, state: str = "normal", height: int = theme.INPUT_HEIGHT, font_size: int = theme.FONT_SIZE_BODY, row_height: int | None = None) -> None:
+        super().__init__(master, fg_color="transparent", width=width, height=height)
+        self._font_size = font_size
+        if row_height is not None:
+            self.ROW_HEIGHT = row_height  # taller rows in the open list, for a dropdown that needs to stand out
         self.pack_propagate(False)
         self._values = list(values) or [""]
         self._command = command
@@ -253,15 +345,15 @@ class SelectBox(ctk.CTkFrame):
             self,
             text=self._variable.get(),
             anchor="w",
-            height=theme.INPUT_HEIGHT,
+            height=height,
             corner_radius=theme.INPUT_RADIUS,
             fg_color=theme.BG_INPUT,
             hover_color=theme.SURFACE_TINT,
             border_color=theme.INPUT_BORDER,
-            border_width=2,
+            border_width=1,
             text_color=theme.TEXT,
             text_color_disabled=theme.DISABLED_TEXT,
-            font=text_font(theme.FONT_SIZE_BODY),
+            font=text_font(font_size, bold=font_size == theme.FONT_SIZE_BODY),
             command=self._toggle,
         )
         self._button.pack(fill="both", expand=True)
@@ -315,9 +407,13 @@ class SelectBox(ctk.CTkFrame):
         panel = ctk.CTkFrame(popup, fg_color=theme.BG_CARD, border_color=theme.DROPDOWN_BORDER, border_width=2, corner_radius=14)
         panel.pack(fill="both", expand=True)
         width = self._button.winfo_width()
+        # The list is as wide as the field, or wider when an item would not fit, so no name is cut off.
+        pixel_scale = ctk.ScalingTracker.get_widget_scaling(popup)
+        longest = max(text_font(theme.FONT_SIZE_LABEL + 1, bold=False).measure(value) for value in self._values)
+        width = max(width, min(round((longest + 80) * pixel_scale), top.winfo_width() - 16))
         needs_search = len(self._values) > self.SEARCH_THRESHOLD
-        search_height = 44 if needs_search else 0
-        list_height = min(len(self._values) * self.ROW_HEIGHT + 12, self.MAX_LIST_HEIGHT)
+        search_height = 40 if needs_search else 0
+        list_height = min(len(self._values) * self.ROW_HEIGHT + self.LIST_PADDING, self.MAX_LIST_HEIGHT)
         # The height is worked out in CustomTkinter units, but the placement check uses screen pixels.
         scale = ctk.ScalingTracker.get_widget_scaling(popup)
         total_pixels, search_pixels = round((list_height + search_height) * scale), round(search_height * scale)
@@ -331,16 +427,16 @@ class SelectBox(ctk.CTkFrame):
         query_box = None
         if needs_search:
             query_box = ctk.CTkEntry(
-                panel, height=34, corner_radius=8, fg_color=theme.BG_INPUT, border_color=theme.INPUT_BORDER,
+                panel, height=30, corner_radius=8, fg_color=theme.BG_INPUT, border_color=theme.INPUT_BORDER,
                 text_color=theme.TEXT, placeholder_text="Search", placeholder_text_color=theme.TEXT_MUTED,
-                font=text_font(theme.FONT_SIZE_BODY),
+                font=text_font(theme.FONT_SIZE_LABEL + 1, bold=False),
             )
-            query_box.pack(fill="x", padx=10, pady=(10, 4))
+            query_box.pack(fill="x", padx=8, pady=(8, 2))
             query_box.bind("<KeyRelease>", lambda _event: self._fill(list_frame, query_box.get()))
             query_box.focus_set()
 
-        list_frame = ctk.CTkScrollableFrame(panel, fg_color=theme.BG_CARD, corner_radius=0, height=list_height)
-        list_frame.pack(fill="both", expand=True, padx=8, pady=8)
+        list_frame = ctk.CTkScrollableFrame(panel, fg_color=theme.BG_CARD, corner_radius=0, height=list_height, scrollbar_button_color=theme.INPUT_BORDER, scrollbar_button_hover_color=theme.DROPDOWN_BORDER)
+        list_frame.pack(fill="both", expand=True, padx=6, pady=6)
         self._fill(list_frame, "")
         top.bind("<Button-1>", self._close_if_outside, add="+")
 
@@ -355,7 +451,7 @@ class SelectBox(ctk.CTkFrame):
                 continue
             selected = value == current
             row = box(frame, theme.BG_CARD)
-            row.pack(fill="x", padx=4, pady=1)
+            row.pack(fill="x", padx=2, pady=0)
             ctk.CTkButton(
                 row,
                 text=value,
@@ -365,11 +461,11 @@ class SelectBox(ctk.CTkFrame):
                 fg_color=theme.PRIMARY_LIGHT if selected else "transparent",
                 hover_color=theme.PRIMARY_LIGHT,
                 text_color=theme.TEXT,
-                font=text_font(theme.FONT_SIZE_BODY),
+                font=text_font(theme.FONT_SIZE_LABEL + 1, bold=False),
                 command=lambda chosen=value: self._choose(chosen),
             ).pack(side="left", fill="x", expand=True)
             if selected:
-                ctk.CTkLabel(row, text="", font=icon_font(12), text_color=theme.BTN_TOP, fg_color="transparent").pack(side="right", padx=10)
+                ctk.CTkLabel(row, text="", font=icon_font(12), text_color=theme.TEXT, fg_color="transparent").pack(side="right", padx=10)
 
     def _choose(self, value: str) -> None:
         self._variable.set(value)
@@ -500,11 +596,11 @@ class DatePopup(ctk.CTkToplevel):
                     width=self.CELL,
                     height=self.CELL - 4,
                     corner_radius=8,
-                    fg_color=theme.PRIMARY if chosen else "transparent",
-                    hover_color=theme.PRIMARY_HOVER if chosen else theme.PRIMARY_LIGHT,
-                    border_color=theme.BTN_TOP if day == today and not chosen else theme.BG_CARD,
+                    fg_color=theme.HIGHLIGHT if chosen else "transparent",
+                    hover_color=theme.HIGHLIGHT_HOVER if chosen else theme.PRIMARY_LIGHT,
+                    border_color=theme.INK if day == today and not chosen else theme.BG_CARD,
                     border_width=1 if day == today and not chosen else 0,
-                    text_color="#FFFFFF" if chosen else (theme.TEXT if in_month else theme.DISABLED_TEXT),
+                    text_color=theme.ON_HIGHLIGHT if chosen else (theme.TEXT if in_month else theme.DISABLED_TEXT),
                     font=text_font(theme.FONT_SIZE_CARD_TITLE - 2, chosen),
                     command=lambda picked=day: self._choose(picked),
                 ).grid(row=row, column=column, padx=2, pady=2)

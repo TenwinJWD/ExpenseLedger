@@ -70,18 +70,19 @@ The packaged program is built from this environment, so the build includes the l
 ## Packaging and uninstall
 
 - `ExpenseLedger.exe` is built with PyInstaller.
-- `ExpenseLedger-Setup-1.0.0.exe` is a single setup program. It shows the license, asks for administrator approval, and installs once for every Windows user on the PC, with a desktop shortcut and a Start Menu entry. It installs the `ExpenseLedger-1.0.0-AllUsers.msi` inside it. Each Windows user then has their own login and their own data folder (chosen on their first run), so people sharing a PC, or on different PCs, never see each other's ledger.
+- `ExpenseLedger-Setup-<version>.exe` is the setup wizard (built with Inno Setup 6), the file to give to users. Pages: Welcome, License, **Install for all users or just me** (just me needs no administrator approval), install folder, shortcut choices (desktop, Start Menu), progress, and Finish with **Launch Daily Fresh**. Running a newer setup over an older install upgrades it in place and closes the running app first; an older install made with the `.msi` (up to 1.0.2) is removed first, after asking. Daily Fresh then appears in **Settings > Apps > Installed apps**. Each Windows user has their own login and data folder (chosen on their first run).
 - `ExpenseLedger-1.0.0-AllUsers.msi` and `ExpenseLedger-1.0.0-CurrentUser.msi` are the same installer for all users (no dialog) and for the current user only (no administrator rights). Use the current-user one for a PC where nobody can approve administrator prompts.
 - `ExpenseLedger-1.0.0.msi` is the installer, built with WiX Toolset v4. The install dialog asks **Just me** (the default: installs for the current user, no administrator rights) or **Anyone who uses this computer** (installs for all users, needs administrator rights). A desktop shortcut and a Start Menu entry are added for the chosen user.
 - To uninstall, use **Settings > Apps > Installed apps > Expense Ledger**, or use the **Uninstall Expense Ledger** Start Menu shortcut (`uninstall.bat` / `uninstall.ps1`). The shortcut asks "Do you want to remove Expense Ledger?" in a window, not a terminal, and shows the result the same way. All keep your data.
 - **Windows SmartScreen warning:** an unsigned build triggers "Windows protected your PC" and may be quarantined by Windows Defender. Release builds should be digitally signed with `installer\sign.ps1` (see **Release checklist** below). For an unsigned build, click **More info**, then **Run anyway**. Only do this for the installer you received from the developer.
+- **Your own PCs:** copy `Unblock-Setup.bat` and `Unblock-Setup.ps1` (from `Build/1.0/installer`) next to the setup EXE and double-click the `.bat`. It removes the "downloaded from the internet" mark from that file so SmartScreen does not block it. To also show "Tenwin James" as the publisher, run `.\Unblock-Setup.ps1 -TrustCertificate` from an administrator PowerShell; it asks you to confirm the certificate thumbprint first.
 
 ### Release checklist (avoid Defender and SmartScreen blocks)
 
 1. Build with PyInstaller using the latest release. `upx=False` is set in `ExpenseLedger.spec` (UPX-packed files are flagged more often). Keep one-folder mode.
 2. `.\installer\sign.ps1 -Stage Exe <certificate options>`, then rebuild the MSI files.
-3. `.\installer\sign.ps1 -Stage Msi ...`, then rebuild the Burn setup.
-4. `.\installer\sign.ps1 -Stage Setup ...` (detaches, signs and reattaches the Burn engine, then signs the setup).
+3. `.\installer\sign.ps1 -Stage Msi ...`, then build the setup wizard (`iscc DailyFresh.iss`).
+4. `.\installer\sign.ps1 -Stage Setup ...` (signs the setup wizard).
 5. `.\installer\sign.ps1 -Stage Verify` and keep the SHA-256 hashes it prints. Publish them with the download.
 6. Scan the files at virustotal.com.
 7. Submit each release to Microsoft as a software developer at https://www.microsoft.com/wdsi/filesubmission.
@@ -93,7 +94,7 @@ The packaged program is built from this environment, so the build includes the l
 
 1. Set `APP_VERSION` in `Build/1.0/app/core/config.py`. This is the only place the version is typed. `build.ps1` copies it into the exe properties, the MSI and the setup EXE.
 2. Add a `## <version>` entry to `CHANGELOG.md`. A test fails if it is missing.
-3. Never change the two `UpgradeCode` values in `installer/Product.wxs` and `installer/Bundle.wxs`, or the component GUIDs in `installer/component_guids.json`. A test guards the codes.
+3. Never change the `UpgradeCode` in `installer/Product.wxs`, the `AppId` in `installer/DailyFresh.iss`, or the component GUIDs in `installer/component_guids.json`. A test guards the codes.
 4. If the saved file format changes: raise `DATA_VERSION` in `app/storage/migrations.py` and add a migration function for the old version. Start-up backs up the files, runs the migration, and stops without changing anything if it fails.
 5. Run `.\build.ps1`. Installing the new setup over an old install replaces the program and keeps all data.
 6. To announce the release in the app, upload a `version.json` such as `{"version": "1.1.0", "url": "https://.../ExpenseLedger-Setup-1.1.0.exe", "notes": "What is new"}` to a web address, and set `UPDATE_URL` in `config.py` to it (https only). Users then see an "Update to 1.1.0" button in the sidebar that opens the download.

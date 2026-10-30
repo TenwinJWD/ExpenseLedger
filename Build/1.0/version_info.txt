@@ -2,8 +2,8 @@
 # Version information for ExpenseLedger.exe (PRD FR-35: Company and Copyright are the developer's name).
 VSVersionInfo(
   ffi=FixedFileInfo(
-    filevers=(1, 0, 1, 0),
-    prodvers=(1, 0, 1, 0),
+    filevers=(1, 0, 3, 0),
+    prodvers=(1, 0, 3, 0),
     mask=0x3f,
     flags=0x0,
     OS=0x40004,
@@ -19,12 +19,12 @@ VSVersionInfo(
           [
             StringStruct(u'CompanyName', u'Tenwin James'),
             StringStruct(u'FileDescription', u'Daily Fresh'),
-            StringStruct(u'FileVersion', u'1.0.1.0'),
+            StringStruct(u'FileVersion', u'1.0.3.0'),
             StringStruct(u'InternalName', u'ExpenseLedger'),
             StringStruct(u'LegalCopyright', u'Copyright (c) Tenwin James'),
             StringStruct(u'OriginalFilename', u'ExpenseLedger.exe'),
             StringStruct(u'ProductName', u'Daily Fresh'),
-            StringStruct(u'ProductVersion', u'1.0.1.0')
+            StringStruct(u'ProductVersion', u'1.0.3.0')
           ]
         )
       ]

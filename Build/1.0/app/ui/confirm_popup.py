@@ -33,7 +33,7 @@ class ConfirmPopup(ctk.CTkToplevel):
 
         buttons = ctk.CTkFrame(body, fg_color="transparent")
         buttons.pack(fill="x", pady=(12, 0))
-        widgets.secondary_button(buttons, "Cancel", self.destroy).pack(side="left", expand=True, fill="x", padx=(0, 6))
+        widgets.cancel_button(buttons, "Cancel", self.destroy).pack(side="left", expand=True, fill="x", padx=(0, 6))
         widgets.danger_button(buttons, confirm_text, self._confirm).pack(side="left", expand=True, fill="x", padx=(6, 0))
         self.bind("<Escape>", lambda _event: self.destroy())
 

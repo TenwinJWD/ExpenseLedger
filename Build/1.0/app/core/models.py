@@ -55,3 +55,9 @@ class Entry:
     debit: Decimal
     credit: Decimal
     created_at: datetime = field(default_factory=datetime.now)
+    owner: str = ""  # the user whose file the row is in; empty means a file from before usernames were added
+
+    @property
+    def key(self) -> tuple[str, str]:
+        """Two users can both have E20261020-001, so a row is told apart by owner and ID together."""
+        return (self.owner.lower(), self.id)

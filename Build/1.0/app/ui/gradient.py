@@ -2,20 +2,13 @@
 
 Tkinter cannot paint CSS gradients, so they are drawn here:
 - GradientCanvas paints a vertical gradient behind its contents and repaints on resize.
+- GradientBar paints a horizontal gradient with several colour stops, and lays widgets on it.
 - gradient_color() gives the colour at any height, so widgets on top can match it.
-- GradientButton draws the rounded primary button as a gradient image with a PNG built in code.
-Nothing here needs Pillow: the PNG is written with the standard library.
 """
 
-import struct
 import tkinter as tk
-import zlib
-from typing import Callable
 
 import customtkinter as ctk
-
-from app.core import theme
-from app.ui import widgets
 
 
 def hex_to_rgb(value: str) -> tuple[int, int, int]:
@@ -32,6 +25,16 @@ def gradient_color(top: str, bottom: str, fraction: float) -> str:
     start, end = hex_to_rgb(top), hex_to_rgb(bottom)
     fraction = max(0.0, min(1.0, fraction))
     return rgb_to_hex(start[i] + (end[i] - start[i]) * fraction for i in range(3))
+
+
+def stops_color(stops: tuple[str, ...], fraction: float) -> str:
+    """The colour at a fraction (0 to 1) along a gradient with several colour stops, evenly spaced."""
+    fraction = max(0.0, min(1.0, fraction))
+    if len(stops) == 1:
+        return stops[0]
+    position = fraction * (len(stops) - 1)
+    index = min(int(position), len(stops) - 2)
+    return gradient_color(stops[index], stops[index + 1], position - index)
 
 
 class GradientCanvas(tk.Canvas):
@@ -63,92 +66,62 @@ class GradientCanvas(tk.Canvas):
         return gradient_color(self.top, self.bottom, y / height)
 
 
-# ----- rounded gradient image for the primary button -----
+class GradientBar(tk.Canvas):
+    """A horizontal gradient strip (the top navbar). Widgets are added to its left or right end.
 
-def _png_rounded_gradient(width: int, height: int, radius: int, top: str, bottom: str) -> bytes:
-    """A PNG with a rounded vertical gradient. Corners outside the radius are transparent."""
-    rows = bytearray()
-    top_rgb, bottom_rgb = hex_to_rgb(top), hex_to_rgb(bottom)
-    for y in range(height):
-        t = y / max(1, height - 1)
-        colour = [round(top_rgb[i] + (bottom_rgb[i] - top_rgb[i]) * t) for i in range(3)]
-        rows.append(0)  # PNG filter type: none
-        for x in range(width):
-            alpha = 255
-            cx = min(max(x, radius), width - 1 - radius)
-            cy = min(max(y, radius), height - 1 - radius)
-            if (x - cx) ** 2 + (y - cy) ** 2 > radius * radius:
-                alpha = 0
-            rows.extend((colour[0], colour[1], colour[2], alpha))
-
-    def chunk(kind: bytes, data: bytes) -> bytes:
-        return struct.pack(">I", len(data)) + kind + data + struct.pack(">I", zlib.crc32(kind + data) & 0xFFFFFFFF)
-
-    header = struct.pack(">IIBBBBB", width, height, 8, 6, 0, 0, 0)  # 8-bit RGBA
-    return b"\x89PNG\r\n\x1a\n" + chunk(b"IHDR", header) + chunk(b"IDAT", zlib.compress(bytes(rows))) + chunk(b"IEND", b"")
-
-
-class GradientButton(tk.Canvas):
-    """The blue primary button: rounded, with a vertical gradient, hover, and disabled states.
-
-    It behaves like the CustomTkinter button it replaces: configure(state=...), cget("state"), and command.
+    Widgets cannot be see-through over a gradient, so each one gets the gradient's colour at its own
+    position as its corner colour. The colours are set again whenever the bar is resized.
     """
 
-    RADIUS = theme.BUTTON_RADIUS
+    STEP = 3
 
-    def __init__(self, master, text: str, command: Callable[[], None], width: int = 160, height: int = theme.BUTTON_HEIGHT, state: str = "normal", bg: str = theme.BG_CARD, **_kwargs) -> None:
-        super().__init__(master, width=width, height=height, highlightthickness=0, bd=0, bg=bg, cursor="hand2")
-        self.text = text
-        self.command = command
-        self._state = state
-        self._hover = False
-        self._images: dict[tuple, tk.PhotoImage] = {}
-        self._image_item = self.create_image(0, 0, anchor="nw")
-        self._label_item = self.create_text(0, 0, text=text, fill="#FFFFFF", font=(theme.FONT_FAMILY, theme.FONT_SIZE_BODY, "bold"))
-        self.bind("<Configure>", lambda _event: self._paint())
-        self.bind("<Enter>", lambda _event: self._set_hover(True))
-        self.bind("<Leave>", lambda _event: self._set_hover(False))
-        self.bind("<ButtonRelease-1>", lambda _event: self._press())
+    def __init__(self, master, stops: tuple[str, ...], height: int) -> None:
+        super().__init__(master, highlightthickness=0, bd=0, bg=stops[0])
+        self.stops = stops
+        scale = ctk.ScalingTracker.get_widget_scaling(self)
+        self.configure(height=round(height * scale))
+        self._items: list[tuple[tk.Widget, str, int, int, int]] = []  # widget, side, window id, gap before, gap after
+        self._painted_width = 0
+        self.bind("<Configure>", lambda _event: self.paint())
 
-    # CustomTkinter-style API used by the screens
-    def configure(self, **kwargs) -> None:
-        if "state" in kwargs:
-            self._state = kwargs.pop("state")
-            self._paint()
-        if "text" in kwargs:
-            self.text = kwargs.pop("text")
-            self.itemconfigure(self._label_item, text=self.text)
-        if kwargs:
-            super().configure(**kwargs)
+    def add(self, widget, side: str = "left", before: int = 0, after: int = 0) -> None:
+        """Place a widget at the next free spot on the left or the right. Gaps are in screen units."""
+        window = self.create_window(0, 0, window=widget, anchor="w" if side == "left" else "e")
+        self._items.append((widget, side, window, before, after))
+        self.after_idle(self.layout)
 
-    def cget(self, key: str):
-        if key == "state":
-            return self._state
-        return super().cget(key)
+    def colour_at(self, x: float) -> str:
+        return stops_color(self.stops, x / max(1, self.winfo_width()))
 
-    def _set_hover(self, hovering: bool) -> None:
-        self._hover = hovering
-        self._paint()
+    def paint(self) -> None:
+        width = max(1, self.winfo_width())
+        height = max(1, self.winfo_height())
+        if width != self._painted_width:
+            self._painted_width = width
+            self.delete("gradient")
+            for x in range(0, width, self.STEP):
+                self.create_rectangle(x, 0, x + self.STEP, height, fill=self.colour_at(x), outline="", tags="gradient")
+            self.tag_lower("gradient")
+        self.layout()
 
-    def _press(self) -> None:
-        if self._state != "disabled" and self.command is not None:
-            self.command()
-
-    def _paint(self) -> None:
-        width, height = max(2, self.winfo_width()), max(2, self.winfo_height())
-        if self._state == "disabled":
-            top, bottom, text_colour = theme.DISABLED_BG, theme.DISABLED_BG, theme.DISABLED_TEXT
-        elif self._hover:
-            top, bottom, text_colour = theme.PRIMARY_HOVER, theme.PRIMARY_HOVER, "#FFFFFF"
-        else:
-            top, bottom, text_colour = theme.BTN_TOP, theme.BTN_BOTTOM, "#FFFFFF"
-        key = (width, height, top, bottom)
-        if key not in self._images:
-            data = _png_rounded_gradient(width, height, self.RADIUS, top, bottom)
-            self._images[key] = tk.PhotoImage(data=data)
-            if len(self._images) > 8:
-                self._images.pop(next(iter(self._images)))
-        self.itemconfigure(self._image_item, image=self._images[key])
-        self.coords(self._image_item, 0, 0)
-        self.itemconfigure(self._label_item, fill=text_colour)
-        self.coords(self._label_item, width / 2, height / 2)
+    def layout(self) -> None:
+        if not self.winfo_exists():
+            return
+        scale = ctk.ScalingTracker.get_widget_scaling(self)
+        width, height = self.winfo_width(), self.winfo_height()
+        left, right = 0.0, float(width)
+        for widget, side, window, before, after in self._items:
+            size = widget.winfo_reqwidth()
+            if side == "left":
+                x = left + before * scale
+                left = x + size + after * scale
+                centre = x + size / 2
+            else:
+                x = right - before * scale
+                right = x - size - after * scale
+                centre = x - size / 2
+            self.coords(window, x, height / 2)
+            try:
+                widget.configure(bg_color=self.colour_at(centre))
+            except (tk.TclError, ValueError):
+                pass  # a plain tkinter widget: it keeps the colour it was made with

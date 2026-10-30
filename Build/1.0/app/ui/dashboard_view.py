@@ -15,7 +15,7 @@ from app.services import report_service as rs
 from app.services.entry_service import EntryService
 from app.services.main_entry_service import MainEntryService
 from app.ui import widgets
-from app.ui.charts import BarChart
+from app.ui.charts import LineChart
 
 ALL_ENTRIES = "All Main Entries"
 
@@ -50,7 +50,7 @@ class DashboardView(ctk.CTkFrame):
         menu = widgets.SelectBox(head, values=[""], command=lambda _choice: self._render(), width=180)
         menu.pack(side="right")
 
-        chart = BarChart(card, height=250)
+        chart = LineChart(card, height=250)
         chart.pack(fill="x", padx=20, pady=(0, 10))
 
         stats = ctk.CTkFrame(card, fg_color="transparent")

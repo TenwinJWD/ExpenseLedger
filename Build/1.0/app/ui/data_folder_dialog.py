@@ -60,7 +60,7 @@ class DataFolderDialog(ctk.CTk):
 
         buttons = ctk.CTkFrame(card, fg_color="transparent")
         buttons.pack(side="bottom", anchor="e", padx=20, pady=20)
-        widgets.secondary_button(buttons, "Cancel", self.quit).pack(side="left", padx=(0, 10))
+        widgets.cancel_button(buttons, "Cancel", self.quit).pack(side="left", padx=(0, 10))
         widgets.primary_button(buttons, "Continue", self._continue, width=160).pack(side="left")
         self.protocol("WM_DELETE_WINDOW", self.quit)
         self.bind("<Return>", lambda _event: self._continue())

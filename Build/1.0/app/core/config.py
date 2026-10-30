@@ -5,7 +5,7 @@ Roadmap/PRD.md and Roadmap/Architecture.md.
 """
 
 APP_NAME = "Daily Fresh"
-APP_VERSION = "1.0.1"
+APP_VERSION = "1.0.3"
 APP_AUTHOR = "Tenwin James"  # PRD FR-36: the only place this name is set.
 
 # Update check. Leave UPDATE_URL empty to turn it off: the app then never connects to the internet.

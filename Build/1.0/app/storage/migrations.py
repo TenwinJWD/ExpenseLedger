@@ -23,8 +23,9 @@ from pathlib import Path
 from typing import Callable
 
 from app.core import config
+from app.storage.excel_store import safe_owner
 
-DATA_VERSION = 1
+DATA_VERSION = 2
 STATE_FILE = "state.json"
 BACKUP_FOLDER = "Backups"
 KEEP_BACKUPS = 5
@@ -41,8 +42,35 @@ class MigrationContext:
 
 Migration = Callable[[MigrationContext], None]
 
+def _name_daily_files_with_username(context: MigrationContext) -> None:
+    """Version 1 to 2: daily files are named <DD-Mon-YYYY>_<username>.xlsx, so each user's file is told apart.
+
+    The account's username is used. With no account there are no files of ours to rename. Existing files are
+    copied to Backups first and then renamed; a file that already has the new name is left alone.
+    """
+    try:
+        data = json.loads((context.app_data / "account.json").read_text(encoding="utf-8"))
+        owner = safe_owner(data["username"])
+    except (OSError, ValueError, KeyError, TypeError, AttributeError):
+        return
+    if not owner or not context.data_dir.exists():
+        return
+    old_files = [path for path in context.data_dir.rglob("*.xlsx") if "_" not in path.stem and ".tmp" not in path.name]
+    if not old_files:
+        return
+    copy_root = context.app_data / BACKUP_FOLDER / f"v1-to-v2-excel-{datetime.now():%Y%m%d-%H%M%S}"
+    for path in old_files:
+        target = copy_root / path.relative_to(context.data_dir)
+        target.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copy2(path, target)
+    for path in old_files:
+        renamed = path.with_name(f"{path.stem}_{owner}.xlsx")
+        if not renamed.exists():
+            path.rename(renamed)
+
+
 # Key = the data version the migration upgrades FROM. The function upgrades the files to key + 1.
-MIGRATIONS: dict[int, Migration] = {}
+MIGRATIONS: dict[int, Migration] = {1: _name_daily_files_with_username}
 
 
 class MigrationError(Exception):

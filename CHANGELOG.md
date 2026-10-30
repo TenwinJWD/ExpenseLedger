@@ -2,14 +2,33 @@
 
 All notable changes to Expense Ledger are recorded here (Rules 33). Dates use DD-Mon-YYYY.
 
-## 1.0.1 – 28-Oct-2026
+## 1.0.3 – 29-Oct-2026
 
 ### Changed
-- Release 1.0.1.
+- Release 1.0.3.
 
 ## Unreleased
 
 ### Changed
+- New setup wizard (Inno Setup) in place of the plain license screen: Welcome, License, all users or just me, install folder, shortcut choices, progress, and a Finish page with Launch. It upgrades an existing install in place, removes an older `.msi` install first, and appears in Settings > Apps. The `.msi` files are still built for managed deployment.
+- Faster start: the PDF library and openpyxl load only when used.
+- Daily Excel files are now named with the date and the username, for example `20-Oct-2026_tenwin.xlsx`, so each user's file is told apart. Existing files are copied to `Backups` and renamed on first start (data version 2).
+
+### Added
+- Faster lists: a SQLite index of the Excel files (`entries-index.db` in AppData). Only files that changed on disk are opened again; the Excel files stay the real data and the index can be deleted at any time.
+- Transaction List: Export CSV and Export PDF (the rows the filters show), and Import CSV. Imported rows are saved in files named with their owner, shown in a new User column, included in the Dashboard, and are read-only. Importing the same CSV again adds nothing.
+
+## 1.0.3 – 29-Oct-2026
+
+### Changed
+- Release 1.0.3.
+
+## 1.0.2 – 29-Oct-2026
+
+### Changed
+- The app is now called Daily Fresh, with a new app icon (shown on the window, the taskbar and the installer).
+- Text is drawn at 110% size.
+- Date picker and dropdown lists are larger or rounded, and always open inside the app window.
 - New light theme and the Nunito font, from the mockups in `Design/design`. The sidebar now lists Dashboard, Main Entry (one item per Main Entry) and Transaction List; the user icon at the top right opens Change Password and Logout.
 - The Expense Report is now the Transaction List, newest entry first. Its Monthly and Yearly Summary cards moved to the Dashboard.
 - The Sub-Head choice on the entry form is called Transactions.
@@ -25,10 +44,20 @@ All notable changes to Expense Ledger are recorded here (Rules 33). Dates use DD
 - Uninstall from the Start Menu shortcut now asks for confirmation in a message-box window and shows the result the same way. There is no terminal window (`uninstall.ps1`; `uninstall.bat` only starts it).
 - Tooltips on field headings, DD/MM/YYYY dates on screen, larger bold text, and a re-ordered Expense Report.
 
+## 1.0.3 – 29-Oct-2026
+
+### Changed
+- Release 1.0.3.
+
 ## 1.0.1 – 28-Oct-2026
 
 ### Changed
 - Release 1.0.1.
+
+## 1.0.3 – 29-Oct-2026
+
+### Changed
+- Release 1.0.3.
 
 ## 1.0.0 – 27-Oct-2026
 

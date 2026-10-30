@@ -5,158 +5,199 @@
     <DirectoryRef Id="APPLICATIONFOLDER">
       <Directory Id="d1" Name="_internal">
         <Directory Id="d2" Name="assets">
-          <Component Id="c1" Guid="{6A2D3F48-3A71-4A01-8449-4279BF7CFB18}">
-            <File Id="f1" Source="C:\Users\tenwi\Desktop\Projects\ExpenseLedger\Build\1.0\dist\ExpenseLedger\_internal\assets\app-icon-512.png" KeyPath="yes" />
+          <Directory Id="d3" Name="fonts">
+            <Component Id="c1" Guid="{811B4A64-0977-468B-958E-7554D83C2271}">
+              <File Id="f1" Source="C:\Users\tenwi\Desktop\Projects\ExpenseLedger\Build\1.0\installer\output\1.0.3\work\dist\ExpenseLedger\_internal\assets\fonts\Nunito-Bold.ttf" KeyPath="yes" />
+            </Component>
+            <Component Id="c2" Guid="{8B0B5D92-C3B5-43D8-853A-4E762B2D0CCA}">
+              <File Id="f2" Source="C:\Users\tenwi\Desktop\Projects\ExpenseLedger\Build\1.0\installer\output\1.0.3\work\dist\ExpenseLedger\_internal\assets\fonts\Nunito-Regular.ttf" KeyPath="yes" />
+            </Component>
+            <Component Id="c3" Guid="{C210F355-45A6-4445-A009-3D748B38C2EE}">
+              <File Id="f3" Source="C:\Users\tenwi\Desktop\Projects\ExpenseLedger\Build\1.0\installer\output\1.0.3\work\dist\ExpenseLedger\_internal\assets\fonts\OFL.txt" KeyPath="yes" />
+            </Component>
+          </Directory>
+          <Component Id="c4" Guid="{6A2D3F48-3A71-4A01-8449-4279BF7CFB18}">
+            <File Id="f4" Source="C:\Users\tenwi\Desktop\Projects\ExpenseLedger\Build\1.0\installer\output\1.0.3\work\dist\ExpenseLedger\_internal\assets\app-icon-512.png" KeyPath="yes" />
           </Component>
-          <Component Id="c2" Guid="{8558AEDE-0AED-40A9-8B5E-3039E6D0AF12}">
-            <File Id="f2" Source="C:\Users\tenwi\Desktop\Projects\ExpenseLedger\Build\1.0\dist\ExpenseLedger\_internal\assets\app-icon.png" KeyPath="yes" />
+          <Component Id="c5" Guid="{8558AEDE-0AED-40A9-8B5E-3039E6D0AF12}">
+            <File Id="f5" Source="C:\Users\tenwi\Desktop\Projects\ExpenseLedger\Build\1.0\installer\output\1.0.3\work\dist\ExpenseLedger\_internal\assets\app-icon.png" KeyPath="yes" />
           </Component>
-          <Component Id="c3" Guid="{1D5FC4D9-01D3-4BD7-94FE-697B4E48895D}">
-            <File Id="f3" Source="C:\Users\tenwi\Desktop\Projects\ExpenseLedger\Build\1.0\dist\ExpenseLedger\_internal\assets\app.ico" KeyPath="yes" />
+          <Component Id="c6" Guid="{1D5FC4D9-01D3-4BD7-94FE-697B4E48895D}">
+            <File Id="f6" Source="C:\Users\tenwi\Desktop\Projects\ExpenseLedger\Build\1.0\installer\output\1.0.3\work\dist\ExpenseLedger\_internal\assets\app.ico" KeyPath="yes" />
           </Component>
         </Directory>
-        <Directory Id="d3" Name="customtkinter">
-          <Directory Id="d4" Name="assets">
-            <Directory Id="d5" Name="fonts">
-              <Directory Id="d6" Name="Roboto">
-                <Component Id="c4" Guid="{D214D0F9-2998-4584-9366-3DBC17B836D8}">
-                  <File Id="f4" Source="C:\Users\tenwi\Desktop\Projects\ExpenseLedger\Build\1.0\dist\ExpenseLedger\_internal\customtkinter\assets\fonts\Roboto\Roboto-Medium.ttf" KeyPath="yes" />
+        <Directory Id="d4" Name="customtkinter">
+          <Directory Id="d5" Name="assets">
+            <Directory Id="d6" Name="fonts">
+              <Directory Id="d7" Name="Roboto">
+                <Component Id="c7" Guid="{D214D0F9-2998-4584-9366-3DBC17B836D8}">
+                  <File Id="f7" Source="C:\Users\tenwi\Desktop\Projects\ExpenseLedger\Build\1.0\installer\output\1.0.3\work\dist\ExpenseLedger\_internal\customtkinter\assets\fonts\Roboto\Roboto-Medium.ttf" KeyPath="yes" />
                 </Component>
-                <Component Id="c5" Guid="{282C1518-3583-401B-8F0E-A43520872511}">
-                  <File Id="f5" Source="C:\Users\tenwi\Desktop\Projects\ExpenseLedger\Build\1.0\dist\ExpenseLedger\_internal\customtkinter\assets\fonts\Roboto\Roboto-Regular.ttf" KeyPath="yes" />
+                <Component Id="c8" Guid="{282C1518-3583-401B-8F0E-A43520872511}">
+                  <File Id="f8" Source="C:\Users\tenwi\Desktop\Projects\ExpenseLedger\Build\1.0\installer\output\1.0.3\work\dist\ExpenseLedger\_internal\customtkinter\assets\fonts\Roboto\Roboto-Regular.ttf" KeyPath="yes" />
                 </Component>
               </Directory>
-              <Component Id="c6" Guid="{2710B5FB-07AF-4889-B185-83AB74977ABE}">
-                <File Id="f6" Source="C:\Users\tenwi\Desktop\Projects\ExpenseLedger\Build\1.0\dist\ExpenseLedger\_internal\customtkinter\assets\fonts\CustomTkinter_shapes_font.otf" KeyPath="yes" />
+              <Component Id="c9" Guid="{2710B5FB-07AF-4889-B185-83AB74977ABE}">
+                <File Id="f9" Source="C:\Users\tenwi\Desktop\Projects\ExpenseLedger\Build\1.0\installer\output\1.0.3\work\dist\ExpenseLedger\_internal\customtkinter\assets\fonts\CustomTkinter_shapes_font.otf" KeyPath="yes" />
               </Component>
             </Directory>
-            <Directory Id="d7" Name="icons">
-              <Component Id="c7" Guid="{C8AE0BD4-BE31-4EEE-9D6A-323F56F6F2A8}">
-                <File Id="f7" Source="C:\Users\tenwi\Desktop\Projects\ExpenseLedger\Build\1.0\dist\ExpenseLedger\_internal\customtkinter\assets\icons\.DS_Store" KeyPath="yes" />
+            <Directory Id="d8" Name="icons">
+              <Component Id="c10" Guid="{C8AE0BD4-BE31-4EEE-9D6A-323F56F6F2A8}">
+                <File Id="f10" Source="C:\Users\tenwi\Desktop\Projects\ExpenseLedger\Build\1.0\installer\output\1.0.3\work\dist\ExpenseLedger\_internal\customtkinter\assets\icons\.DS_Store" KeyPath="yes" />
               </Component>
-              <Component Id="c8" Guid="{B254C1EC-9EF0-4800-BB21-5F127D8B5C9F}">
-                <File Id="f8" Source="C:\Users\tenwi\Desktop\Projects\ExpenseLedger\Build\1.0\dist\ExpenseLedger\_internal\customtkinter\assets\icons\CustomTkinter_icon_Windows.ico" KeyPath="yes" />
-              </Component>
-            </Directory>
-            <Directory Id="d8" Name="themes">
-              <Component Id="c9" Guid="{D9E6D17A-7201-4C69-BFC0-4F7A5A6F9093}">
-                <File Id="f9" Source="C:\Users\tenwi\Desktop\Projects\ExpenseLedger\Build\1.0\dist\ExpenseLedger\_internal\customtkinter\assets\themes\blue.json" KeyPath="yes" />
-              </Component>
-              <Component Id="c10" Guid="{A194A54C-30FA-4EE9-9B34-F99E5E714FF5}">
-                <File Id="f10" Source="C:\Users\tenwi\Desktop\Projects\ExpenseLedger\Build\1.0\dist\ExpenseLedger\_internal\customtkinter\assets\themes\dark-blue.json" KeyPath="yes" />
-              </Component>
-              <Component Id="c11" Guid="{FCF9DE7D-482A-4FEC-8F95-C0D9C0A91644}">
-                <File Id="f11" Source="C:\Users\tenwi\Desktop\Projects\ExpenseLedger\Build\1.0\dist\ExpenseLedger\_internal\customtkinter\assets\themes\green.json" KeyPath="yes" />
+              <Component Id="c11" Guid="{B254C1EC-9EF0-4800-BB21-5F127D8B5C9F}">
+                <File Id="f11" Source="C:\Users\tenwi\Desktop\Projects\ExpenseLedger\Build\1.0\installer\output\1.0.3\work\dist\ExpenseLedger\_internal\customtkinter\assets\icons\CustomTkinter_icon_Windows.ico" KeyPath="yes" />
               </Component>
             </Directory>
-            <Component Id="c12" Guid="{881A8F27-3E63-490D-B3BF-66CA070B0514}">
-              <File Id="f12" Source="C:\Users\tenwi\Desktop\Projects\ExpenseLedger\Build\1.0\dist\ExpenseLedger\_internal\customtkinter\assets\.DS_Store" KeyPath="yes" />
+            <Directory Id="d9" Name="themes">
+              <Component Id="c12" Guid="{D9E6D17A-7201-4C69-BFC0-4F7A5A6F9093}">
+                <File Id="f12" Source="C:\Users\tenwi\Desktop\Projects\ExpenseLedger\Build\1.0\installer\output\1.0.3\work\dist\ExpenseLedger\_internal\customtkinter\assets\themes\blue.json" KeyPath="yes" />
+              </Component>
+              <Component Id="c13" Guid="{A194A54C-30FA-4EE9-9B34-F99E5E714FF5}">
+                <File Id="f13" Source="C:\Users\tenwi\Desktop\Projects\ExpenseLedger\Build\1.0\installer\output\1.0.3\work\dist\ExpenseLedger\_internal\customtkinter\assets\themes\dark-blue.json" KeyPath="yes" />
+              </Component>
+              <Component Id="c14" Guid="{FCF9DE7D-482A-4FEC-8F95-C0D9C0A91644}">
+                <File Id="f14" Source="C:\Users\tenwi\Desktop\Projects\ExpenseLedger\Build\1.0\installer\output\1.0.3\work\dist\ExpenseLedger\_internal\customtkinter\assets\themes\green.json" KeyPath="yes" />
+              </Component>
+            </Directory>
+            <Component Id="c15" Guid="{881A8F27-3E63-490D-B3BF-66CA070B0514}">
+              <File Id="f15" Source="C:\Users\tenwi\Desktop\Projects\ExpenseLedger\Build\1.0\installer\output\1.0.3\work\dist\ExpenseLedger\_internal\customtkinter\assets\.DS_Store" KeyPath="yes" />
             </Component>
           </Directory>
         </Directory>
-        <Directory Id="d9" Name="PIL">
-          <Component Id="c13" Guid="{21C8A62A-A17B-482D-960C-5878998581EB}">
-            <File Id="f13" Source="C:\Users\tenwi\Desktop\Projects\ExpenseLedger\Build\1.0\dist\ExpenseLedger\_internal\PIL\_avif.cp315-win_amd64.pyd" KeyPath="yes" />
+        <Directory Id="d10" Name="fontTools">
+          <Directory Id="d11" Name="misc">
+            <Component Id="c16" Guid="{6036C999-36B0-44FA-BFE4-81037CCD7864}">
+              <File Id="f16" Source="C:\Users\tenwi\Desktop\Projects\ExpenseLedger\Build\1.0\installer\output\1.0.3\work\dist\ExpenseLedger\_internal\fontTools\misc\bezierTools.cp315-win_amd64.pyd" KeyPath="yes" />
+            </Component>
+          </Directory>
+          <Directory Id="d12" Name="varLib">
+            <Component Id="c17" Guid="{81D8C131-58D8-4A14-A6C3-F216420D4216}">
+              <File Id="f17" Source="C:\Users\tenwi\Desktop\Projects\ExpenseLedger\Build\1.0\installer\output\1.0.3\work\dist\ExpenseLedger\_internal\fontTools\varLib\iup.cp315-win_amd64.pyd" KeyPath="yes" />
+            </Component>
+          </Directory>
+        </Directory>
+        <Directory Id="d13" Name="PIL">
+          <Component Id="c18" Guid="{21C8A62A-A17B-482D-960C-5878998581EB}">
+            <File Id="f18" Source="C:\Users\tenwi\Desktop\Projects\ExpenseLedger\Build\1.0\installer\output\1.0.3\work\dist\ExpenseLedger\_internal\PIL\_avif.cp315-win_amd64.pyd" KeyPath="yes" />
           </Component>
-          <Component Id="c14" Guid="{C677C64C-3766-4D7B-8748-7A6E6997A61C}">
-            <File Id="f14" Source="C:\Users\tenwi\Desktop\Projects\ExpenseLedger\Build\1.0\dist\ExpenseLedger\_internal\PIL\_imaging.cp315-win_amd64.pyd" KeyPath="yes" />
+          <Component Id="c19" Guid="{C677C64C-3766-4D7B-8748-7A6E6997A61C}">
+            <File Id="f19" Source="C:\Users\tenwi\Desktop\Projects\ExpenseLedger\Build\1.0\installer\output\1.0.3\work\dist\ExpenseLedger\_internal\PIL\_imaging.cp315-win_amd64.pyd" KeyPath="yes" />
           </Component>
-          <Component Id="c15" Guid="{9953E691-DD52-43FA-90BF-E206352D611A}">
-            <File Id="f15" Source="C:\Users\tenwi\Desktop\Projects\ExpenseLedger\Build\1.0\dist\ExpenseLedger\_internal\PIL\_imagingcms.cp315-win_amd64.pyd" KeyPath="yes" />
+          <Component Id="c20" Guid="{9953E691-DD52-43FA-90BF-E206352D611A}">
+            <File Id="f20" Source="C:\Users\tenwi\Desktop\Projects\ExpenseLedger\Build\1.0\installer\output\1.0.3\work\dist\ExpenseLedger\_internal\PIL\_imagingcms.cp315-win_amd64.pyd" KeyPath="yes" />
           </Component>
-          <Component Id="c16" Guid="{F3F6D337-F9AA-4CBE-B1D3-9792E1F123D9}">
-            <File Id="f16" Source="C:\Users\tenwi\Desktop\Projects\ExpenseLedger\Build\1.0\dist\ExpenseLedger\_internal\PIL\_imagingtk.cp315-win_amd64.pyd" KeyPath="yes" />
+          <Component Id="c21" Guid="{F3F6D337-F9AA-4CBE-B1D3-9792E1F123D9}">
+            <File Id="f21" Source="C:\Users\tenwi\Desktop\Projects\ExpenseLedger\Build\1.0\installer\output\1.0.3\work\dist\ExpenseLedger\_internal\PIL\_imagingtk.cp315-win_amd64.pyd" KeyPath="yes" />
           </Component>
-          <Component Id="c17" Guid="{25CD18D4-40A5-4C90-9591-28320C34E242}">
-            <File Id="f17" Source="C:\Users\tenwi\Desktop\Projects\ExpenseLedger\Build\1.0\dist\ExpenseLedger\_internal\PIL\_webp.cp315-win_amd64.pyd" KeyPath="yes" />
+          <Component Id="c22" Guid="{25CD18D4-40A5-4C90-9591-28320C34E242}">
+            <File Id="f22" Source="C:\Users\tenwi\Desktop\Projects\ExpenseLedger\Build\1.0\installer\output\1.0.3\work\dist\ExpenseLedger\_internal\PIL\_webp.cp315-win_amd64.pyd" KeyPath="yes" />
           </Component>
         </Directory>
-        <Directory Id="d10" Name="seed">
-          <Component Id="c18" Guid="{442D6947-B067-4D73-9074-D0F5C873D796}">
-            <File Id="f18" Source="C:\Users\tenwi\Desktop\Projects\ExpenseLedger\Build\1.0\dist\ExpenseLedger\_internal\seed\default.js" KeyPath="yes" />
+        <Directory Id="d14" Name="seed">
+          <Component Id="c23" Guid="{442D6947-B067-4D73-9074-D0F5C873D796}">
+            <File Id="f23" Source="C:\Users\tenwi\Desktop\Projects\ExpenseLedger\Build\1.0\installer\output\1.0.3\work\dist\ExpenseLedger\_internal\seed\default.js" KeyPath="yes" />
           </Component>
         </Directory>
-        <Component Id="c19" Guid="{41F5A7DF-B584-4E73-9441-96373877A654}">
-          <File Id="f19" Source="C:\Users\tenwi\Desktop\Projects\ExpenseLedger\Build\1.0\dist\ExpenseLedger\_internal\_bz2.pyd" KeyPath="yes" />
+        <Component Id="c24" Guid="{DA80F3A1-3344-4AD6-A31F-1344FC865402}">
+          <File Id="f24" Source="C:\Users\tenwi\Desktop\Projects\ExpenseLedger\Build\1.0\installer\output\1.0.3\work\dist\ExpenseLedger\_internal\_asyncio.pyd" KeyPath="yes" />
         </Component>
-        <Component Id="c20" Guid="{B6DA1F1B-7619-46CC-BB8A-91D11872BFF5}">
-          <File Id="f20" Source="C:\Users\tenwi\Desktop\Projects\ExpenseLedger\Build\1.0\dist\ExpenseLedger\_internal\_ctypes.pyd" KeyPath="yes" />
+        <Component Id="c25" Guid="{41F5A7DF-B584-4E73-9441-96373877A654}">
+          <File Id="f25" Source="C:\Users\tenwi\Desktop\Projects\ExpenseLedger\Build\1.0\installer\output\1.0.3\work\dist\ExpenseLedger\_internal\_bz2.pyd" KeyPath="yes" />
         </Component>
-        <Component Id="c21" Guid="{EE5DB9FA-3ABF-45C4-B839-422A1D9FEFAD}">
-          <File Id="f21" Source="C:\Users\tenwi\Desktop\Projects\ExpenseLedger\Build\1.0\dist\ExpenseLedger\_internal\_decimal.pyd" KeyPath="yes" />
+        <Component Id="c26" Guid="{B6DA1F1B-7619-46CC-BB8A-91D11872BFF5}">
+          <File Id="f26" Source="C:\Users\tenwi\Desktop\Projects\ExpenseLedger\Build\1.0\installer\output\1.0.3\work\dist\ExpenseLedger\_internal\_ctypes.pyd" KeyPath="yes" />
         </Component>
-        <Component Id="c22" Guid="{5922E7D1-4F87-47FA-B050-2FB5F6F9D519}">
-          <File Id="f22" Source="C:\Users\tenwi\Desktop\Projects\ExpenseLedger\Build\1.0\dist\ExpenseLedger\_internal\_elementtree.pyd" KeyPath="yes" />
+        <Component Id="c27" Guid="{EE5DB9FA-3ABF-45C4-B839-422A1D9FEFAD}">
+          <File Id="f27" Source="C:\Users\tenwi\Desktop\Projects\ExpenseLedger\Build\1.0\installer\output\1.0.3\work\dist\ExpenseLedger\_internal\_decimal.pyd" KeyPath="yes" />
         </Component>
-        <Component Id="c23" Guid="{5F0B45B8-EDCE-4865-BB26-F87A305AEF7E}">
-          <File Id="f23" Source="C:\Users\tenwi\Desktop\Projects\ExpenseLedger\Build\1.0\dist\ExpenseLedger\_internal\_hashlib.pyd" KeyPath="yes" />
+        <Component Id="c28" Guid="{5922E7D1-4F87-47FA-B050-2FB5F6F9D519}">
+          <File Id="f28" Source="C:\Users\tenwi\Desktop\Projects\ExpenseLedger\Build\1.0\installer\output\1.0.3\work\dist\ExpenseLedger\_internal\_elementtree.pyd" KeyPath="yes" />
         </Component>
-        <Component Id="c24" Guid="{91ECEAF3-75B2-41FF-B01B-2CA9036F981D}">
-          <File Id="f24" Source="C:\Users\tenwi\Desktop\Projects\ExpenseLedger\Build\1.0\dist\ExpenseLedger\_internal\_lzma.pyd" KeyPath="yes" />
+        <Component Id="c29" Guid="{5F0B45B8-EDCE-4865-BB26-F87A305AEF7E}">
+          <File Id="f29" Source="C:\Users\tenwi\Desktop\Projects\ExpenseLedger\Build\1.0\installer\output\1.0.3\work\dist\ExpenseLedger\_internal\_hashlib.pyd" KeyPath="yes" />
         </Component>
-        <Component Id="c25" Guid="{B1862F33-D710-4AAC-ABBE-4FAE86DA6453}">
-          <File Id="f25" Source="C:\Users\tenwi\Desktop\Projects\ExpenseLedger\Build\1.0\dist\ExpenseLedger\_internal\_queue.pyd" KeyPath="yes" />
+        <Component Id="c30" Guid="{91ECEAF3-75B2-41FF-B01B-2CA9036F981D}">
+          <File Id="f30" Source="C:\Users\tenwi\Desktop\Projects\ExpenseLedger\Build\1.0\installer\output\1.0.3\work\dist\ExpenseLedger\_internal\_lzma.pyd" KeyPath="yes" />
         </Component>
-        <Component Id="c26" Guid="{6C0C4640-B0C4-4609-9CD1-D0512691FDCF}">
-          <File Id="f26" Source="C:\Users\tenwi\Desktop\Projects\ExpenseLedger\Build\1.0\dist\ExpenseLedger\_internal\_socket.pyd" KeyPath="yes" />
+        <Component Id="c31" Guid="{EEB62137-DA4E-4782-BC59-9BFD08EDA3CE}">
+          <File Id="f31" Source="C:\Users\tenwi\Desktop\Projects\ExpenseLedger\Build\1.0\installer\output\1.0.3\work\dist\ExpenseLedger\_internal\_multiprocessing.pyd" KeyPath="yes" />
         </Component>
-        <Component Id="c27" Guid="{E7202FCF-A00C-4FE3-8B02-3ED1977AC66F}">
-          <File Id="f27" Source="C:\Users\tenwi\Desktop\Projects\ExpenseLedger\Build\1.0\dist\ExpenseLedger\_internal\_ssl.pyd" KeyPath="yes" />
+        <Component Id="c32" Guid="{63733D87-6FC6-4870-A788-A45B46129561}">
+          <File Id="f32" Source="C:\Users\tenwi\Desktop\Projects\ExpenseLedger\Build\1.0\installer\output\1.0.3\work\dist\ExpenseLedger\_internal\_overlapped.pyd" KeyPath="yes" />
         </Component>
-        <Component Id="c28" Guid="{00B949EB-8CA3-4DC0-9820-30424A67CC4F}">
-          <File Id="f28" Source="C:\Users\tenwi\Desktop\Projects\ExpenseLedger\Build\1.0\dist\ExpenseLedger\_internal\_tkinter.pyd" KeyPath="yes" />
+        <Component Id="c33" Guid="{B1862F33-D710-4AAC-ABBE-4FAE86DA6453}">
+          <File Id="f33" Source="C:\Users\tenwi\Desktop\Projects\ExpenseLedger\Build\1.0\installer\output\1.0.3\work\dist\ExpenseLedger\_internal\_queue.pyd" KeyPath="yes" />
         </Component>
-        <Component Id="c29" Guid="{9420D30E-E87D-4FDB-9501-89A536726663}">
-          <File Id="f29" Source="C:\Users\tenwi\Desktop\Projects\ExpenseLedger\Build\1.0\dist\ExpenseLedger\_internal\_wmi.pyd" KeyPath="yes" />
+        <Component Id="c34" Guid="{6C0C4640-B0C4-4609-9CD1-D0512691FDCF}">
+          <File Id="f34" Source="C:\Users\tenwi\Desktop\Projects\ExpenseLedger\Build\1.0\installer\output\1.0.3\work\dist\ExpenseLedger\_internal\_socket.pyd" KeyPath="yes" />
         </Component>
-        <Component Id="c30" Guid="{D8E76B5B-D46C-4014-8D54-EE55A67C481F}">
-          <File Id="f30" Source="C:\Users\tenwi\Desktop\Projects\ExpenseLedger\Build\1.0\dist\ExpenseLedger\_internal\_zstd.pyd" KeyPath="yes" />
+        <Component Id="c35" Guid="{04084F60-FE66-4DD6-B5F2-4616A1C7CB26}">
+          <File Id="f35" Source="C:\Users\tenwi\Desktop\Projects\ExpenseLedger\Build\1.0\installer\output\1.0.3\work\dist\ExpenseLedger\_internal\_sqlite3.pyd" KeyPath="yes" />
         </Component>
-        <Component Id="c31" Guid="{04A15BCA-AB42-425C-B303-0E69625355D1}">
-          <File Id="f31" Source="C:\Users\tenwi\Desktop\Projects\ExpenseLedger\Build\1.0\dist\ExpenseLedger\_internal\base_library.zip" KeyPath="yes" />
+        <Component Id="c36" Guid="{E7202FCF-A00C-4FE3-8B02-3ED1977AC66F}">
+          <File Id="f36" Source="C:\Users\tenwi\Desktop\Projects\ExpenseLedger\Build\1.0\installer\output\1.0.3\work\dist\ExpenseLedger\_internal\_ssl.pyd" KeyPath="yes" />
         </Component>
-        <Component Id="c32" Guid="{B8672878-0944-42D7-97AB-EE6B964F129D}">
-          <File Id="f32" Source="C:\Users\tenwi\Desktop\Projects\ExpenseLedger\Build\1.0\dist\ExpenseLedger\_internal\libcrypto-3.dll" KeyPath="yes" />
+        <Component Id="c37" Guid="{00B949EB-8CA3-4DC0-9820-30424A67CC4F}">
+          <File Id="f37" Source="C:\Users\tenwi\Desktop\Projects\ExpenseLedger\Build\1.0\installer\output\1.0.3\work\dist\ExpenseLedger\_internal\_tkinter.pyd" KeyPath="yes" />
         </Component>
-        <Component Id="c33" Guid="{2762555C-0BCF-4F6A-906D-5BFA6C0F2997}">
-          <File Id="f33" Source="C:\Users\tenwi\Desktop\Projects\ExpenseLedger\Build\1.0\dist\ExpenseLedger\_internal\libffi-8.dll" KeyPath="yes" />
+        <Component Id="c38" Guid="{B9518B3C-D86A-4B8C-B0DD-D8E460D4267B}">
+          <File Id="f38" Source="C:\Users\tenwi\Desktop\Projects\ExpenseLedger\Build\1.0\installer\output\1.0.3\work\dist\ExpenseLedger\_internal\_uuid.pyd" KeyPath="yes" />
         </Component>
-        <Component Id="c34" Guid="{74811D12-3D3D-4EAE-81D5-A87B474CC61E}">
-          <File Id="f34" Source="C:\Users\tenwi\Desktop\Projects\ExpenseLedger\Build\1.0\dist\ExpenseLedger\_internal\libssl-3.dll" KeyPath="yes" />
+        <Component Id="c39" Guid="{9420D30E-E87D-4FDB-9501-89A536726663}">
+          <File Id="f39" Source="C:\Users\tenwi\Desktop\Projects\ExpenseLedger\Build\1.0\installer\output\1.0.3\work\dist\ExpenseLedger\_internal\_wmi.pyd" KeyPath="yes" />
         </Component>
-        <Component Id="c35" Guid="{50F3E904-C4C2-40A8-8C88-2C7F77BA8AD4}">
-          <File Id="f35" Source="C:\Users\tenwi\Desktop\Projects\ExpenseLedger\Build\1.0\dist\ExpenseLedger\_internal\libtommath.dll" KeyPath="yes" />
+        <Component Id="c40" Guid="{D8E76B5B-D46C-4014-8D54-EE55A67C481F}">
+          <File Id="f40" Source="C:\Users\tenwi\Desktop\Projects\ExpenseLedger\Build\1.0\installer\output\1.0.3\work\dist\ExpenseLedger\_internal\_zstd.pyd" KeyPath="yes" />
         </Component>
-        <Component Id="c36" Guid="{B06F17A1-6FCD-46D4-8251-446FEE0D2909}">
-          <File Id="f36" Source="C:\Users\tenwi\Desktop\Projects\ExpenseLedger\Build\1.0\dist\ExpenseLedger\_internal\pyexpat.pyd" KeyPath="yes" />
+        <Component Id="c41" Guid="{04A15BCA-AB42-425C-B303-0E69625355D1}">
+          <File Id="f41" Source="C:\Users\tenwi\Desktop\Projects\ExpenseLedger\Build\1.0\installer\output\1.0.3\work\dist\ExpenseLedger\_internal\base_library.zip" KeyPath="yes" />
         </Component>
-        <Component Id="c37" Guid="{26AE02B2-B2CE-43F7-BC6F-6F1E51AA7570}">
-          <File Id="f37" Source="C:\Users\tenwi\Desktop\Projects\ExpenseLedger\Build\1.0\dist\ExpenseLedger\_internal\python315.dll" KeyPath="yes" />
+        <Component Id="c42" Guid="{B8672878-0944-42D7-97AB-EE6B964F129D}">
+          <File Id="f42" Source="C:\Users\tenwi\Desktop\Projects\ExpenseLedger\Build\1.0\installer\output\1.0.3\work\dist\ExpenseLedger\_internal\libcrypto-3.dll" KeyPath="yes" />
         </Component>
-        <Component Id="c38" Guid="{2E270867-6F91-4E81-98C8-411C4C0F2B4D}">
-          <File Id="f38" Source="C:\Users\tenwi\Desktop\Projects\ExpenseLedger\Build\1.0\dist\ExpenseLedger\_internal\select.pyd" KeyPath="yes" />
+        <Component Id="c43" Guid="{2762555C-0BCF-4F6A-906D-5BFA6C0F2997}">
+          <File Id="f43" Source="C:\Users\tenwi\Desktop\Projects\ExpenseLedger\Build\1.0\installer\output\1.0.3\work\dist\ExpenseLedger\_internal\libffi-8.dll" KeyPath="yes" />
         </Component>
-        <Component Id="c39" Guid="{FDB27E1D-F6E3-4AC3-886E-05468AFA6443}">
-          <File Id="f39" Source="C:\Users\tenwi\Desktop\Projects\ExpenseLedger\Build\1.0\dist\ExpenseLedger\_internal\tcl90.dll" KeyPath="yes" />
+        <Component Id="c44" Guid="{74811D12-3D3D-4EAE-81D5-A87B474CC61E}">
+          <File Id="f44" Source="C:\Users\tenwi\Desktop\Projects\ExpenseLedger\Build\1.0\installer\output\1.0.3\work\dist\ExpenseLedger\_internal\libssl-3.dll" KeyPath="yes" />
         </Component>
-        <Component Id="c40" Guid="{B605AA90-A936-41FD-BB59-64315ADFA368}">
-          <File Id="f40" Source="C:\Users\tenwi\Desktop\Projects\ExpenseLedger\Build\1.0\dist\ExpenseLedger\_internal\tcl9tk90.dll" KeyPath="yes" />
+        <Component Id="c45" Guid="{50F3E904-C4C2-40A8-8C88-2C7F77BA8AD4}">
+          <File Id="f45" Source="C:\Users\tenwi\Desktop\Projects\ExpenseLedger\Build\1.0\installer\output\1.0.3\work\dist\ExpenseLedger\_internal\libtommath.dll" KeyPath="yes" />
         </Component>
-        <Component Id="c41" Guid="{C5CBCDED-D330-440F-9A85-1FE8FB404740}">
-          <File Id="f41" Source="C:\Users\tenwi\Desktop\Projects\ExpenseLedger\Build\1.0\dist\ExpenseLedger\_internal\unicodedata.pyd" KeyPath="yes" />
+        <Component Id="c46" Guid="{B06F17A1-6FCD-46D4-8251-446FEE0D2909}">
+          <File Id="f46" Source="C:\Users\tenwi\Desktop\Projects\ExpenseLedger\Build\1.0\installer\output\1.0.3\work\dist\ExpenseLedger\_internal\pyexpat.pyd" KeyPath="yes" />
         </Component>
-        <Component Id="c42" Guid="{56A918F5-A1E2-408B-95A1-B83D20457CC7}">
-          <File Id="f42" Source="C:\Users\tenwi\Desktop\Projects\ExpenseLedger\Build\1.0\dist\ExpenseLedger\_internal\VCRUNTIME140.dll" KeyPath="yes" />
+        <Component Id="c47" Guid="{26AE02B2-B2CE-43F7-BC6F-6F1E51AA7570}">
+          <File Id="f47" Source="C:\Users\tenwi\Desktop\Projects\ExpenseLedger\Build\1.0\installer\output\1.0.3\work\dist\ExpenseLedger\_internal\python315.dll" KeyPath="yes" />
         </Component>
-        <Component Id="c43" Guid="{3F92D049-9848-4E46-8A79-9099B4FB2D1A}">
-          <File Id="f43" Source="C:\Users\tenwi\Desktop\Projects\ExpenseLedger\Build\1.0\dist\ExpenseLedger\_internal\VCRUNTIME140_1.dll" KeyPath="yes" />
+        <Component Id="c48" Guid="{2E270867-6F91-4E81-98C8-411C4C0F2B4D}">
+          <File Id="f48" Source="C:\Users\tenwi\Desktop\Projects\ExpenseLedger\Build\1.0\installer\output\1.0.3\work\dist\ExpenseLedger\_internal\select.pyd" KeyPath="yes" />
         </Component>
-        <Component Id="c44" Guid="{9688AF28-2488-4D82-8B02-B6E5FC25367D}">
-          <File Id="f44" Source="C:\Users\tenwi\Desktop\Projects\ExpenseLedger\Build\1.0\dist\ExpenseLedger\_internal\zlib1.dll" KeyPath="yes" />
+        <Component Id="c49" Guid="{F0A72D73-0A25-403F-B2AA-FF9940C82E40}">
+          <File Id="f49" Source="C:\Users\tenwi\Desktop\Projects\ExpenseLedger\Build\1.0\installer\output\1.0.3\work\dist\ExpenseLedger\_internal\sqlite3.dll" KeyPath="yes" />
+        </Component>
+        <Component Id="c50" Guid="{FDB27E1D-F6E3-4AC3-886E-05468AFA6443}">
+          <File Id="f50" Source="C:\Users\tenwi\Desktop\Projects\ExpenseLedger\Build\1.0\installer\output\1.0.3\work\dist\ExpenseLedger\_internal\tcl90.dll" KeyPath="yes" />
+        </Component>
+        <Component Id="c51" Guid="{B605AA90-A936-41FD-BB59-64315ADFA368}">
+          <File Id="f51" Source="C:\Users\tenwi\Desktop\Projects\ExpenseLedger\Build\1.0\installer\output\1.0.3\work\dist\ExpenseLedger\_internal\tcl9tk90.dll" KeyPath="yes" />
+        </Component>
+        <Component Id="c52" Guid="{C5CBCDED-D330-440F-9A85-1FE8FB404740}">
+          <File Id="f52" Source="C:\Users\tenwi\Desktop\Projects\ExpenseLedger\Build\1.0\installer\output\1.0.3\work\dist\ExpenseLedger\_internal\unicodedata.pyd" KeyPath="yes" />
+        </Component>
+        <Component Id="c53" Guid="{56A918F5-A1E2-408B-95A1-B83D20457CC7}">
+          <File Id="f53" Source="C:\Users\tenwi\Desktop\Projects\ExpenseLedger\Build\1.0\installer\output\1.0.3\work\dist\ExpenseLedger\_internal\VCRUNTIME140.dll" KeyPath="yes" />
+        </Component>
+        <Component Id="c54" Guid="{3F92D049-9848-4E46-8A79-9099B4FB2D1A}">
+          <File Id="f54" Source="C:\Users\tenwi\Desktop\Projects\ExpenseLedger\Build\1.0\installer\output\1.0.3\work\dist\ExpenseLedger\_internal\VCRUNTIME140_1.dll" KeyPath="yes" />
+        </Component>
+        <Component Id="c55" Guid="{9688AF28-2488-4D82-8B02-B6E5FC25367D}">
+          <File Id="f55" Source="C:\Users\tenwi\Desktop\Projects\ExpenseLedger\Build\1.0\installer\output\1.0.3\work\dist\ExpenseLedger\_internal\zlib1.dll" KeyPath="yes" />
         </Component>
       </Directory>
-      <Component Id="c45" Guid="{51F701C0-BA43-4578-AFA7-0E0D98AF6C0C}">
-        <File Id="f45" Source="C:\Users\tenwi\Desktop\Projects\ExpenseLedger\Build\1.0\dist\ExpenseLedger\ExpenseLedger.exe" KeyPath="yes" />
+      <Component Id="c56" Guid="{51F701C0-BA43-4578-AFA7-0E0D98AF6C0C}">
+        <File Id="f56" Source="C:\Users\tenwi\Desktop\Projects\ExpenseLedger\Build\1.0\installer\output\1.0.3\work\dist\ExpenseLedger\ExpenseLedger.exe" KeyPath="yes" />
       </Component>
     </DirectoryRef>
   </Fragment>
@@ -207,6 +248,17 @@
       <ComponentRef Id="c43" />
       <ComponentRef Id="c44" />
       <ComponentRef Id="c45" />
+      <ComponentRef Id="c46" />
+      <ComponentRef Id="c47" />
+      <ComponentRef Id="c48" />
+      <ComponentRef Id="c49" />
+      <ComponentRef Id="c50" />
+      <ComponentRef Id="c51" />
+      <ComponentRef Id="c52" />
+      <ComponentRef Id="c53" />
+      <ComponentRef Id="c54" />
+      <ComponentRef Id="c55" />
+      <ComponentRef Id="c56" />
     </ComponentGroup>
   </Fragment>
 </Wix>

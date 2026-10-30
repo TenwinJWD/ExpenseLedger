@@ -78,7 +78,7 @@ def main() -> None:
     auth = AuthService(AccountStore(paths.account_file()))
     subheads = SubheadService(SubheadStore(paths.subheads_file()), defaults)
     main_entries = MainEntryService(MainEntryStore(paths.main_entries_file()))
-    entries = EntryService(ExcelStore(paths.data_dir(), main_entries), subheads)
+    entries = EntryService(ExcelStore(paths.data_dir(), main_entries, owner=auth.username, index_file=paths.entry_index_file()), subheads)
     app = App(auth, main_entries, subheads, entries)
     app.mainloop()
 

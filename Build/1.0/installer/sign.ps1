@@ -2,15 +2,14 @@
   Signs the Daily Fresh release files with Authenticode (SHA-256 + timestamp).
 
   Order matters: each file must be signed before anything that wraps it is built.
-    1. dist\ExpenseLedger\ExpenseLedger.exe   (sign, then rebuild the MSI files from it)
-    2. installer\output\<version>\*.msi                 (sign, then rebuild the Burn setup from the User MSI)
-    3. Burn engine inside ExpenseLedger-Setup-*.exe (detach, sign, reattach)
-    4. ExpenseLedger-Setup-*.exe              (sign the final file)
+    1. installer\output\<version>\work\dist\ExpenseLedger\ExpenseLedger.exe   (sign, then rebuild the MSI files from it)
+    2. installer\output\<version>\*.msi                 (sign)
+    3. ExpenseLedger-Setup-*.exe              (the Inno Setup wizard, built from the signed exe; sign the final file)
 
   Usage:
     .\sign.ps1 -Stage Exe                       # step 1
     .\sign.ps1 -Stage Msi                       # step 2
-    .\sign.ps1 -Stage Setup                     # steps 3 and 4
+    .\sign.ps1 -Stage Setup                     # step 3
     .\sign.ps1 -Stage Verify                    # check every signature, print SHA-256 hashes
 
   Certificate (pick one):
@@ -32,8 +31,8 @@ param(
 $ErrorActionPreference = 'Stop'
 $root = Split-Path -Parent $PSScriptRoot
 if (-not $Version) { $Version = (Select-String -Path (Join-Path $root 'app\core\config.py') -Pattern '^APP_VERSION = "([0-9.]+)"').Matches[0].Groups[1].Value }
-$exe = Join-Path $root 'dist\ExpenseLedger\ExpenseLedger.exe'
 $out = Join-Path $PSScriptRoot "output\$Version"
+$exe = Join-Path $out 'work\dist\ExpenseLedger\ExpenseLedger.exe'
 $msis = @("$out\ExpenseLedger-$Version.msi", "$out\ExpenseLedger-$Version-CurrentUser.msi", "$out\ExpenseLedger-$Version-AllUsers.msi")
 $setup = "$out\ExpenseLedger-Setup-$Version.exe"
 
@@ -75,19 +74,10 @@ switch ($Stage) {
     }
     'Msi' {
         $msis | ForEach-Object { Sign-File $_ }
-        Write-Host 'Next: rebuild the Burn setup from the signed AllUsers MSI (wix build Bundle.wxs), then run -Stage Setup.'
+        Write-Host 'Next: build the setup wizard (iscc DailyFresh.iss), then run -Stage Setup.'
     }
     'Setup' {
-        $engine = Join-Path $env:TEMP 'ExpenseLedger-burn-engine.exe'
-        $tmp = Join-Path $env:TEMP 'ExpenseLedger-Setup-unsigned.exe'
-        wix burn detach $setup -engine $engine
-        if ($LASTEXITCODE -ne 0) { throw 'wix burn detach failed.' }
-        Sign-File $engine
-        wix burn reattach $setup -engine $engine -o $tmp
-        if ($LASTEXITCODE -ne 0) { throw 'wix burn reattach failed.' }
-        Move-Item $tmp $setup -Force
         Sign-File $setup
-        Remove-Item $engine -ErrorAction SilentlyContinue
     }
     'Verify' {
         $all = @($exe) + $msis + @($setup)

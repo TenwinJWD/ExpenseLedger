@@ -5,12 +5,14 @@ installer/component_guids.json, so an upgrade replaces the same components.
 """
 
 import json
+import sys
 import uuid
 from pathlib import Path
 from xml.sax.saxutils import escape, quoteattr
 
 HERE = Path(__file__).resolve().parent
-SOURCE = HERE.parent / "dist" / "ExpenseLedger"
+# build.ps1 passes the folder PyInstaller wrote for this version; run alone, it uses dist\ExpenseLedger.
+SOURCE = Path(sys.argv[1]).resolve() if len(sys.argv) > 1 else HERE.parent / "dist" / "ExpenseLedger"
 GUID_FILE = HERE / "component_guids.json"
 OUTPUT = HERE / "Files.wxs"
 

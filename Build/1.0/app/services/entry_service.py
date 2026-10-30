@@ -57,6 +57,21 @@ class EntryService:
                 entry.sub_head = renamed[entry.main_head].get(entry.sub_head, entry.sub_head)
         return entries
 
+    def is_mine(self, entry: Entry) -> bool:
+        """Only the logged-in user's own rows can be changed. Rows imported from other users are read-only."""
+        return self.store.is_mine(entry)
+
+    def current_owner(self) -> str:
+        return self.store.current_owner()
+
+    def import_entries(self, entries: list[Entry]) -> tuple[Result, int, int]:
+        """Save rows from a CSV into the data folder. Returns (result, added, already_there)."""
+        try:
+            added, skipped = self.store.import_entries(entries)
+        except ExcelFileLockedError:
+            return Result(False, "An Excel file in the data folder is open. Close it in Excel and import again."), 0, 0
+        return Result(True), added, skipped
+
     def update_entry(self, entry: Entry, old_date: date) -> Result:
         """Save changes made in the report's inline edit (PRD FR-22)."""
         try:

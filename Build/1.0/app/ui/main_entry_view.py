@@ -7,6 +7,7 @@ the form is valid. Errors show under a field only after the user has left that f
 
 import tkinter as tk
 from datetime import date
+from typing import Callable
 
 import customtkinter as ctk
 
@@ -16,6 +17,7 @@ from app.services.entry_service import EntryService
 from app.services.main_entry_service import MainEntryService
 from app.services.subhead_service import SubheadService
 from app.ui import widgets
+from app.ui.expense_report_view import ExpenseReportView
 
 SELECT = "-Select-"
 TRANSACTION_FIELDS = ("date", "name", "particulars", "debit", "credit")
@@ -24,7 +26,7 @@ TRANSACTION_FIELDS = ("date", "name", "particulars", "debit", "credit")
 class MainEntryView(ctk.CTkFrame):
     """The entry form of one Main Entry, with the Transactions choice above it."""
 
-    def __init__(self, master, main_entries: MainEntryService, subheads: SubheadService, entries: EntryService) -> None:
+    def __init__(self, master, main_entries: MainEntryService, subheads: SubheadService, entries: EntryService, notify: Callable[[str], None] = lambda _text: None) -> None:
         super().__init__(master, fg_color="transparent")
         self.main_entries = main_entries
         self.subheads = subheads
@@ -52,6 +54,11 @@ class MainEntryView(ctk.CTkFrame):
         self.message = ctk.CTkLabel(self, text="", font=widgets.text_font(theme.FONT_SIZE_BODY), corner_radius=theme.BUTTON_RADIUS, padx=14, pady=10, anchor="w")
         self.message.grid(row=1, column=0, sticky="ew", padx=24, pady=(14, 0))
         self.message.grid_remove()
+
+        # The entries of this Main Entry, under the form. show() points it at the open Main Entry.
+        self.table = ExpenseReportView(self, main_entries, subheads, entries, notify=notify, locked_head=self.main_head)
+        self.table.grid(row=2, column=0, sticky="nsew")
+        self.grid_rowconfigure(2, weight=1)
 
         self._reload_subheads("")
         self._update_state()
@@ -134,7 +141,7 @@ class MainEntryView(ctk.CTkFrame):
     def _build_buttons(self, form) -> None:
         bar = ctk.CTkFrame(form, fg_color="transparent")
         bar.grid(row=7, column=0, columnspan=2, sticky="e", padx=20, pady=(18, 20))
-        self.clear_button = widgets.secondary_button(bar, "Cancel", self._clear)
+        self.clear_button = widgets.cancel_button(bar, "Cancel", self._clear)
         self.clear_button.pack(side="left", padx=(0, 10))
         self.submit_button = widgets.primary_button(bar, "Submit", self._submit, state="disabled", width=160)
         self.submit_button.pack(side="left")
@@ -148,12 +155,14 @@ class MainEntryView(ctk.CTkFrame):
             self._clear_transaction()
             self._hide_message()
             self.sub_var.set(SELECT)
+            self.table.set_main_head(main_head)
 
     def refresh(self) -> None:
         """Reload the sub-heads each time the page opens (Architecture 4.4)."""
         self.subtitle.configure(text=f"Record an entry for {self.main_entries.label(self.main_head)}")
         self._reload_subheads(self.sub_var.get())
         self._update_state()
+        self.table.refresh()
 
     def _reload_subheads(self, keep: str) -> None:
         names = self.subheads.active_names(self.main_head)
@@ -253,6 +262,7 @@ class MainEntryView(ctk.CTkFrame):
         self._clear_transaction()
         self._show_message(f"Entry saved to {dates.format_date_slash(values['date'])}.", kind="success")
         self._update_state()
+        self.table.refresh()
 
     def _clear(self) -> None:
         self._clear_transaction()

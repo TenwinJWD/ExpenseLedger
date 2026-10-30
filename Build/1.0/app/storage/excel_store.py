@@ -1,7 +1,10 @@
 """Daily Excel ledger files (PRD FR-22 to FR-31; Architecture 5.1).
 
-Each day with entries has its own file: <root>\\<YYYY>\\<MM-Mon>\\<DD-Mon-YYYY>.xlsx,
+Each day with entries has its own file per user: <root>\\<YYYY>\\<MM-Mon>\\<DD-Mon-YYYY>_<username>.xlsx,
 with one sheet named "Entries". Dates are stored as text (DD-Mon-YYYY), amounts as numbers.
+Rows copied in from other users (CSV import) go to files named with their owner, beside the user's own.
+
+Reading goes through a SQLite index of the files (entry_index.py): only files that changed on disk are opened again.
 
 Saves go to a temporary file first and then replace the real file (Rules 16). If Excel
 has the file open, Windows refuses the replace, and ExcelFileLockedError is raised so the
@@ -13,16 +16,22 @@ import re
 from datetime import date, datetime
 from decimal import Decimal
 from pathlib import Path
-
-import openpyxl
+from typing import Callable
 
 from app.core import dates
 from app.core.models import DEFAULT_MAIN_ENTRIES, Entry
+from app.storage.entry_index import EntryIndex
 
 SHEET_NAME = "Entries"
 HEADERS = ("ID", "Main Head", "Sub Head", "Date", "Name", "Particulars", "Debit", "Credit", "Created At")
 ID_PATTERN = re.compile(r"^E(\d{8})-(\d{3})$")
 CENT = Decimal("0.01")
+_UNSAFE_FILE_CHARACTERS = re.compile(r'[^\w.\- ]')
+
+
+def safe_owner(username: str) -> str:
+    """The username as it appears in a file name: characters Windows does not allow become underscores."""
+    return _UNSAFE_FILE_CHARACTERS.sub("_", username.strip()).strip(" .")
 
 
 class ExcelFileLockedError(Exception):
@@ -45,16 +54,26 @@ class ExcelStore:
     heads turns a Main Entry id into the name saved in Excel and back (label() and id_for_label()).
     """
 
-    def __init__(self, root: Path, heads=None) -> None:
+    def __init__(self, root: Path, heads=None, owner: Callable[[], str] | None = None, index_file: Path | None = None) -> None:
         self.root = root
         self.heads = heads or _DefaultHeads()
-        # Parsed rows per file, reused until the file changes on disk (Architecture 7).
-        self._cache: dict[Path, tuple[int, list[Entry]]] = {}
+        self._owner = owner or (lambda: "")  # the logged-in username, asked each time because login comes after start-up
+        # Parsed rows per file, reused until the file changes on disk (Architecture 7). index_file None: in memory only.
+        self._index = EntryIndex(index_file, root)
 
     # ----- file locations -----
 
-    def file_path_for(self, entry_date: date) -> Path:
-        return self.root / dates.year_folder_name(entry_date) / dates.month_folder_name(entry_date) / f"{dates.format_date(entry_date)}.xlsx"
+    def current_owner(self) -> str:
+        return safe_owner(self._owner())
+
+    def is_mine(self, entry: Entry) -> bool:
+        """True for rows in the logged-in user's own files. Only those can be edited or deleted."""
+        return entry.owner.lower() == self.current_owner().lower()
+
+    def file_path_for(self, entry_date: date, owner: str | None = None) -> Path:
+        owner = self.current_owner() if owner is None else safe_owner(owner)
+        suffix = f"_{owner}" if owner else ""
+        return self.root / dates.year_folder_name(entry_date) / dates.month_folder_name(entry_date) / f"{dates.format_date(entry_date)}{suffix}.xlsx"
 
     # ----- writing -----
 
@@ -71,16 +90,31 @@ class ExcelStore:
         return f"E{entry_date:%Y%m%d}-{highest + 1:03d}"
 
     def append_entry(self, entry: Entry) -> None:
-        path = self.file_path_for(entry.entry_date)
-        if path.exists():
-            workbook, sheet = self._open(path)
-        else:
-            workbook = openpyxl.Workbook()
-            sheet = workbook.active
-            sheet.title = SHEET_NAME
-            sheet.append(list(HEADERS))
-        sheet.append(self._to_row(entry))
+        path = self.file_path_for(entry.entry_date, entry.owner or None)
+        workbook, sheet = self._open(path) if path.exists() else self._new_workbook()
+        self._append_row(sheet, self._to_row(entry))
         self._save(workbook, path)
+
+    def import_entries(self, entries: list[Entry]) -> tuple[int, int]:
+        """Copy rows from other users' CSV into files named with their owner. Returns (added, already_there).
+
+        A row whose owner and ID are already in that day's file is skipped, so importing the same CSV twice adds nothing.
+        """
+        groups: dict[Path, list[Entry]] = {}
+        for entry in entries:
+            groups.setdefault(self.file_path_for(entry.entry_date, entry.owner or None), []).append(entry)
+        added = skipped = 0
+        for path, group in groups.items():
+            workbook, sheet = self._open(path) if path.exists() else self._new_workbook()
+            known = {str(row[0]) for row in sheet.iter_rows(min_row=2, values_only=True) if row[0] is not None}
+            fresh = [entry for entry in group if entry.id not in known]
+            skipped += len(group) - len(fresh)
+            for entry in fresh:
+                self._append_row(sheet, self._to_row(entry))
+            if fresh:
+                self._save(workbook, path)
+                added += len(fresh)
+        return added, skipped
 
     def update_entry(self, entry: Entry, old_date: date) -> None:
         """Change a saved entry. If its date changed, the row moves to the file for the new date (FR-30)."""
@@ -92,7 +126,7 @@ class ExcelStore:
         workbook, sheet = self._open(path)
         row_number = self._find_row(sheet, entry.id)
         for column, value in enumerate(self._to_row(entry), start=1):
-            sheet.cell(row=row_number, column=column, value=value)
+            self._set_cell(sheet.cell(row=row_number, column=column), value)
         self._save(workbook, path)
 
     def delete_entry(self, entry_id: str, entry_date: date) -> None:
@@ -104,32 +138,56 @@ class ExcelStore:
     # ----- reading -----
 
     def read_all_entries(self) -> list[Entry]:
-        """Every entry in every daily file under the root, oldest first."""
-        entries: list[Entry] = []
-        if not self.root.exists():
-            return entries
-        for path in sorted(self.root.rglob("*.xlsx")):
-            if ".tmp" in path.name:
-                continue
-            entries.extend(self._entries_of(path))
-        entries.sort(key=lambda entry: (entry.entry_date, entry.id))
+        """Every entry in every daily file under the root, oldest first. Only changed files are opened."""
+        stamps: dict[str, tuple[int, int]] = {}
+        if self.root.exists():
+            for path in self.root.rglob("*.xlsx"):
+                if ".tmp" not in path.name:
+                    info = path.stat()
+                    stamps[path.relative_to(self.root).as_posix()] = (info.st_mtime_ns, info.st_size)
+        for rel in self._index.changed_since(stamps):
+            path = self.root / rel
+            _workbook, sheet = self._open(path)
+            self._index.replace_file(rel, stamps[rel], self._parse_sheet(path, sheet))
+        entries = self._index.all_entries()
+        resolved: dict[str, str] = {}
+        for entry in entries:  # the index holds the name written in Excel; turn it into the Main Entry id
+            if entry.main_head not in resolved:
+                resolved[entry.main_head] = self.heads.id_for_label(entry.main_head)
+            entry.main_head = resolved[entry.main_head]
         return entries
 
-    def _entries_of(self, path: Path) -> list[Entry]:
-        """The rows of one file. Reuses the parsed rows while the file's modified time is unchanged."""
-        stamp = path.stat().st_mtime_ns
-        cached = self._cache.get(path)
-        if cached and cached[0] == stamp:
-            return list(cached[1])
-        _workbook, sheet = self._open(path)
-        rows = [self._from_row(row) for row in sheet.iter_rows(min_row=2, values_only=True) if row[0] is not None]
-        self._cache[path] = (stamp, rows)
-        return list(rows)
+    def _parse_sheet(self, path: Path, sheet) -> list[Entry]:
+        owner = path.stem.split("_", 1)[1] if "_" in path.stem else ""  # the date part has no underscore
+        return [self._from_row(row, owner) for row in sheet.iter_rows(min_row=2, values_only=True) if row[0] is not None]
 
     # ----- helpers -----
 
     @staticmethod
+    def _new_workbook():
+        import openpyxl  # loaded when first needed: a start that reads only the index never opens a workbook
+        workbook = openpyxl.Workbook()
+        sheet = workbook.active
+        sheet.title = SHEET_NAME
+        sheet.append(list(HEADERS))
+        return workbook, sheet
+
+    @classmethod
+    def _append_row(cls, sheet, values: list) -> None:
+        row_number = sheet.max_row + 1
+        for column, value in enumerate(values, start=1):
+            cls._set_cell(sheet.cell(row=row_number, column=column), value)
+
+    @staticmethod
+    def _set_cell(cell, value) -> None:
+        """Write a value. Text starting with = stays text; Excel would otherwise run it as a formula."""
+        cell.value = value
+        if isinstance(value, str) and value.startswith("="):
+            cell.data_type = "s"
+
+    @staticmethod
     def _open(path: Path):
+        import openpyxl
         workbook = openpyxl.load_workbook(path)
         sheet = workbook[SHEET_NAME] if SHEET_NAME in workbook.sheetnames else workbook.active
         return workbook, sheet
@@ -141,8 +199,7 @@ class ExcelStore:
                 return row_number
         raise KeyError(f"entry {entry_id} not found")
 
-    @staticmethod
-    def _save(workbook, path: Path) -> None:
+    def _save(self, workbook, path: Path) -> None:
         path.parent.mkdir(parents=True, exist_ok=True)
         temp_path = path.with_name(path.stem + ".tmp.xlsx")
         workbook.save(temp_path)
@@ -151,6 +208,17 @@ class ExcelStore:
         except PermissionError as error:
             temp_path.unlink(missing_ok=True)
             raise ExcelFileLockedError(str(error)) from error
+        self._reindex(path, workbook)
+
+    def _reindex(self, path: Path, workbook) -> None:
+        """Update the index from the workbook just saved, so the next read does not open the file again."""
+        rel = path.relative_to(self.root).as_posix()
+        try:
+            sheet = workbook[SHEET_NAME] if SHEET_NAME in workbook.sheetnames else workbook.active
+            info = path.stat()
+            self._index.replace_file(rel, (info.st_mtime_ns, info.st_size), self._parse_sheet(path, sheet))
+        except Exception:  # the file is saved; at worst the next read opens it again
+            self._index.forget_file(rel)
 
     def _to_row(self, entry: Entry) -> list:
         created = f"{dates.format_date(entry.created_at.date())} {entry.created_at:%H:%M}"
@@ -166,8 +234,9 @@ class ExcelStore:
             created,
         ]
 
-    def _from_row(self, row) -> Entry:
-        main_head = self.heads.id_for_label(str(row[1]))
+    def _from_row(self, row, owner: str = "") -> Entry:
+        """One row as an Entry. main_head is still the name written in Excel; read_all_entries turns it into the id."""
+        main_head = str(row[1])
         created_text = str(row[8])
         created_date_text, created_time_text = created_text.rsplit(" ", 1)
         created_date = dates.parse_date(created_date_text)
@@ -182,4 +251,5 @@ class ExcelStore:
             debit=Decimal(str(row[6])).quantize(CENT),
             credit=Decimal(str(row[7])).quantize(CENT),
             created_at=datetime(created_date.year, created_date.month, created_date.day, hour, minute),
+            owner=owner,
         )

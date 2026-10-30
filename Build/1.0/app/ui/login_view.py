@@ -8,7 +8,7 @@ from app.core import theme
 from app.services.auth_service import AuthService, format_lock_message
 from app.storage.account_store import CorruptAccountFileError
 from app.ui import widgets
-from app.ui.gradient import GradientCanvas
+from app.ui.gradient import GradientCanvas, gradient_color
 
 
 class LoginView(GradientCanvas):
@@ -21,7 +21,7 @@ class LoginView(GradientCanvas):
         self._refresh_job = None
 
         # The card keeps a fixed size; without this it shrinks to fit its contents.
-        card = widgets.card(self, width=420, height=440)
+        card = widgets.card(self, width=420, height=440, bg_color=gradient_color(theme.PAGE_TOP, theme.PAGE_BOTTOM, 0.5))
         card.pack_propagate(False)
         card.place(relx=0.5, rely=0.5, anchor="center")
 

@@ -11,7 +11,7 @@ from typing import Callable
 
 from app.core import config
 from app.services import password_hash
-from app.storage.account_store import AccountStore
+from app.storage.account_store import AccountStore, CorruptAccountFileError
 
 
 @dataclass
@@ -37,6 +37,14 @@ class AuthService:
 
     def has_account(self) -> bool:
         return self.store.exists()
+
+    def username(self) -> str:
+        """The account's username, or an empty string when there is no readable account yet."""
+        try:
+            data = self.store.load()
+        except CorruptAccountFileError:
+            return ""
+        return data["username"] if data else ""
 
     def create_account(self, username: str, password: str, repeat: str) -> Result:
         """Create the one account. Refuses if an account already exists (FR-2)."""

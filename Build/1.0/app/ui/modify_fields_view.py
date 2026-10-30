@@ -32,10 +32,10 @@ class ModifyFieldsView(ctk.CTkFrame):
         self.grid_columnconfigure(0, weight=1)
         widgets.secondary_button(self, "‹ Back to Main Entry", lambda: self.on_back(), width=190).grid(row=0, column=0, sticky="w", padx=24, pady=(20, 0))
         self.entries_card = self._card(1, "Main Entries", "These are the entries listed under Main Entry in the sidebar.", "New Main Entry name", config.MAIN_ENTRY_MAX_LENGTH, self._add_entry)
-        self.fields_card = self._card(2, "Transactions Fields", "These are the choices in the Transactions list of the entry form.", "New Transactions field name", config.SUBHEAD_MAX_LENGTH, self._add_field)
+        self.fields_card = self._card(2, "Transaction Fields", "These are the choices in the Transactions list of the entry form.", "New Transactions field name", config.SUBHEAD_MAX_LENGTH, self._add_field)
 
         # Card 2 says which Main Entry's fields it shows, and lets the user switch.
-        self.scope_menu = widgets.SelectBox(self.fields_card["head"], values=[""], command=self._on_scope, width=220)
+        self.scope_menu = widgets.SelectBox(self.fields_card["head"], values=[""], command=self._on_scope, width=240, height=48, row_height=42)
         self.scope_menu.pack(side="right")
 
     # ----- layout -----
@@ -47,7 +47,8 @@ class ModifyFieldsView(ctk.CTkFrame):
         head.pack(fill="x", padx=20, pady=(18, 4))
         titles = ctk.CTkFrame(head, fg_color="transparent")
         titles.pack(side="left", fill="x", expand=True)
-        widgets.label(titles, title, size=theme.FONT_SIZE_CARD_TITLE).pack(anchor="w")
+        title_label = widgets.label(titles, title, size=theme.FONT_SIZE_CARD_TITLE)
+        title_label.pack(anchor="w")
         widgets.label(titles, description, color=theme.TEXT_MUTED).pack(anchor="w")
 
         add_row = ctk.CTkFrame(card, fg_color="transparent")
@@ -63,7 +64,7 @@ class ModifyFieldsView(ctk.CTkFrame):
         table = ctk.CTkFrame(card, fg_color="transparent")
         table.pack(fill="x", padx=20, pady=(4, 20))
         table.grid_columnconfigure(0, weight=1)
-        return {"card": card, "head": head, "entry": entry, "error": error, "table": table}
+        return {"card": card, "head": head, "title": title_label, "entry": entry, "error": error, "table": table}
 
     # ----- data -----
 
@@ -81,6 +82,7 @@ class ModifyFieldsView(ctk.CTkFrame):
             self.main_head = active[0].id
         self.scope_menu.configure(values=[item.name for item in active])
         self.scope_menu.set(self.main_entries.label(self.main_head))
+        self._show_fields_title()
         self._render_entries(active)
         self._render_fields()
 
@@ -88,7 +90,11 @@ class ModifyFieldsView(ctk.CTkFrame):
         self.main_head = next((item.id for item in self.main_entries.active() if item.name == choice), self.main_head)
         self.editing_field = None
         self.fields_card["error"].configure(text="")
+        self._show_fields_title()
         self._render_fields()
+
+    def _show_fields_title(self) -> None:
+        self.fields_card["title"].configure(text=f"Transaction Fields : {self.main_entries.label(self.main_head)}")
 
     # ----- tables -----
 
@@ -96,18 +102,17 @@ class ModifyFieldsView(ctk.CTkFrame):
         table = card["table"]
         for child in table.winfo_children():
             child.destroy()
-        header = ctk.CTkFrame(table, fg_color=theme.SURFACE_TINT, corner_radius=8)
+        header = ctk.CTkFrame(table, fg_color="transparent", corner_radius=0)
         header.grid(row=0, column=0, sticky="ew")
         header.grid_columnconfigure(0, weight=1)
-        widgets.label(header, "Name", size=theme.FONT_SIZE_BODY).grid(row=0, column=0, sticky="w", padx=14, pady=8)
-        widgets.label(header, "Actions", size=theme.FONT_SIZE_BODY).grid(row=0, column=1, sticky="e", padx=(0, 60), pady=8)
+        widgets.label(header, "NAME", size=theme.FONT_SIZE_LABEL, color=theme.TEXT_MUTED).grid(row=0, column=0, sticky="w", padx=14, pady=6)
+        widgets.label(header, "ACTIONS", size=theme.FONT_SIZE_LABEL, color=theme.TEXT_MUTED).grid(row=0, column=1, sticky="e", padx=(0, 60), pady=6)
         if not names:
             widgets.label(table, "Nothing here yet. Add one above.", color=theme.TEXT_MUTED).grid(row=1, column=0, pady=18)
         for index, name in enumerate(names, start=1):
-            line = ctk.CTkFrame(table, fg_color="transparent")
-            line.grid(row=index, column=0, sticky="ew")
+            line = ctk.CTkFrame(table, fg_color=theme.SURFACE_SOFT, corner_radius=14)  # each row is a rounded card
+            line.grid(row=index, column=0, sticky="ew", pady=3)
             line.grid_columnconfigure(0, weight=1)
-            ctk.CTkFrame(line, height=1, fg_color=theme.ROW_BORDER).grid(row=2, column=0, columnspan=2, sticky="ew")
             actions = ctk.CTkFrame(line, fg_color="transparent", height=1)
             actions.grid(row=0, column=1, sticky="e", padx=(8, 8))
             if name == editing:
@@ -120,16 +125,16 @@ class ModifyFieldsView(ctk.CTkFrame):
                 problem.grid(row=1, column=0, sticky="w", padx=(12, 0))
                 field.bind("<Return>", lambda _event, f=field, p=problem, old=name: on_save(old, f.get(), p))
                 field.bind("<Escape>", lambda _event: on_cancel())
-                self._link(actions, "Save", lambda f=field, p=problem, old=name: on_save(old, f.get(), p), theme.PRIMARY).pack(side="left")
-                self._link(actions, "Cancel", on_cancel, theme.TEXT_MUTED).pack(side="left")
+                self._link(actions, "Save", lambda f=field, p=problem, old=name: on_save(old, f.get(), p), theme.TEXT).pack(side="left")
+                self._link(actions, "Cancel", on_cancel, theme.CANCEL).pack(side="left")
             else:
                 widgets.label(line, name, color=theme.TEXT).grid(row=0, column=0, sticky="w", padx=14, pady=10)
-                self._link(actions, "Edit", lambda n=name: on_edit(n), theme.PRIMARY).pack(side="left")
+                self._link(actions, "Edit", lambda n=name: on_edit(n), theme.TEXT).pack(side="left")
                 self._link(actions, "Remove", lambda n=name: on_remove(n), theme.DEBIT).pack(side="left")
 
     @staticmethod
     def _link(parent, text: str, command, colour: str) -> ctk.CTkButton:
-        return ctk.CTkButton(parent, text=text, command=command, width=64, height=30, corner_radius=8, fg_color="transparent", hover_color=theme.PRIMARY_LIGHT, text_color=colour, font=widgets.text_font(theme.FONT_SIZE_BODY))
+        return ctk.CTkButton(parent, text=text, command=command, width=64, height=30, corner_radius=15, fg_color="transparent", hover_color=theme.PRIMARY_LIGHT, text_color=colour, font=widgets.text_font(theme.FONT_SIZE_BODY))
 
     def _render_entries(self, active: list[models.MainEntry]) -> None:
         editing_name = self.main_entries.label(self.editing_entry) if self.editing_entry else None

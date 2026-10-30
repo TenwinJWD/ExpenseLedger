@@ -58,7 +58,7 @@ class ChangePasswordPopup(ctk.CTkToplevel):
 
         buttons = ctk.CTkFrame(body, fg_color="transparent")
         buttons.pack(fill="x", pady=(12, 0))
-        widgets.secondary_button(buttons, "Cancel", self.destroy).pack(side="left", expand=True, fill="x", padx=(0, 6))
+        widgets.cancel_button(buttons, "Cancel", self.destroy).pack(side="left", expand=True, fill="x", padx=(0, 6))
         self.save_button = widgets.primary_button(buttons, "Save", self._save, state="disabled")
         self.save_button.pack(side="left", expand=True, fill="x", padx=(6, 0))
 

@@ -1130,5 +1130,16 @@
   "_internal/PIL/_imagingcms.cp315-win_amd64.pyd": "{9953E691-DD52-43FA-90BF-E206352D611A}",
   "_internal/PIL/_imagingtk.cp315-win_amd64.pyd": "{F3F6D337-F9AA-4CBE-B1D3-9792E1F123D9}",
   "_internal/PIL/_webp.cp315-win_amd64.pyd": "{25CD18D4-40A5-4C90-9591-28320C34E242}",
-  "_internal/_queue.pyd": "{B1862F33-D710-4AAC-ABBE-4FAE86DA6453}"
+  "_internal/_queue.pyd": "{B1862F33-D710-4AAC-ABBE-4FAE86DA6453}",
+  "_internal/assets/fonts/Nunito-Bold.ttf": "{811B4A64-0977-468B-958E-7554D83C2271}",
+  "_internal/assets/fonts/Nunito-Regular.ttf": "{8B0B5D92-C3B5-43D8-853A-4E762B2D0CCA}",
+  "_internal/assets/fonts/OFL.txt": "{C210F355-45A6-4445-A009-3D748B38C2EE}",
+  "_internal/fontTools/misc/bezierTools.cp315-win_amd64.pyd": "{6036C999-36B0-44FA-BFE4-81037CCD7864}",
+  "_internal/fontTools/varLib/iup.cp315-win_amd64.pyd": "{81D8C131-58D8-4A14-A6C3-F216420D4216}",
+  "_internal/_asyncio.pyd": "{DA80F3A1-3344-4AD6-A31F-1344FC865402}",
+  "_internal/_multiprocessing.pyd": "{EEB62137-DA4E-4782-BC59-9BFD08EDA3CE}",
+  "_internal/_overlapped.pyd": "{63733D87-6FC6-4870-A788-A45B46129561}",
+  "_internal/_sqlite3.pyd": "{04084F60-FE66-4DD6-B5F2-4616A1C7CB26}",
+  "_internal/_uuid.pyd": "{B9518B3C-D86A-4B8C-B0DD-D8E460D4267B}",
+  "_internal/sqlite3.dll": "{F0A72D73-0A25-403F-B2AA-FF9940C82E40}"
 }
